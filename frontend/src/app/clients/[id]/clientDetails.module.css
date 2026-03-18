@@ -1,0 +1,166 @@
+.detailsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.titleWrapper h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusPending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.btnBack {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.btnBack:hover {
+  color: var(--primary-color);
+}
+
+.btnApprove {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--success-color, #10b981);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+}
+
+.btnApprove:hover {
+  background-color: #059669;
+}
+
+/* Content Grid */
+.contentGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.infoCard {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.cardHeader {
+  background-color: rgba(248, 250, 252, 0.5);
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .cardHeader {
+    background-color: rgba(30, 41, 59, 0.4);
+  }
+}
+
+.icon {
+  font-size: 1.25rem;
+  filter: grayscale(1) opacity(0.7);
+}
+
+.cardHeader h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.cardBody {
+  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.infoGroup label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.infoGroup p {
+  font-size: 0.95rem;
+  color: var(--text-main);
+  margin: 0;
+  font-weight: 500;
+  word-break: break-word; /* Prevents long emails/links from breaking the layout */
+}
+
+@media (max-width: 768px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+  .cardBody {
+    grid-template-columns: 1fr;
+  }
+}

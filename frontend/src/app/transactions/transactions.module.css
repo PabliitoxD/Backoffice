@@ -1,0 +1,90 @@
+.container { display: flex; flex-direction: column; gap: 2rem; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; }
+.titleWrapper { display: flex; align-items: center; gap: 1rem; }
+.btnBack { background: transparent; border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: var(--radius-md); color: var(--text-main); text-decoration: none; font-weight: 500; transition: all 0.2s; font-size: 0.875rem; }
+.btnBack:hover { background-color: var(--surface); border-color: var(--text-muted); }
+.statsRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+.statCard { background-color: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.5rem; }
+.statTitle { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.statValue { font-size: 1.75rem; font-weight: 700; color: var(--text-main); }
+.statPositive { color: #10b981; }
+.statNegative { color: #ef4444; }
+.tableCard { background-color: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
+.tableToolbar { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 1rem; }
+.filterSelect { padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--surface); color: var(--text-main); outline: none; }
+.tableWrapper { overflow-x: auto; width: 100%; }
+.table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+.table th, .table td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; }
+.table th { background-color: rgba(248, 250, 252, 0.4); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+@media (prefers-color-scheme: dark) { .table th { background-color: rgba(30, 41, 59, 0.4); } .table tbody tr:hover { background-color: rgba(30, 41, 59, 0.2); } }
+.table tbody tr:hover { background-color: rgba(248, 250, 252, 0.4); }
+.fontWeightMedium { font-weight: 500; color: var(--text-main); }
+.textMuted { color: var(--text-muted); }
+.statusBadge { display: inline-flex; align-items: center; padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em; }
+.statusApproved { background-color: rgba(16, 185, 129, 0.1); color: #10b981; }
+.statusCompleted { background-color: rgba(5, 150, 105, 0.1); color: #059669; }
+.statusWaiting { background-color: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.statusRefused { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.statusNotCompleted { background-color: rgba(185, 28, 28, 0.1); color: #b91c1c; }
+.statusExitCheckout { background-color: rgba(100, 116, 139, 0.1); color: #64748b; }
+.statusReversed { background-color: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.statusClaimed { background-color: rgba(168, 85, 247, 0.1); color: #a855f7; }
+.statusChargeback { background-color: rgba(153, 27, 27, 0.1); color: #991b1b; }
+.pagination { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); }
+.paginationText { font-size: 0.875rem; color: var(--text-muted); }
+.paginationControls { display: flex; gap: 0.25rem; }
+.btnPage { padding: 0.35rem 0.75rem; border: 1px solid var(--border-color); background-color: var(--surface); border-radius: var(--radius-md); font-size: 0.875rem; color: var(--text-main); cursor: pointer; }
+.btnPage:disabled { opacity: 0.5; cursor: not-allowed; }
+.btnPageActive { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+.actionsCell { text-align: right; }
+.dropdownContainer { position: relative; display: inline-block; text-align: right; cursor: pointer; }
+.btnActionDots { background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; padding: 0 0.5rem; line-height: 1; border-radius: var(--radius-md); transition: all 0.2s; }
+.btnActionDots:hover { background-color: rgba(100, 116, 139, 0.1); color: var(--text-main); }
+.dropdownMenu { position: absolute; right: 0; top: 100%; margin-top: 0.5rem; background-color: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); min-width: 160px; z-index: 50; display: flex; flex-direction: column; padding: 0.5rem; animation: dropdownFadeIn 0.2s ease-out; }
+@keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.dropdownItem { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.6rem 0.75rem; background: transparent; border: none; text-align: left; font-size: 0.875rem; color: var(--text-main); cursor: pointer; border-radius: var(--radius-sm); text-decoration: none; transition: background-color 0.2s; box-sizing: border-box; }
+.dropdownItem:hover { background-color: rgba(248, 250, 252, 0.8); }
+@media (prefers-color-scheme: dark) { .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); } }
+.modalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+.modalContent { background: var(--surface); border-radius: 12px; width: 90%; max-width: 700px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+.modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
+@media (prefers-color-scheme: dark) { .modalHeader { background: rgba(30, 41, 59, 0.4); } }
+.modalHeader h2 { font-size: 1.1rem; color: var(--text-main); margin: 0; font-weight: 600; }
+.closeBtn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1; }
+.closeBtn:hover { color: #ef4444; }
+.modalBody { padding: 1.5rem; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 1.5rem; }
+.tabs { display: flex; gap: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem; }
+.tab { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 0.5rem 0.25rem; font-size: 0.9rem; font-weight: 500; color: var(--text-muted); cursor: pointer; transition: all 0.2s; margin-bottom: -1px; }
+.tab:hover { color: var(--text-main); }
+.tabActive { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.detailGrid { display: grid; grid-template-columns: 180px 1fr; gap: 0.75rem 1rem; align-items: center; font-size: 0.9rem;}
+.detailLabel { color: var(--text-muted); font-weight: 500;}
+.detailValue { color: #3b82f6; font-weight: 500; overflow-wrap: anywhere; } 
+.detailValueBold { font-weight: 600; color: var(--text-main); }
+.productSection { background-color: rgba(248, 250, 252, 0.6); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+@media (prefers-color-scheme: dark) { .productSection { background-color: rgba(30, 41, 59, 0.4); } }
+.productInfo { display: flex; align-items: center; gap: 1rem; max-width: 80%; }
+.productDesc { display: flex; flex-direction: column; gap: 0.25rem; }
+.productCode { font-size: 0.8rem; color: var(--text-muted); font-family: monospace; }
+.productName { font-size: 0.9rem; font-weight: 500; color: var(--text-main); text-transform: uppercase; }
+.productPrice { font-weight: 600; font-size: 1.1rem; color: var(--text-main);}
+.modalTable { white-space: normal; }
+.modalTable th, .modalTable td { padding: 1.25rem 0.5rem; }
+.divider { height: 1px; background-color: var(--border-color); width: 100%; margin: 0.5rem 0; }
+.warningBanner { background-color: #fde047; color: #854d0e; padding: 1rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;}
+.errorBanner { background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;}
+.modalFooter { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
+@media (prefers-color-scheme: dark) { .modalFooter { background: rgba(30, 41, 59, 0.4); } }
+.btnCancelItem { padding: 0.625rem 1.25rem; border: none; background-color: #ef4444; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; opacity: 0.9; }
+.btnCancelItem:hover { opacity: 1; }
+.btnCloseModal { padding: 0.625rem 1.25rem; border: none; background-color: #94a3b8; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
+.btnCloseModal:hover { background-color: #64748b; }
+.producerBanner { background-color: #2cb5c6; color: white; padding: 1rem; border-radius: var(--radius-md); font-weight: 500; margin: 1rem 0; font-size: 0.95rem; }
+.feesTable { width: 100%; border-collapse: collapse; }
+.feesTable th, .feesTable td { padding: 1rem 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+.feesTable th { text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; }
+.feesTable td:last-child, .feesTable th:last-child { text-align: right; font-weight: 600; }
+.tableHeaderLight { background-color: transparent !important; color: var(--text-muted) !important; text-transform: none !important; font-size: 0.85rem !important; border-bottom: 2px solid var(--border-color) !important; }
+.btnViewSmall { background-color: #2cb5c6; color: white; border: none; padding: 0.35rem 1rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btnViewSmall:hover { opacity: 0.9; }

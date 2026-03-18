@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /*
+   * GLOBAL COLOR PALETTE
+   * Using a modern, clean palette suitable for a backoffice
+   */
+  --primary-color: #4F46E5; /* Indigo */
+  --primary-hover: #4338CA;
+  --secondary-color: #10B981; /* Emerald */
+  --danger-color: #EF4444; /* Red */
+  --warning-color: #F59E0B; /* Amber */
+  --sidebar-bg: #1E1E2F; /* Dark slate for sidebar */
+  --sidebar-text: #E2E8F0;
+  --sidebar-hover: #334155;
+  --header-bg: #FFFFFF;
+  
+  /* Backgrounds and Text */
+  --background: #F8FAFC; /* Light gray background */
+  --surface: #FFFFFF; /* White for cards/panels */
+  --border-color: #E2E8F0;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+
+  /* Shadows and formatting */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  /* Header/Sidebar widths */
+  --sidebar-width: 260px;
+  --header-height: 70px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Optional: We can implement dark mode fully later, defining base dark variables */
+    --background: #0F172A;
+    --surface: #1E293B;
+    --border-color: #334155;
+    --header-bg: #1E293B;
+    --text-main: #F8FAFC;
+    --text-muted: #94A3B8;
+  }
+}
+
+/* 
+ * CSS RESET & BASE STYLES
+ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+ul, ol {
+  list-style: none;
+}
+
+/* 
+ * UTILITY CLASSES
+ */
+.card {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}

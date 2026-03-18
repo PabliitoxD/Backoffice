@@ -1,0 +1,24 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background-color: var(--background);
+  overflow: hidden;
+}
+
+.dashboard-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.dashboard-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  /* Adjusting height to viewport minus topbar height to ensure proper scrolling inside the main area */
+  height: calc(100vh - var(--header-height));
+}

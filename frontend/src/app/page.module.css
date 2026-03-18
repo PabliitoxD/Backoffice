@@ -1,0 +1,104 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+.cardBody {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.cardValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.cardTrend {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+}
+
+.trendUp {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--secondary-color);
+}
+
+.trendDown {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger-color);
+}
+
+.recentGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+/* Mock Table Styles */
+.mockTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+}
+
+.mockTable th,
+.mockTable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mockTable th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  background-color: rgba(248, 250, 252, 0.5); /* slightly tinted header */
+}
+
+@media (prefers-color-scheme: dark) {
+  .mockTable th {
+    background-color: rgba(30, 41, 59, 0.5);
+  }
+}
+
+.statusActive, .statusPending {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.statusActive {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--secondary-color);
+}
+
+.statusPending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}

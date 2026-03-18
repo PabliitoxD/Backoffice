@@ -1,0 +1,164 @@
+.plansContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  max-width: 600px;
+}
+
+.btnAdd {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnAdd:hover {
+  background-color: var(--primary-hover);
+}
+
+.iconPlus {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.tableCard {
+  background-color: var(--surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.table th {
+  background-color: rgba(248, 250, 252, 0.5);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (prefers-color-scheme: dark) {
+  .table th {
+    background-color: rgba(30, 41, 59, 0.5);
+  }
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(248, 250, 252, 0.8);
+}
+
+@media (prefers-color-scheme: dark) {
+  .table tbody tr:hover {
+    background-color: rgba(30, 41, 59, 0.8);
+  }
+}
+
+.fontWeightMedium {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.textMuted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusActive {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success-color, #10b981);
+}
+
+.statusInactive {
+  background-color: rgba(100, 116, 139, 0.1);
+  color: var(--text-muted);
+}
+
+.textRight {
+  text-align: right;
+}
+
+.actionsCell {
+  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btnAction {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.btnAction:hover {
+  background-color: rgba(100, 116, 139, 0.1);
+  color: var(--text-main);
+}
+
+.emptyState {
+  padding: 4rem;
+  text-align: center;
+  color: var(--text-muted);
+}

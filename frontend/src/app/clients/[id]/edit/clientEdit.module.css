@@ -1,0 +1,311 @@
+.formContainer {
+  background-color: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.titleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statusActive {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--secondary-color);
+}
+
+.statusPending {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--warning-color);
+}
+
+.statusInactive {
+  background-color: rgba(100, 116, 139, 0.1);
+  color: var(--text-muted);
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.btnBack {
+  padding: 0.5rem 1rem;
+  background-color: transparent;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.btnBack:hover {
+  color: var(--text-main);
+}
+
+.btnSave {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnSave:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Form Styles */
+.formGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+.formSection {
+  background-color: rgba(248, 250, 252, 0.4);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  .formSection {
+    background-color: rgba(30, 41, 59, 0.4);
+  }
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sectionTitle::before {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 1.1rem;
+  background-color: var(--primary-color);
+  border-radius: 2px;
+}
+
+.sectionDesc {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.inputGroup {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.field input,
+.field select,
+.field textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+/* New dropdown styling */
+.planDropdown {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+}
+
+.inputWithSymbol {
+  display: flex;
+  align-items: center;
+}
+
+.symbol {
+  margin-left: 0.25rem;
+}
+
+
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+/* Pricing Table specifically */
+.planTableContainer {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+}
+
+.planTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.planTable th,
+.planTable td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.planTable th {
+  background-color: rgba(248, 250, 252, 0.8);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+@media (prefers-color-scheme: dark) {
+  .planTable th {
+    background-color: rgba(30, 41, 59, 1);
+  }
+}
+
+.planTable tbody tr {
+  transition: background-color 0.2s;
+}
+
+.planTable tbody tr:hover {
+  background-color: rgba(248, 250, 252, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  .planTable tbody tr:hover {
+    background-color: rgba(30, 41, 59, 0.2);
+  }
+}
+
+.rowSelected {
+  background-color: rgba(67, 97, 238, 0.05) !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .rowSelected {
+    background-color: rgba(67, 97, 238, 0.15) !important;
+  }
+}
+
+.planName {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.planPopular {
+  color: var(--primary-color);
+}
+
+.planPopular::after {
+  content: 'Pop';
+  display: inline-block;
+  margin-left: 0.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 9999px;
+  vertical-align: middle;
+}
+
+.customRateField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rateInput {
+  width: 80px;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-main);
+  text-align: right;
+  font-family: inherit;
+}
+
+.rateInput:disabled {
+  background-color: var(--bg-color);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
