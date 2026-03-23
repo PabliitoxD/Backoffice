@@ -1,6 +1,12 @@
+"use client";
+
 import './Topbar.css';
+import { useTheme } from "next-themes";
+import { Sun, Moon } from "lucide-react";
 
 export function Topbar() {
+  const { theme, setTheme } = useTheme();
+
   return (
     <header className="topbar">
       <div className="topbar-search">
@@ -10,6 +16,13 @@ export function Topbar() {
       </div>
 
       <div className="topbar-actions">
+        <button 
+          className="icon-btn" 
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
+
         {/* Notifications Mock */}
         <button className="icon-btn">
           <span className="icon">🔔</span>

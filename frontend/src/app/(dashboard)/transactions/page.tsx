@@ -100,8 +100,6 @@ export default function TransactionsPage() {
             <span className={styles.detailValue}>{formatCurrency(selectedTx.amount)}</span>
             <span className={styles.detailLabel}>Valor da venda (=)</span>
             <span className={styles.detailValueBold}>{formatCurrency(selectedTx.amount)}</span>
-            <span className={styles.detailLabel}>Adquirente</span>
-            <span className={styles.detailValue}>{selectedTx.gateway}</span>
             <span className={styles.detailLabel}>Meio de pagamento</span>
             <span className={styles.detailValue}>{selectedTx.method}</span>
             <span className={styles.detailLabel}>Condição de pagamento</span>
@@ -153,7 +151,7 @@ export default function TransactionsPage() {
                     <tr style={{ backgroundColor: 'transparent' }}>
                       <td className={styles.textMuted}>{approvedDateStr}</td>
                       <td><span className={`${styles.statusBadge} ${styles.statusApproved}`}>Aprovada</span></td>
-                      <td className={styles.textMuted}>O pagamento foi aprovado pelo gateway ({selectedTx.gateway}).</td>
+                      <td className={styles.textMuted}>O pagamento foi aprovado e processado com sucesso.</td>
                     </tr>
                   )}
                   <tr style={{ backgroundColor: 'transparent' }}>

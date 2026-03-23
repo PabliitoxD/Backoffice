@@ -33,16 +33,15 @@
   --header-height: 70px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Optional: We can implement dark mode fully later, defining base dark variables */
-    --background: #0F172A;
-    --surface: #1E293B;
-    --border-color: #334155;
-    --header-bg: #1E293B;
-    --text-main: #F8FAFC;
-    --text-muted: #94A3B8;
-  }
+.dark {
+  /* Dark mode definitions */
+  --background: #0F172A;
+  --surface: #1E293B;
+  --border-color: #334155;
+  --header-bg: #1E293B;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --sidebar-bg: #0B0F19; /* Even darker for contrast */
 }
 
 /* 

@@ -1,0 +1,29 @@
+﻿node.exe : TypeError: 
+Cannot read properties 
+of undefined (reading 
+'upsert')
+No linha:1 caractere:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (TypeError: Ca   
+ nn...ading 'upsert    
+'):String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+    at main (C:\Users\P
+abliitoxD\.gemini\antig
+ravity\scratch\backoffi
+ce\backend\prisma\seed.
+ts:9:34)

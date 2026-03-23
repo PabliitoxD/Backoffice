@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Producer {
+  id           String        @id @default(uuid())
+  name         String
+  document     String       @unique
+  email        String       @unique
+  phone        String?
+  status       String       @default("ACTIVE")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  products     Product[]
+  transactions Transaction[]
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  name         String
+  document     String       @unique
+  email        String
+  phone        String?
+  gender       String?
+  type         String        @default("Pessoa física")
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  transactions Transaction[]
+}
+
+model Product {
+  id           String        @id @default(uuid())
+  code         String       @unique
+  name         String
+  price        Float
+  producerId   String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  producer     Producer      @relation(fields: [producerId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                String    @id @default(uuid())
+  producerId        String
+  customerId        String
+  productId         String
+  amount            Float
+  method            String
+  status            String    @default("WAITING")
+  condition         String?
+  createdAt         DateTime  @default(now())
+  approvedAt        DateTime?
+
+  producer          Producer  @relation(fields: [producerId], references: [id])
+  customer          Customer  @relation(fields: [customerId], references: [id])
+  product           Product   @relation(fields: [productId], references: [id])
+
+  history           TransactionHistory[]
+}
+
+model TransactionHistory {
+  id            String      @id @default(uuid())
+  transactionId String
+  status        String
+  details       String?
+  createdAt     DateTime    @default(now())
+
+  transaction   Transaction  @relation(fields: [transactionId], references: [id])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
