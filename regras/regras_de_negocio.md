@@ -73,3 +73,22 @@ Diferente dos Produtores (Sellers), os Usuários Administrativos (`User`) são m
 - **Autenticação (Login):** O usuário preenche e-mail e senha na tela de `/login`. O backend valida a criptografia e emite um Token de Sessão (ex: JWT) com tempo de expiração.
 - **Autorização (Roles):** Cada usuário possui um nível de permissão (Role). Por padrão, o sistema opera com `ADMIN` (acesso total para editar planos, ver transações e credenciar clientes).
 - **Proteção de Rotas:** O Frontend e o Backend validam ativamente a presença e validade do token. Requisições não autenticadas são bloqueadas e redirecionadas para a tela de login.
+
+---
+
+## 5. Arquitetura de Software, UI e Infraestrutura (Deploy)
+
+A aplicação segue padrões rígidos de infraestrutura para garantir a segurança dos dados financeiros e a escalabilidade no ambiente de produção:
+
+### 5.1. Interface de Usuário (Estilização e Módulo Auth)
+- **Grouping de Rotas (Next.js)**: As telas de autenticação (`/login` e `/signup`) são isoladas dentro de um *Route Group* `(auth)` para garantir que ocupem a tela inteira, sem herdar a barra lateral de navegação (Sidebar). As telas internas do painel residem no grupo `(dashboard)`.
+- **Modo Escuro (Dark Mode)**: O painel possui suporte nativo à inversão de cores (Tema Claro / Escuro) através da alternância da classe CSS `.dark`. O usuário pode realizar essa troca pelo botão localizado no cabeçalho (*Topbar*).
+
+### 5.2. Banco de Dados Oficial
+- A aplicação utiliza o motor de banco de dados relacional **PostgreSQL**, hospedado de forma centralizada.
+- Requisições tanto locais (através de túneis SSH) quanto do servidor oficial conectam-se ativamente à mesma base, garantindo sincronia total dos produtores cadastrados.
+
+### 5.3. Hospedagem em Produção (VPS Ubuntu)
+- O código oficial do sistema está alocado nativamente no IP `45.227.61.197`.
+- **Serviços Contínuos (Daemons)**: O servidor Frontend Web e o Backend de API (NestJS na porta 3001) rodam de maneira perpétua gerenciados pelo processo corporativo **PM2**, garantindo reinicialização automática em caso de crashes.
+- O versionamento do código em produção espelha a ramificação principal ou correspondente funcional do repositório no GitHub.
