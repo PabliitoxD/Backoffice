@@ -61,6 +61,9 @@ export default function LoginPage() {
               placeholder="••••••••"
             />
           </div>
+          <div className="form-footer">
+            <a href="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--text-accent)' }}>Esqueceu a senha?</a>
+          </div>
           <button type="submit" className="btn-primary">Acessar</button>
         </form>
 

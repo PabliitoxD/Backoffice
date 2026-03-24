@@ -80,6 +80,12 @@
   border-color: #0066ff;
 }
 
+.form-footer {
+  text-align: right;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
 .btn-primary {
   background: #0066ff;
   color: white;
