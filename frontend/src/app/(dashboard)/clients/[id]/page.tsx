@@ -24,8 +24,11 @@ const MOCK_CLIENT = {
   date: '12 Mar 2026',
 };
 
-export default function ClientDetailsPage({ params }: { params: { id: string } }) {
-  // In a real application, you'd use `params.id` to fetch the client data.
+import { use } from 'react';
+
+export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  // In a real application, you'd use `id` to fetch the client data.
   const client = MOCK_CLIENT;
 
   return (
@@ -38,7 +41,7 @@ export default function ClientDetailsPage({ params }: { params: { id: string } }
               {client.status}
             </span>
           </div>
-          <p className="subtitle">ID do Cliente: #{params.id} • Cadastrado em {client.date}</p>
+          <p className="subtitle">ID do Cliente: #{id} • Cadastrado em {client.date}</p>
         </div>
         <div className={styles.headerActions}>
            <Link href="/clients" className={styles.btnBack}>

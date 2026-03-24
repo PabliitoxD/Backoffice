@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import styles from './clientEdit.module.css';
-import { useState } from 'react';
+import { useState, use } from 'react';
 
 // MOCK DATA for the selected client
 const MOCK_CLIENT = {
@@ -41,8 +41,9 @@ const SYSTEM_PLANS = [
   { id: 'custom', name: 'Personalizado', description: 'Taxas configuradas manualmente', pixRate: 'Sob Consulta', boletoRate: 'Sob Consulta', type: 'custom' },
 ];
 
-export default function EditClientPage({ params }: { params: { id: string } }) {
-  // In a real application, fetch the client using params.id
+export default function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  // In a real application, fetch the client using id
   const [formData, setFormData] = useState({
     ...MOCK_CLIENT,
     planId: MOCK_CLIENT.planId as number | string
@@ -70,7 +71,7 @@ export default function EditClientPage({ params }: { params: { id: string } }) {
               {formData.status}
             </span>
           </div>
-          <p className={styles.subtitle}>ID do Cliente: #{params.id}</p>
+          <p className={styles.subtitle}>ID do Cliente: #{id}</p>
         </div>
         <div className={styles.headerActions}>
            <Link href="/clients" className={styles.btnBack}>
