@@ -8,7 +8,7 @@ async function main() {
   
   const user = await prisma.user.upsert({
     where: { email: 'admin@superfin.com.br' },
-    update: {},
+    update: { password: hashedPassword },
     create: {
       email: 'admin@superfin.com.br',
       name: 'Administrador',
