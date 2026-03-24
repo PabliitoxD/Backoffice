@@ -60,7 +60,7 @@ export default function PlansListPage() {
           </table>
           {MOCK_PLANS.length === 0 && (
              <div className={styles.emptyState}>
-               Nenhum plano cadastrado ainda. Clique em "Novo Plano" para começar.
+               Nenhum plano cadastrado ainda. Clique em &quot;Novo Plano&quot; para começar.
              </div>
           )}
         </div>

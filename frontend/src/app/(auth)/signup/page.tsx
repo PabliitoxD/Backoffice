@@ -29,7 +29,7 @@ export default function SignupPage() {
       } else {
         setError(data.message || "Erro ao cadastrar usuário");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("Erro ao conectar com o servidor");
     }
   };

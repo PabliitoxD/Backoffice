@@ -26,7 +26,7 @@ export default function LoginPage() {
       } else {
         setError(data.message || "Credenciais inválidas");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("Erro ao conectar com o servidor");
     }
   };
