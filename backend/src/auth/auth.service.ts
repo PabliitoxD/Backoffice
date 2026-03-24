@@ -34,21 +34,37 @@ export class AuthService {
   async login(data: any) {
     const { email, password } = data;
     
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException('Credenciais inválidas');
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Credenciais inválidas');
-
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
+    try {
+      console.log(`[AuthService] Tentativa de login para: ${email}`);
+      const user = await this.prisma.user.findUnique({ where: { email } });
+      
+      if (!user) {
+        console.log(`[AuthService] Usuário não encontrado: ${email}`);
+        throw new UnauthorizedException('Credenciais inválidas');
       }
-    };
+
+      console.log(`[AuthService] Usuário encontrado, comparando senha...`);
+      const isMatch = await bcrypt.compare(password, user.password);
+      
+      if (!isMatch) {
+         console.log(`[AuthService] Senha incorreta para: ${email}`);
+         throw new UnauthorizedException('Credenciais inválidas');
+      }
+
+      console.log(`[AuthService] Login bem-sucedido, gerando token...`);
+      const payload = { email: user.email, sub: user.id };
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        }
+      };
+    } catch (error) {
+      console.error(`[AuthService] Erro fatal no login:`, error);
+      throw error; // Re-throw to keep the 500 or the specific NestJS exception
+    }
   }
 }
