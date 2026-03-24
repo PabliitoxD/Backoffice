@@ -20,8 +20,7 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Install Nginx and PM2
-RUN apk add --no-cache nginx gettext
+# Install PM2
 RUN npm install -g pm2
 
 # Copy Backend output
@@ -38,7 +37,6 @@ COPY --from=frontend-build /app/frontend/public ./frontend/public
 
 # Copy deployment configurations
 COPY ecosystem.config.js .
-COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY start.sh .
 
 RUN chmod +x start.sh
