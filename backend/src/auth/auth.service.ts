@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -8,70 +9,89 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private auditLogsService: AuditLogsService,
   ) {}
 
-  async register(data: any) {
-    const { email, password, name } = data;
-    
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new BadRequestException('E-mail já cadastrado');
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        role: 'ADMIN',
-      },
+  async validateUser(email: string, pass: string): Promise<any> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: { profile: true },
     });
 
-    const { password: _, ...result } = user;
-    return result;
+    if (user && (await bcrypt.compare(pass, user.password))) {
+      const { password, ...result } = user;
+      return result;
+    }
+    return null;
   }
 
-  async login(data: any) {
-    const { email, password } = data;
-    console.log(`[AuthService] Tentativa de login: ${email}`);
+  async login(user: any, ip?: string) {
+    const payload = { 
+      email: user.email, 
+      sub: user.id, 
+      role: user.role,
+      permissions: user.profile?.permissions || [],
+    };
+
+    await this.auditLogsService.logAction({
+      userId: user.id,
+      action: 'LOGIN',
+      ip,
+    });
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile: user.profile,
+      },
+    };
+  }
+
+  async register(data: any) {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    
+    // Fallback to Administrative profile if none specified
+    let profileId = data.profileId;
+    if (!profileId) {
+      const adminProfile = await this.prisma.profile.findFirst({
+        where: { name: 'Administrativo' }
+      });
+      profileId = adminProfile?.id;
+    }
 
     try {
-      if (!this.prisma.user) {
-        console.error('[AuthService] Erro: Tabela User não encontrada no PrismaService.');
-        throw new Error('Database Client Error');
-      }
+      const user = await this.prisma.user.create({
+        data: {
+          email: data.email,
+          password: hashedPassword,
+          name: data.name,
+          role: data.role || 'ADMIN',
+          profileId: profileId,
+        },
+      });
 
-      const user = await this.prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        console.warn(`[AuthService] Login falhou: Usuário não encontrado - ${email}`);
-        throw new UnauthorizedException('Credenciais inválidas');
-      }
+      await this.auditLogsService.logAction({
+        userId: user.id,
+        action: 'REGISTER',
+        details: { email: user.email, name: user.name },
+      });
 
-      console.log(`[AuthService] Usuário ${email} encontrado. Verificando senha...`);
-      const isMatch = await bcrypt.compare(password, user.password);
-      
-      if (!isMatch) {
-         console.warn(`[AuthService] Login falhou: Senha incorreta - ${email}`);
-         throw new UnauthorizedException('Credenciais inválidas');
-      }
-
-      console.log(`[AuthService] Senha OK. Gerando token para ${email}...`);
-      const payload = { email: user.email, sub: user.id };
-      const token = this.jwtService.sign(payload);
-      
-      console.log(`[AuthService] Token gerado com sucesso.`);
-      return {
-        access_token: token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      };
+      return user;
     } catch (error) {
-      console.error(`[AuthService] ERRO CRÍTICO NO LOGIN:`, error);
-      throw error;
+      // Resilience fallback if profile table/column missing
+      console.error('Registration error, attempting fallback:', error.message);
+      return this.prisma.user.create({
+        data: {
+          email: data.email,
+          password: hashedPassword,
+          name: data.name,
+          role: data.role || 'ADMIN',
+        },
+      });
     }
   }
 }

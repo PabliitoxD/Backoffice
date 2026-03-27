@@ -51,21 +51,17 @@ const MOCK_TRANSACTIONS = [
 const getStatusBadgeConfig = (status: string) => {
   switch(status) {
     case 'APPROVED': 
-      return { className: styles.statusApproved, label: 'Aprovada' };
     case 'COMPLETED': 
-      return { className: styles.statusCompleted, label: 'Finalizada' };
+      return { className: styles.statusApproved, label: 'Aprovada' };
     case 'WAITING': 
-      return { className: styles.statusWaiting, label: 'Aguardando Pagamento' };
+    case 'PENDING':
+      return { className: styles.statusWaiting, label: 'Aguardando' };
     case 'REFUSED': 
-      return { className: styles.statusRefused, label: 'Recusada (Fraude)' };
-    case 'NOT_COMPLETED': 
-      return { className: styles.statusNotCompleted, label: 'Dados Inválidos' };
+      return { className: styles.statusRefused, label: 'Recusada' };
     case 'REVERSED': 
-      return { className: styles.statusReversed, label: 'Estornada' };
     case 'CLAIMED': 
-      return { className: styles.statusClaimed, label: 'Reembolsada' };
     case 'CHARGEBACK': 
-      return { className: styles.statusChargeback, label: 'Chargeback' };
+      return { className: styles.statusReversed, label: 'Chargeback/Reembolso' };
     default: 
       return { className: '', label: status };
   }
@@ -77,19 +73,50 @@ const formatCurrency = (value: number) => {
 
 export default function ExtratoPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
-  
+  const [statement, setStatement] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
 
+  useEffect(() => {
+    const fetchStatement = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:3001/producers/${resolvedParams.id}/statement`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setStatement(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch statement:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStatement();
+  }, [resolvedParams.id]);
+
   // Load selected transaction data
-  const selectedTx = MOCK_TRANSACTIONS.find(t => t.id === selectedTxId);
+  const selectedTx = statement.find(t => t.id === selectedTxId);
+
+  const stats = {
+    approved: statement.filter(s => s.type === 'TRANSACTION' && (s.status === 'APPROVED' || s.status === 'COMPLETED')).reduce((acc, curr) => acc + curr.amount, 0),
+    processing: statement.filter(s => s.status === 'WAITING' || s.status === 'PENDING').reduce((acc, curr) => acc + Math.abs(curr.amount), 0),
+    withdrawn: statement.filter(s => s.type === 'WITHDRAWAL' && s.status === 'COMPLETED').reduce((acc, curr) => acc + Math.abs(curr.amount), 0),
+  };
 
   const handleOpenDetail = (id: string) => {
     setSelectedTxId(id);
     setActiveTab('geral');
     setIsModalOpen(true);
   };
+  // ... rest of the component
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -108,167 +135,97 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
   const renderTabContent = () => {
     if (!selectedTx) return null;
 
+    if (selectedTx.type === 'WITHDRAWAL') {
+      return (
+        <div style={{ padding: '1rem', backgroundColor: 'rgba(248, 250, 252, 0.4)', borderRadius: 'var(--radius-md)' }}>
+          <div className={styles.detailGrid}>
+            <span className={styles.detailLabel}>Tipo</span>
+            <span className={styles.detailValue}>Saque Bancário</span>
+
+            <span className={styles.detailLabel}>Valor do Saque</span>
+            <span className={styles.statNegative} style={{ fontWeight: 600 }}>{formatCurrency(selectedTx.amount)}</span>
+
+            <span className={styles.detailLabel}>Status Atual</span>
+            <td><span className={`${styles.statusBadge} ${getStatusBadgeConfig(selectedTx.status).className}`}>{getStatusBadgeConfig(selectedTx.status).label}</span></td>
+
+            <span className={styles.detailLabel}>Data da Solicitação</span>
+            <span className={styles.detailValue}>{new Date(selectedTx.createdAt).toLocaleString('pt-BR')}</span>
+          </div>
+          <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            Solicitação de saque enviada para processamento. Caso aprovada, o valor será transferido para a conta cadastrada.
+          </p>
+        </div>
+      );
+    }
+
     if (activeTab === 'geral') {
       return (
         <>
           <div className={styles.detailGrid}>
             <span className={styles.detailLabel}>Cliente</span>
-            <span className={styles.detailValue}>{selectedTx.clientName}</span>
+            <span className={styles.detailValue}>{selectedTx.customerName || 'N/A'}</span>
 
-            <span className={styles.detailLabel}>Gênero</span>
-            <span className={styles.detailValue}>{selectedTx.clientGender}</span>
-
-            <span className={styles.detailLabel}>Tipo</span>
-            <span className={styles.detailValue}>{selectedTx.clientType}</span>
-
-            <span className={styles.detailLabel}>CPF</span>
-            <span className={styles.detailValue}>{selectedTx.clientCpf}</span>
-
-            <span className={styles.detailLabel}>E-mail</span>
-            <span className={styles.detailValue}>{selectedTx.clientEmail}</span>
-
-            <span className={styles.detailLabel}>Telefone</span>
-            <span className={styles.detailValue}>{selectedTx.clientPhone}</span>
+            <span className={styles.detailLabel}>ID da Transação</span>
+            <span className={styles.detailValue}>#{selectedTx.id}</span>
           </div>
 
           <div className={styles.productSection}>
             <div className={styles.productInfo}>
               <div style={{ fontSize: '2rem' }}>📦</div>
               <div className={styles.productDesc}>
-                <span className={styles.productCode}>Código: {selectedTx.productCode}</span>
-                <span className={styles.productName}>{selectedTx.product}</span>
+                <span className={styles.productName}>{selectedTx.description}</span>
               </div>
             </div>
-            <div className={styles.productPrice}>{formatCurrency(selectedTx.amount)}</div>
+            <div className={styles.productPrice}>{formatCurrency(Math.abs(selectedTx.amount))}</div>
           </div>
 
           <div className={styles.detailGrid}>
-            <span className={styles.detailLabel}>Data do pedido</span>
-            <span className={styles.detailValue}>{selectedTx.date}</span>
+            <span className={styles.detailLabel}>Data</span>
+            <span className={styles.detailValue}>{new Date(selectedTx.createdAt).toLocaleString('pt-BR')}</span>
 
-            <span className={styles.detailLabel}>Total dos itens (+)</span>
-            <span className={styles.detailValue}>{formatCurrency(selectedTx.amount)}</span>
-
-            <span className={styles.detailLabel}>Valor da venda (=)</span>
-            <span className={styles.detailValueBold}>{formatCurrency(selectedTx.amount)}</span>
-            <span className={styles.detailLabel}>Meio de pagamento</span>
-            <span className={styles.detailValue}>{selectedTx.method}</span>
-
-            <span className={styles.detailLabel}>Condição de pagamento</span>
-            <span className={styles.detailValue}>{selectedTx.condition}</span>
+            <span className={styles.detailLabel} style={{ fontWeight: 600, color: 'var(--text-main)' }}>Valor Final (=)</span>
+            <span className={styles.detailValueBold}>{formatCurrency(Math.abs(selectedTx.amount))}</span>
           </div>
-
-          {selectedTx.status === 'WAITING' && (
-            <div className={styles.warningBanner}>
-              ⚠️ Aguardando pagamento do {selectedTx.method} ou reprocessar.
-            </div>
-          )}
-          {selectedTx.status === 'NOT_COMPLETED' && (
-            <div className={styles.errorBanner}>
-              ❌ Compra recusada por dados incorretos ou inválidos do cartão de crédito.
-            </div>
-          )}
-          {selectedTx.status === 'REFUSED' && (
-            <div className={styles.errorBanner}>
-              ❌ Compra recusada pelo Antifraude ou pela Instituição emissora do cartão.
-            </div>
-          )}
         </>
       );
     }
 
     if (activeTab === 'historico') {
-      const isApproved = ['APPROVED', 'COMPLETED', 'CLAIMED', 'REVERSED', 'CHARGEBACK'].includes(selectedTx.status);
-      
-      // Criar a data de aprovação (mockada adicionando 2 minutos à data de criação)
-      // Como estamos lindando com mock str tipo '18/03/2026 às 12:01', vai ser apenas ilustrativo
-      const approvedDateStr = selectedTx.date.replace('12:01', '12:03')
-                                             .replace('10:15', '10:16')
-                                             .replace('18:45', '18:46');
-
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>
-              Histórico de status da venda
-            </h3>
-            <div>
-              <table className={`${styles.table} ${styles.modalTable}`}>
-                <thead>
-                  <tr>
-                    <th className={styles.tableHeaderLight}>Data ↑↓</th>
-                    <th className={styles.tableHeaderLight}>Status</th>
-                    <th className={styles.tableHeaderLight} style={{ width: '100%' }}>Detalhes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isApproved && (
-                    <tr style={{ backgroundColor: 'transparent' }}>
-                      <td className={styles.textMuted}>{approvedDateStr}</td>
-                      <td><span className={`${styles.statusBadge} ${styles.statusApproved}`}>Aprovada</span></td>
-                      <td className={styles.textMuted}>O pagamento foi aprovado e processado com sucesso.</td>
-                    </tr>
-                  )}
-                  <tr style={{ backgroundColor: 'transparent' }}>
-                    <td className={styles.textMuted}>{selectedTx.date}</td>
-                    <td><span className={`${styles.statusBadge} ${styles.statusWaiting}`}>Aguardando</span></td>
-                    <td className={styles.textMuted}>
-                      {selectedTx.method === 'PIX' ? 'QRCode para pagamento do PIX gerado com sucesso.' : 'Processo de compra inciado.'}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
           <div>
             <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>
-              Histórico de vendas para esse cliente
+              Histórico de status
             </h3>
-            <div className={styles.tableWrapper} style={{ overflowX: 'hidden' }}>
-              <table className={`${styles.table} ${styles.modalTable}`}>
-                <thead>
-                  <tr>
-                    <th className={styles.tableHeaderLight}>Data status ↑↓</th>
-                    <th className={styles.tableHeaderLight}>Transação</th>
-                    <th className={styles.tableHeaderLight} style={{ width: '100%' }}>Produto</th>
-                    <th className={styles.tableHeaderLight}>Sua comissão</th>
-                    <th className={styles.tableHeaderLight}>Status</th>
-                    <th className={styles.tableHeaderLight}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ backgroundColor: 'transparent' }}>
-                    <td className={styles.textMuted}>{selectedTx.date}</td>
-                    <td className={styles.textMuted}>#{selectedTx.id}</td>
-                    <td>{selectedTx.product.split('(')[0].trim()}</td>
-                    <td>{formatCurrency(selectedTx.amount * 0.95)}</td>
-                    <td><span className={`${styles.statusBadge} ${getStatusBadgeConfig(selectedTx.status).className}`}>{getStatusBadgeConfig(selectedTx.status).label}</span></td>
-                    <td><button className={styles.btnViewSmall}>Ver</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <table className={`${styles.table} ${styles.modalTable}`}>
+              <thead>
+                <tr>
+                  <th className={styles.tableHeaderLight}>Data</th>
+                  <th className={styles.tableHeaderLight}>Status</th>
+                  <th className={styles.tableHeaderLight} style={{ width: '100%' }}>Detalhes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ backgroundColor: 'transparent' }}>
+                  <td className={styles.textMuted}>{new Date(selectedTx.createdAt).toLocaleString('pt-BR')}</td>
+                  <td><span className={`${styles.statusBadge} ${getStatusBadgeConfig(selectedTx.status).className}`}>{getStatusBadgeConfig(selectedTx.status).label}</span></td>
+                  <td className={styles.textMuted}>Movimentação registrada no sistema.</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       );
     }
 
     if (activeTab === 'taxas') {
-      const isPix = selectedTx.method === 'PIX';
-      // Mocked calculation based on Plans & Liquidations logic requested
-      const processingFee = isPix ? 1.00 : selectedTx.amount * 0.0499; 
-      const fixedFee = isPix ? 0 : 1.00;
-      const totalFees = processingFee + fixedFee;
-      const netValue = selectedTx.amount - totalFees;
-
       return (
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <p className={styles.textMuted}>
-            Veja abaixo as taxas e os valores de cada participante da venda:
+            Taxas e comissões detalhadas para esta movimentação:
           </p>
-          <div className={styles.producerBanner}>
-            Você participou dessa venda como <strong>produtor</strong>.
+          <div className={styles.producerBanner} style={{ backgroundColor: selectedTx.type === 'WITHDRAWAL' ? '#94a3b8' : '#2cb5c6' }}>
+            Esta operação de <strong>{selectedTx.type === 'TRANSACTION' ? 'venda' : 'saque'}</strong> foi processada com sucesso.
           </div>
           <table className={`${styles.feesTable} ${styles.modalTable}`}>
             <thead>
@@ -279,30 +236,19 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
             </thead>
             <tbody>
               <tr>
-                <td>Total pago pelo comprador:</td>
-                <td className={styles.textMuted}>{formatCurrency(selectedTx.amount)}</td>
+                <td>Bruto:</td>
+                <td className={styles.textMuted}>{formatCurrency(Math.abs(selectedTx.amount))}</td>
               </tr>
               <tr>
-                <td>Valor da venda sem taxas e impostos:</td>
-                <td className={styles.textMuted}>{formatCurrency(selectedTx.amount)}</td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>Valor base para cálculo de comissões:</td>
-                <td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedTx.amount)}</td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 600, color: '#10b981' }}>Sua comissão: (após taxas produtor)</td>
-                <td style={{ color: '#10b981', fontWeight: 600, fontSize: '1.1rem' }}>{formatCurrency(netValue)}</td>
+                <td style={{ fontWeight: 600 }}>Líquido:</td>
+                <td style={{ fontWeight: 600 }}>{formatCurrency(Math.abs(selectedTx.amount))}</td>
               </tr>
             </tbody>
           </table>
-          <p className={styles.textMuted} style={{ marginTop: '1.5rem', fontSize: '0.85rem' }}>
-            Taxa transparente aplicada à transação: 
-            {isPix ? ' R$ 1,00 por liquidação PIX.' : ' 4.99% + R$ 1,00 (Plano Padrão Cartão).'}
-          </p>
         </div>
       );
     }
+    return null;
   };
 
   return (
@@ -323,85 +269,102 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Total Aprovado</h3>
           <div className={`${styles.statValue} ${styles.statPositive}`}>
-            {formatCurrency(1044.00)}
+            {formatCurrency(stats.approved)}
           </div>
         </div>
 
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Em Processamento</h3>
           <div className={styles.statValue}>
-            {formatCurrency(57.00)}
+            {formatCurrency(stats.processing)}
           </div>
         </div>
 
         <div className={styles.statCard}>
-          <h3 className={styles.statTitle}>Total Estornado/Reembolsado</h3>
+          <h3 className={styles.statTitle}>Total Sacado</h3>
           <div className={`${styles.statValue} ${styles.statNegative}`}>
-            {formatCurrency(2491.00)}
+            {formatCurrency(stats.withdrawn)}
           </div>
         </div>
       </div>
 
       <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Transações</h2>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Extrato de Movimentações</h2>
           <select className={styles.filterSelect}>
-            <option value="">Status da Transação: Todos</option>
-            <option value="APPROVED">Aprovadas</option>
-            <option value="COMPLETED">Finalizadas (Pós-Garantia)</option>
-            <option value="WAITING">Aguardando Pagamento</option>
-            <option value="REFUSED">Recusada (Fraude)</option>
-            <option value="NOT_COMPLETED">Dados Inválidos</option>
-            <option value="REVERSED">Estornos / Reembolsos / Chargeback</option>
+            <option value="">Tipo: Todos</option>
+            <option value="TRANSACTION">Vendas</option>
+            <option value="WITHDRAWAL">Saques</option>
           </select>
         </div>
 
         <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>ID da Transação</th>
-                <th>Produto</th>
-                <th>Método</th>
-                <th>Valor</th>
-                <th>Status</th>
-                <th className={styles.actionsCell}>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MOCK_TRANSACTIONS.map((trx) => {
-                const badge = getStatusBadgeConfig(trx.status);
-                return (
-                  <tr key={trx.id}>
-                    <td className={styles.textMuted}>{trx.date.split(' às')[0]}</td>
-                    <td className={styles.fontWeightMedium}>{trx.id}</td>
-                    <td>{trx.product.split('(')[0].trim()}</td>
-                    <td className={styles.textMuted}>{trx.method}</td>
-                    <td className={styles.fontWeightMedium}>{formatCurrency(trx.amount)}</td>
-                    <td>
-                      <span className={`${styles.statusBadge} ${badge.className}`} title={trx.status}>
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td className={styles.actionsCell}>
-                      <button 
-                        className={styles.btnActionDots} 
-                        onClick={() => handleOpenDetail(trx.id)}
-                        title="Detalhes da Venda"
-                      >
-                        ⋮
-                      </button>
+          {loading ? (
+            <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Carregando extrato...
+            </div>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>ID</th>
+                  <th>Descrição</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th className={styles.actionsCell}>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statement.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                      Nenhuma movimentação encontrada.
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ) : (
+                  statement.map((item) => {
+                    const badge = getStatusBadgeConfig(item.status);
+                    return (
+                      <tr key={item.id}>
+                        <td className={styles.textMuted}>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</td>
+                        <td className={styles.fontWeightMedium}>#{item.id.slice(-6).toUpperCase()}</td>
+                        <td>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span>{item.description}</span>
+                            {item.customerName && <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Cliente: {item.customerName}</small>}
+                          </div>
+                        </td>
+                        <td className={styles.textMuted}>{item.type === 'TRANSACTION' ? 'Venda' : 'Saque'}</td>
+                        <td className={item.amount < 0 ? styles.statNegative : styles.statPositive} style={{ fontWeight: 600 }}>
+                          {formatCurrency(item.amount)}
+                        </td>
+                        <td>
+                          <span className={`${styles.statusBadge} ${badge.className}`}>
+                            {badge.label}
+                          </span>
+                        </td>
+                        <td className={styles.actionsCell}>
+                          <button 
+                            className={styles.btnActionDots} 
+                            onClick={() => handleOpenDetail(item.id)}
+                            title="Detalhes"
+                          >
+                            ⋮
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         <div className={styles.pagination}>
-          <span className={styles.paginationText}>Mostrando 1 a {MOCK_TRANSACTIONS.length} de {MOCK_TRANSACTIONS.length} transações</span>
+          <span className={styles.paginationText}>Mostrando 1 a {statement.length} de {statement.length} movimentações</span>
           <div className={styles.paginationControls}>
             <button className={styles.btnPage} disabled>Anterior</button>
             <button className={`${styles.btnPage} ${styles.btnPageActive}`}>1</button>
@@ -414,7 +377,7 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
         <div className={styles.modalOverlay} onClick={closeModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <h2>Detalhes da venda #{selectedTx.id}</h2>
+              <h2>Detalhes da {selectedTx.type === 'TRANSACTION' ? 'venda' : 'movimentação'} #{selectedTx.id.slice(-6).toUpperCase()}</h2>
               <button className={styles.closeBtn} onClick={closeModal}>×</button>
             </div>
             
@@ -445,7 +408,7 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
             </div>
 
             <div className={styles.modalFooter}>
-              <button className={styles.btnCancelItem}>Estornar venda</button>
+              {selectedTx.type === 'TRANSACTION' && <button className={styles.btnCancelItem}>Estornar venda</button>}
               <button className={styles.btnCloseModal} onClick={closeModal}>Fechar</button>
             </div>
           </div>
