@@ -16,7 +16,8 @@ export class ProfilesService implements OnModuleInit {
       });
 
       if (!admin) {
-        await this.prisma.profile.create({
+        // Create it
+        const newAdmin = await this.prisma.profile.create({
           data: {
             name: 'Administrativo',
             permissions: [
@@ -30,6 +31,18 @@ export class ProfilesService implements OnModuleInit {
           },
         });
         console.log('Seeded Administrativo profile');
+        
+        // Also assign this profile to all existing users who don't have one
+        await this.prisma.user.updateMany({
+          where: { profileId: null },
+          data: { profileId: newAdmin.id },
+        });
+      } else {
+        // If it already exists, just make sure all users have it if they have none
+        await this.prisma.user.updateMany({
+          where: { profileId: null },
+          data: { profileId: admin.id },
+        });
       }
     } catch (error) {
       console.error('Database tables not ready yet. Skipping seed.');

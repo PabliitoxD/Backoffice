@@ -10,25 +10,44 @@ export class UsersService {
   ) {}
 
   async findAll() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        profileId: true,
-        profile: {
-          select: {
-            name: true,
+    try {
+      // Try to include profiles (if tables exist)
+      return await this.prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          profileId: true,
+          profile: {
+            select: {
+              name: true,
+            },
           },
+          createdAt: true,
+          updatedAt: true,
         },
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    } catch (error) {
+      // Fallback if profile table or column is missing
+      console.warn('Profile table not found, falling back to basic user list');
+      return this.prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
   }
 
   async create(data: any) {
