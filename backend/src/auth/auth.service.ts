@@ -20,15 +20,30 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        role: 'ADMIN',
-        profileId: profileId || null,
-      },
-    });
+    let user;
+    try {
+      // Try to create with profileId (if column exists)
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name,
+          password: hashedPassword,
+          role: 'ADMIN',
+          profileId: profileId || null,
+        },
+      });
+    } catch (error) {
+      // Fallback if profileId column is missing
+      console.warn('Profile schema not ready, creating user without profileId');
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name,
+          password: hashedPassword,
+          role: 'ADMIN',
+        },
+      });
+    }
 
     const { password: _, ...result } = user;
     return result;
