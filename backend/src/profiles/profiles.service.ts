@@ -10,25 +10,29 @@ export class ProfilesService implements OnModuleInit {
   }
 
   private async seedAdminProfile() {
-    const admin = await this.prisma.profile.findUnique({
-      where: { name: 'Administrativo' },
-    });
-
-    if (!admin) {
-      await this.prisma.profile.create({
-        data: {
-          name: 'Administrativo',
-          permissions: [
-            'dashboard:view',
-            'clients:manage',
-            'transactions:manage',
-            'users:manage',
-            'profiles:manage',
-            'settings:manage',
-          ],
-        },
+    try {
+      const admin = await this.prisma.profile.findUnique({
+        where: { name: 'Administrativo' },
       });
-      console.log('Seeded Administrativo profile');
+
+      if (!admin) {
+        await this.prisma.profile.create({
+          data: {
+            name: 'Administrativo',
+            permissions: [
+              'dashboard:view',
+              'clients:manage',
+              'transactions:manage',
+              'users:manage',
+              'profiles:manage',
+              'settings:manage',
+            ],
+          },
+        });
+        console.log('Seeded Administrativo profile');
+      }
+    } catch (error) {
+      console.error('Database tables not ready yet. Skipping seed.');
     }
   }
 
