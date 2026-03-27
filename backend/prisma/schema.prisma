@@ -83,6 +83,31 @@ model User {
   password  String
   name      String
   role      String   @default("ADMIN")
+  profileId String?
+  profile   Profile? @relation(fields: [profileId], references: [id])
+  logs      AuditLog[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String   // e.g. "LOGIN", "CREATE_USER", "UPDATE_PROFILE"
+  entity    String?  // e.g. "User", "Profile", "Transaction"
+  entityId  String?
+  details   Json?    // Store old/new values or request body
+  ip        String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Profile {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  permissions Json     // Example: ["dashboard:view", "clients:manage", ...]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
 }

@@ -2,16 +2,18 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import * as bcrypt from 'bcrypt';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private auditLogsService: AuditLogsService,
   ) {}
 
   async register(data: any) {
-    const { email, password, name } = data;
+    const { email, password, name, profileId } = data;
     
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new BadRequestException('E-mail já cadastrado');
@@ -24,6 +26,7 @@ export class AuthService {
         name,
         password: hashedPassword,
         role: 'ADMIN',
+        profileId: profileId || null,
       },
     });
 
@@ -33,45 +36,30 @@ export class AuthService {
 
   async login(data: any) {
     const { email, password } = data;
-    console.log(`[AuthService] Tentativa de login: ${email}`);
+    
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException('Credenciais inválidas');
 
-    try {
-      if (!this.prisma.user) {
-        console.error('[AuthService] Erro: Tabela User não encontrada no PrismaService.');
-        throw new Error('Database Client Error');
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new UnauthorizedException('Credenciais inválidas');
+
+    // Log successful login
+    await this.auditLogsService.logAction({
+      userId: user.id,
+      action: 'LOGIN',
+      entity: 'Auth',
+      details: { email: user.email },
+    });
+
+    const payload = { email: user.email, sub: user.id };
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
       }
-
-      const user = await this.prisma.user.findUnique({ where: { email } });
-      if (!user) {
-        console.warn(`[AuthService] Login falhou: Usuário não encontrado - ${email}`);
-        throw new UnauthorizedException('Credenciais inválidas');
-      }
-
-      console.log(`[AuthService] Usuário ${email} encontrado. Verificando senha...`);
-      const isMatch = await bcrypt.compare(password, user.password);
-      
-      if (!isMatch) {
-         console.warn(`[AuthService] Login falhou: Senha incorreta - ${email}`);
-         throw new UnauthorizedException('Credenciais inválidas');
-      }
-
-      console.log(`[AuthService] Senha OK. Gerando token para ${email}...`);
-      const payload = { email: user.email, sub: user.id };
-      const token = this.jwtService.sign(payload);
-      
-      console.log(`[AuthService] Token gerado com sucesso.`);
-      return {
-        access_token: token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role
-        }
-      };
-    } catch (error) {
-      console.error(`[AuthService] ERRO CRÍTICO NO LOGIN:`, error);
-      throw error;
-    }
+    };
   }
 }
