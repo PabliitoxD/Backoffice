@@ -36,22 +36,9 @@ export class AuditLogsService {
         action: query.action,
       },
       include: {
-<<<<<<< HEAD
         user: { select: { name: true, email: true } }
       },
       orderBy: { createdAt: 'desc' },
-=======
-        user: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
->>>>>>> Feature/0004/login-singup
       take: query.limit || 100,
     });
   }

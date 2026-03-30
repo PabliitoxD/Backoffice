@@ -1,9 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import * as bcrypt from 'bcrypt';
-import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Injectable()
 export class AuthService {
@@ -13,56 +12,19 @@ export class AuthService {
     private auditLogsService: AuditLogsService,
   ) {}
 
-<<<<<<< HEAD
-  async validateUser(email: string, pass: string): Promise<any> {
+  async login(data: any, ip?: string) {
+    const { email, password } = data;
+    
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: { profile: true },
     });
-=======
-  async register(data: any) {
-    const { email, password, name, profileId } = data;
     
-    const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new BadRequestException('E-mail já cadastrado');
+    if (!user) throw new UnauthorizedException('Credenciais inválidas');
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    let user;
-    try {
-      // Try to create with profileId (if column exists)
-      user = await this.prisma.user.create({
-        data: {
-          email,
-          name,
-          password: hashedPassword,
-          role: 'ADMIN',
-          profileId: profileId || null,
-        },
-      });
-    } catch (error) {
-      // Fallback if profileId column is missing
-      console.warn('Profile schema not ready, creating user without profileId');
-      user = await this.prisma.user.create({
-        data: {
-          email,
-          name,
-          password: hashedPassword,
-          role: 'ADMIN',
-        },
-      });
-    }
->>>>>>> Feature/0004/login-singup
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) throw new UnauthorizedException('Credenciais inválidas');
 
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
-  }
-
-<<<<<<< HEAD
-  async login(user: any, ip?: string) {
     const payload = { 
       email: user.email, 
       sub: user.id, 
@@ -89,25 +51,29 @@ export class AuthService {
   }
 
   async register(data: any) {
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const { email, password, name, role, profileId } = data;
     
-    // Fallback to Administrative profile if none specified
-    let profileId = data.profileId;
-    if (!profileId) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing) throw new BadRequestException('E-mail já cadastrado');
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    let finalProfileId = profileId;
+    if (!finalProfileId) {
       const adminProfile = await this.prisma.profile.findFirst({
         where: { name: 'Administrativo' }
       });
-      profileId = adminProfile?.id;
+      finalProfileId = adminProfile?.id;
     }
 
     try {
       const user = await this.prisma.user.create({
         data: {
-          email: data.email,
+          email,
           password: hashedPassword,
-          name: data.name,
-          role: data.role || 'ADMIN',
-          profileId: profileId,
+          name,
+          role: role || 'ADMIN',
+          profileId: finalProfileId || null,
         },
       });
 
@@ -119,45 +85,15 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      // Resilience fallback if profile table/column missing
-      console.error('Registration error, attempting fallback:', error.message);
+      console.error('Registration error, attempting fallback:', (error as Error).message);
       return this.prisma.user.create({
         data: {
-          email: data.email,
+          email,
           password: hashedPassword,
-          name: data.name,
-          role: data.role || 'ADMIN',
+          name,
+          role: role || 'ADMIN',
         },
       });
     }
-=======
-  async login(data: any) {
-    const { email, password } = data;
-    
-    const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException('Credenciais inválidas');
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) throw new UnauthorizedException('Credenciais inválidas');
-
-    // Log successful login
-    await this.auditLogsService.logAction({
-      userId: user.id,
-      action: 'LOGIN',
-      entity: 'Auth',
-      details: { email: user.email },
-    });
-
-    const payload = { email: user.email, sub: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    };
->>>>>>> Feature/0004/login-singup
   }
 }

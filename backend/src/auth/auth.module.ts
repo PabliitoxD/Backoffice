@@ -16,10 +16,6 @@ import { PrismaService } from '../prisma.service';
   ],
   providers: [AuthService, JwtStrategy, PrismaService],
   controllers: [AuthController],
-<<<<<<< HEAD
   exports: [AuthService, JwtModule],
-=======
-  exports: [AuthService],
->>>>>>> Feature/0004/login-singup
 })
 export class AuthModule {}

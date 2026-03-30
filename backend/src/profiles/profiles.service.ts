@@ -16,10 +16,7 @@ export class ProfilesService implements OnModuleInit {
       });
 
       if (!admin) {
-<<<<<<< HEAD
-=======
         // Create it
->>>>>>> Feature/0004/login-singup
         const newAdmin = await this.prisma.profile.create({
           data: {
             name: 'Administrativo',
@@ -33,22 +30,15 @@ export class ProfilesService implements OnModuleInit {
             ],
           },
         });
-<<<<<<< HEAD
-        
-=======
         console.log('Seeded Administrativo profile');
         
         // Also assign this profile to all existing users who don't have one
->>>>>>> Feature/0004/login-singup
         await this.prisma.user.updateMany({
           where: { profileId: null },
           data: { profileId: newAdmin.id },
         });
       } else {
-<<<<<<< HEAD
-=======
         // If it already exists, just make sure all users have it if they have none
->>>>>>> Feature/0004/login-singup
         await this.prisma.user.updateMany({
           where: { profileId: null },
           data: { profileId: admin.id },
@@ -61,19 +51,8 @@ export class ProfilesService implements OnModuleInit {
 
   async findAll() {
     return this.prisma.profile.findMany({
-<<<<<<< HEAD
       include: { _count: { select: { users: true } } },
       orderBy: { name: 'asc' },
-=======
-      include: {
-        _count: {
-          select: { users: true },
-        },
-      },
-      orderBy: {
-        name: 'asc',
-      },
->>>>>>> Feature/0004/login-singup
     });
   }
 
@@ -84,35 +63,15 @@ export class ProfilesService implements OnModuleInit {
     });
   }
 
-<<<<<<< HEAD
-  async create(data: { name: string; permissions: any }) {
+  async create(data: { name: string; permissions: string[] }) {
     return this.prisma.profile.create({ data });
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: { name?: string; permissions?: string[] }) {
     return this.prisma.profile.update({ where: { id }, data });
   }
 
   async remove(id: string) {
     return this.prisma.profile.delete({ where: { id } });
-=======
-  async create(data: { name: string; permissions: string[] }) {
-    return this.prisma.profile.create({
-      data,
-    });
-  }
-
-  async update(id: string, data: { name?: string; permissions?: string[] }) {
-    return this.prisma.profile.update({
-      where: { id },
-      data,
-    });
-  }
-
-  async remove(id: string) {
-    return this.prisma.profile.delete({
-      where: { id },
-    });
->>>>>>> Feature/0004/login-singup
   }
 }
