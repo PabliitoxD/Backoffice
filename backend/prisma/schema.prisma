@@ -8,14 +8,14 @@ datasource db {
 }
 
 model Producer {
-  id           String        @id @default(uuid())
-  name         String
-  document     String       @unique
-  email        String       @unique
-  phone        String?
-  status       String       @default("ACTIVE")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+  email     String   @unique
+  phone     String?
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   products     Product[]
   transactions Transaction[]
@@ -23,127 +23,102 @@ model Producer {
 }
 
 model Customer {
-  id           String        @id @default(uuid())
-  name         String
-  document     String       @unique
-  email        String
-  phone        String?
-  gender       String?
-  type         String        @default("Pessoa física")
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  document  String   @unique
+  email     String
+  phone     String?
+  gender    String?
+  type      String   @default("Pessoa física")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   transactions Transaction[]
 }
 
 model Product {
-  id           String        @id @default(uuid())
-  code         String       @unique
-  name         String
-  price        Float
-  producerId   String
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id         String   @id @default(uuid())
+  code       String   @unique
+  name       String
+  price      Float
+  producerId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   producer     Producer      @relation(fields: [producerId], references: [id])
   transactions Transaction[]
 }
 
 model Transaction {
-  id                String    @id @default(uuid())
-  producerId        String
-  customerId        String
-  productId         String
-  amount            Float
-  method            String
-  status            String    @default("WAITING")
-  condition         String?
-  createdAt         DateTime  @default(now())
-  approvedAt        DateTime?
+  id         String    @id @default(uuid())
+  producerId String
+  customerId String
+  productId  String
+  amount     Float
+  method     String
+  status     String    @default("WAITING")
+  condition  String?
+  createdAt  DateTime  @default(now())
+  approvedAt DateTime?
 
-  producer          Producer  @relation(fields: [producerId], references: [id])
-  customer          Customer  @relation(fields: [customerId], references: [id])
-  product           Product   @relation(fields: [productId], references: [id])
+  producer Producer @relation(fields: [producerId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
 
-  history           TransactionHistory[]
+  history TransactionHistory[]
 }
 
 model TransactionHistory {
-  id            String      @id @default(uuid())
+  id            String   @id @default(uuid())
   transactionId String
   status        String
   details       String?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime @default(now())
 
-  transaction   Transaction  @relation(fields: [transactionId], references: [id])
+  transaction Transaction @relation(fields: [transactionId], references: [id])
 }
 
 model Withdrawal {
-  id          String   @id @default(uuid())
-  amount      Float
-  status      String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REFUSED
-  producerId  String
-  producer    Producer @relation(fields: [producerId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  amount     Float
+  status     String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REFUSED
+  producerId String
+  producer   Producer @relation(fields: [producerId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   password  String
   name      String
-  role      String   @default("ADMIN")
+  role      String     @default("ADMIN")
   profileId String?
-  profile   Profile? @relation(fields: [profileId], references: [id])
-<<<<<<< HEAD
-=======
-  logs      AuditLog[]
->>>>>>> Feature/0004/login-singup
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  profile   Profile?   @relation(fields: [profileId], references: [id])
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   auditLogs AuditLog[]
 }
 
 model Profile {
   id          String   @id @default(uuid())
   name        String   @unique
-  permissions Json
-  users       User[]
+  permissions Json // Example: ["dashboard:view", "clients:manage", ...]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  users       User[]
 }
 
 model AuditLog {
   id        String   @id @default(uuid())
   userId    String?
-  user      User?    @relation(fields: [userId], references: [id])
-  action    String
-  entity    String?
+  action    String // e.g. "LOGIN", "CREATE_USER", "UPDATE_PROFILE"
+  entity    String? // e.g. "User", "Profile", "Transaction"
   entityId  String?
-  details   Json?
-  ip        String?
-  createdAt DateTime @default(now())
-}
-
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?
-  action    String   // e.g. "LOGIN", "CREATE_USER", "UPDATE_PROFILE"
-  entity    String?  // e.g. "User", "Profile", "Transaction"
-  entityId  String?
-  details   Json?    // Store old/new values or request body
+  details   Json? // Store old/new values or request body
   ip        String?
   createdAt DateTime @default(now())
 
-  user      User?    @relation(fields: [userId], references: [id])
-}
-
-model Profile {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  permissions Json     // Example: ["dashboard:view", "clients:manage", ...]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  users       User[]
+  user User? @relation(fields: [userId], references: [id])
 }
