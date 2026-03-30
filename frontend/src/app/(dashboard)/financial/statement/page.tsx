@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from '../financial.module.css';
 import { API_URL } from '@/lib/api';
 
@@ -20,8 +21,6 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-import { useRouter } from 'next/navigation';
-
 export default function StatementPage() {
   const router = useRouter();
   const [statement, setStatement] = useState<StatementItem[]>([]);
@@ -29,9 +28,6 @@ export default function StatementPage() {
   const [activeTab, setActiveTab] = useState<'ALL' | 'VENDAS' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
 
   useEffect(() => {
-    // In a real scenario, you would fetch this with authorization headers
-    // Using a mocked version until integration is fully wired if auth is strict, 
-    // but assuming auth is handled or we use a token from cookies/localStorage
     const fetchStatement = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -45,7 +41,6 @@ export default function StatementPage() {
           setStatement(data);
         } else {
           console.error("Failed to fetch statement");
-          // Mock data for preview if backend isn't reachable yet
           setStatement([
             { id: 'tx-1234', type: 'TRANSACTION', description: 'Venda (#1234)', producerName: 'Acme Corp', amount: 997.0, fee: 0, impact: 997.0, status: 'APPROVED', date: new Date().toISOString() },
             { id: 'wt-5678', type: 'WITHDRAWAL', description: 'Saque Solicitado', producerName: 'Acme Corp', amount: 500.0, fee: 5.0, impact: -505.0, status: 'COMPLETED', date: new Date(Date.now() - 86400000).toISOString() },
@@ -68,8 +63,8 @@ export default function StatementPage() {
   const filteredStatement = statement.filter(item => {
     if (activeTab === 'VENDAS') return item.type === 'TRANSACTION' && item.impact > 0;
     if (activeTab === 'WITHDRAWALS') return item.type === 'WITHDRAWAL';
-    if (activeTab === 'CHARGEBACKS') return item.type === 'TRANSACTION' && item.impact < 0; // estornos e chargebacks
-    return true; // ALL
+    if (activeTab === 'CHARGEBACKS') return item.type === 'TRANSACTION' && item.impact < 0; 
+    return true; 
   });
 
   const filteredBalance = filteredStatement.reduce((acc, curr) => acc + curr.impact, 0);
@@ -98,6 +93,7 @@ export default function StatementPage() {
         </div>
       </div>
 
+      <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Linha do Tempo</h2>
           <div style={{ display: 'flex', gap: '1rem' }}>
