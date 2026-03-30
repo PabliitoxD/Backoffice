@@ -44,7 +44,7 @@ export class ProducersService {
 
     // Format both into a unified statement list
     const statement = [
-      ...transactions.map(t => ({
+      ...transactions.map((t: any) => ({
         id: t.id,
         type: 'TRANSACTION',
         amount: t.amount,
@@ -53,7 +53,7 @@ export class ProducersService {
         createdAt: t.createdAt,
         customerName: t.customer?.name
       })),
-      ...withdrawals.map(w => ({
+      ...withdrawals.map((w: any) => ({
         id: w.id,
         type: 'WITHDRAWAL',
         amount: -w.amount, // Negative for statement

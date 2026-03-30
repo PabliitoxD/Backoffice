@@ -13,7 +13,6 @@ import { PrismaService } from '../prisma.service';
       secret: process.env.JWT_SECRET || 'super-secret-key-123',
       signOptions: { expiresIn: '1d' },
     }),
-    AuditLogsModule,
   ],
   providers: [AuthService, JwtStrategy, PrismaService],
   controllers: [AuthController],
