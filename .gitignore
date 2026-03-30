@@ -24,3 +24,4 @@ frontend/build_log*.txt
 # Misc
 .DS_Store
 *.tsbuildinfo
+start-preview.bat

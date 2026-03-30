@@ -81,6 +81,7 @@ model TransactionHistory {
 model Withdrawal {
   id         String   @id @default(uuid())
   amount     Float
+  fee        Float    @default(0)
   status     String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REFUSED
   producerId String
   producer   Producer @relation(fields: [producerId], references: [id])

@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
+import { FinancialModule } from './financial/financial.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AuditLogsModule } from './audit-logs/audit-logs.module';
     ProducersModule,
     TransactionsModule,
     WithdrawalsModule,
+    FinancialModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

@@ -7,6 +7,9 @@ const NAV_ITEMS = [
   { label: 'Clientes', href: '/clients', icon: '👥' },
   { label: 'Planos e Liquidação', href: '/plans', icon: '💳' },
   { label: 'Transações', href: '/transactions', icon: '💰' },
+  { label: 'Extrato', href: '/financial/statement', icon: '🧾' },
+  { label: 'Saques', href: '/financial/withdrawals', icon: '🏦' },
+  { label: 'Chargebacks', href: '/financial/chargebacks', icon: '⚠️' },
   { label: 'Configurações', href: '/settings', icon: '⚙️' },
 ];
 

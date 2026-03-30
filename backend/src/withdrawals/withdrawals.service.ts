@@ -10,6 +10,7 @@ export class WithdrawalsService {
       data: {
         amount: data.amount,
         producerId: data.producerId,
+        fee: 5.00, // Fixed fee for now until Plans are integrated
         status: 'PENDING',
       },
     });

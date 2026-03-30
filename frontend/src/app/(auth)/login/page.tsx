@@ -32,6 +32,13 @@ export default function LoginPage() {
     }
   };
 
+  const handleOfflineLogin = () => {
+    localStorage.setItem("token", "mock-token-local");
+    localStorage.setItem("user", JSON.stringify({ name: "Usuário Teste Local", role: "ADMIN" }));
+    document.cookie = `token=mock-token-local; path=/`;
+    window.location.href = "/transactions";
+  };
+
   return (
     <div className="auth-container">
       <div className="auth-card">
@@ -65,6 +72,24 @@ export default function LoginPage() {
             <a href="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--text-accent)' }}>Esqueceu a senha?</a>
           </div>
           <button type="submit" className="btn-primary">Acessar</button>
+          
+          <div style={{ marginTop: '1rem', width: '100%' }}>
+            <button 
+              type="button" 
+              onClick={handleOfflineLogin}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '8px',
+                color: 'var(--text-muted)',
+                cursor: 'pointer'
+              }}
+            >
+              🛠️ Entrar Offline (Somente Teste/Mock)
+            </button>
+          </div>
         </form>
 
         <div className="auth-footer">
