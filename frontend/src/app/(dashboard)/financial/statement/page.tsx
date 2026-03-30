@@ -26,7 +26,7 @@ export default function StatementPage() {
   const router = useRouter();
   const [statement, setStatement] = useState<StatementItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'ALL' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
+  const [activeTab, setActiveTab] = useState<'ALL' | 'VENDAS' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
 
   useEffect(() => {
     // In a real scenario, you would fetch this with authorization headers
@@ -66,10 +66,13 @@ export default function StatementPage() {
   const totalOut = statement.filter(s => s.impact < 0).reduce((acc, curr) => acc + Math.abs(curr.impact), 0);
 
   const filteredStatement = statement.filter(item => {
+    if (activeTab === 'VENDAS') return item.type === 'TRANSACTION' && item.impact > 0;
     if (activeTab === 'WITHDRAWALS') return item.type === 'WITHDRAWAL';
-    if (activeTab === 'CHARGEBACKS') return item.status === 'CHARGEBACK';
+    if (activeTab === 'CHARGEBACKS') return item.type === 'TRANSACTION' && item.impact < 0; // estornos e chargebacks
     return true; // ALL
   });
+
+  const filteredBalance = filteredStatement.reduce((acc, curr) => acc + curr.impact, 0);
 
   return (
     <div className={styles.container}>
@@ -82,48 +85,33 @@ export default function StatementPage() {
 
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
-          <h3 className={styles.statTitle}>Entradas (Aprovadas)</h3>
+          <h3 className={styles.statTitle}>Entradas</h3>
           <div className={`${styles.statValue} ${styles.statPositive}`}>
             {formatCurrency(totalIn)}
           </div>
         </div>
         <div className={styles.statCard}>
-          <h3 className={styles.statTitle}>Saídas (Saques / Chargebacks)</h3>
+          <h3 className={styles.statTitle}>Saídas</h3>
           <div className={`${styles.statValue} ${styles.statNegative}`}>
             {formatCurrency(totalOut)}
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-        <button 
-          onClick={() => setActiveTab('ALL')}
-          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'ALL' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-        >
-          Todas as Movimentações
-        </button>
-        <button 
-          onClick={() => setActiveTab('WITHDRAWALS')}
-          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'WITHDRAWALS' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-        >
-          Apenas Saques
-        </button>
-        <button 
-          onClick={() => setActiveTab('CHARGEBACKS')}
-          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'CHARGEBACKS' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
-        >
-          Apenas Chargebacks
-        </button>
-      </div>
-
-      <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Linha do Tempo</h2>
-          <select style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}>
-            <option value="ALL">Todo o período</option>
-            <option value="30D">Últimos 30 dias</option>
-            <option value="7D">Últimos 7 dias</option>
-          </select>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <select 
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value as any)}
+              style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)', outline: 'none' }}
+            >
+              <option value="ALL">Filtro: Todas as Movimentações</option>
+              <option value="VENDAS">Vendas (+)</option>
+              <option value="WITHDRAWALS">Saques Solicitados (-)</option>
+              <option value="CHARGEBACKS">Chargebacks e Estornos (-)</option>
+            </select>
+          </div>
         </div>
         
         <div className={styles.tableWrapper}>
@@ -196,6 +184,19 @@ export default function StatementPage() {
                 })
               )}
             </tbody>
+            {filteredStatement.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'right', fontWeight: 600, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    Saldo Consolidado (Filtro Atual):
+                  </td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: filteredBalance >= 0 ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
+                    {filteredBalance >= 0 ? '+' : ''}{formatCurrency(filteredBalance)}
+                  </td>
+                  <td style={{ borderTop: '2px solid var(--border-color)' }}></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

@@ -25,10 +25,10 @@ export class FinancialService {
     // Remapear transações para o formato unificado do extrato
     const mappedTransactions = transactions.map((t) => {
       // Impacto no Saldo: 
-      // WAITING/APPROVED = Adiciona saldo (crédito)
-      // CHARGEBACK/REFUNDED = Retira saldo (débito)
-      const isCredit = ['WAITING', 'APPROVED'].includes(t.status);
-      const isDebit = ['CHARGEBACK', 'REFUNDED'].includes(t.status);
+      // WAITING/APPROVED/COMPLETED = Adiciona saldo (crédito)
+      // CHARGEBACK/REFUNDED/REVERSED/CLAIMED = Retira saldo (débito)
+      const isCredit = ['WAITING', 'APPROVED', 'COMPLETED'].includes(t.status);
+      const isDebit = ['CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'].includes(t.status);
       
       let impact = 0;
       if (isCredit) impact = t.amount;
