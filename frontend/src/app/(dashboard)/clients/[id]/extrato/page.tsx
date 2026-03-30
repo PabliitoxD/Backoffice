@@ -1,52 +1,11 @@
 "use client";
 
-import React, { use, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './extrato.module.css';
 
-// MOCK TRASACTIONS DATA
-const MOCK_TRANSACTIONS = [
-  { 
-    id: '5YJB3Z7X3R', 
-    date: '18/03/2026 às 12:01', 
-    product: 'KIT AUTISMO 980 ATIVIDADES (#52399382 - Oferta R$10)',
-    productCode: '#31960057', 
-    amount: 10.00, 
-    method: 'PIX', 
-    status: 'WAITING',
-    clientName: 'Emerson Teste',
-    clientCpf: '110.770.144-90',
-    clientEmail: 'potenciadodigital.mkt@gmail.com',
-    clientPhone: '+55 (81) 98435-5026',
-    clientGender: 'Masculino',
-    clientType: 'Pessoa física',
-    gateway: 'MercadoPago',
-    condition: 'R$ 10,00 à vista'
-  },
-  { 
-    id: '8HNK5C2P9M', 
-    date: '18/03/2026 às 10:15', 
-    product: 'Mentoria Vip',
-    productCode: '#31960058', 
-    amount: 997.00, 
-    method: 'Cartão de Crédito', 
-    status: 'APPROVED',
-    clientName: 'João Silva',
-    clientCpf: '123.456.789-00',
-    clientEmail: 'joao@email.com',
-    clientPhone: '+55 (11) 99999-9999',
-    clientGender: 'Masculino',
-    clientType: 'Pessoa física',
-    gateway: 'Stripe',
-    condition: '12x de R$ 99,70'
-  },
-  { id: '1A2B3C4D5E', date: '17/03/2026 às 18:45', product: 'E-book Start', productCode: '#31960059', amount: 47.00, method: 'Boleto', status: 'COMPLETED', clientName: 'Maria Oliveira', clientCpf: '321.654.987-01', clientEmail: 'maria@email.com', clientPhone: '+55 (21) 98888-8888', clientGender: 'Feminino', clientType: 'Pessoa física', gateway: 'MercadoPago', condition: 'R$ 47,00 à vista' },
-  { id: '9Z8Y7X6W5V', date: '17/03/2026 às 15:20', product: 'Plano Gold', productCode: '#31960060', amount: 297.00, method: 'Cartão de Crédito', status: 'REFUSED', clientName: 'Carlos Souza', clientCpf: '111.222.333-44', clientEmail: 'carlos@email.com', clientPhone: '+55 (31) 97777-7777', clientGender: 'Masculino', clientType: 'Pessoa física', gateway: 'Cielo', condition: '1x de R$ 297,00' },
-  { id: '5T4R3E2W1Q', date: '16/03/2026 às 09:10', product: 'Mentoria Vip', productCode: '#31960061', amount: 997.00, method: 'Cartão de Crédito', status: 'NOT_COMPLETED', clientName: 'Ana Pereira', clientCpf: '555.666.777-88', clientEmail: 'ana@email.com', clientPhone: '+55 (41) 96666-6666', clientGender: 'Feminino', clientType: 'Pessoa física', gateway: 'Stripe', condition: '12x de R$ 99,70' },
-  { id: '0P9O8I7U6Y', date: '14/03/2026 às 11:00', product: 'Plano Pro', productCode: '#31960062', amount: 497.00, method: 'Cartão de Crédito', status: 'REVERSED', clientName: 'Lucas Lima', clientCpf: '999.888.777-66', clientEmail: 'lucas@email.com', clientPhone: '+55 (51) 95555-5555', clientGender: 'Masculino', clientType: 'Pessoa física', gateway: 'MercadoPago', condition: 'R$ 497,00 à vista' },
-  { id: '1Q2W3E4R5T', date: '12/03/2026 às 08:30', product: 'Plano Pro', productCode: '#31960063', amount: 497.00, method: 'PIX', status: 'CLAIMED', clientName: 'Roberto Firmino', clientCpf: '444.333.222-11', clientEmail: 'roberto@email.com', clientPhone: '+55 (61) 94444-4444', clientGender: 'Masculino', clientType: 'Pessoa física', gateway: 'MercadoPago', condition: 'R$ 497,00 à vista' },
-  { id: '6Y7U8I9O0P', date: '10/03/2026 às 16:50', product: 'Plano VIP', productCode: '#31960064', amount: 1497.00, method: 'Cartão de Crédito', status: 'CHARGEBACK', clientName: 'Fernanda Costa', clientCpf: '777.666.555-44', clientEmail: 'fernanda@email.com', clientPhone: '+55 (71) 93333-3333', clientGender: 'Feminino', clientType: 'Pessoa física', gateway: 'Stripe', condition: '12x de R$ 149,70' },
-];
+// MOCK TRASACTIONS DATA REMOVED AS IT WAS UNUSED
 
 const getStatusBadgeConfig = (status: string) => {
   switch(status) {
@@ -71,8 +30,9 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
-export default function ExtratoPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
+export default function ExtratoPage() {
+  const params = useParams();
+  const id = params.id as string;
   const [statement, setStatement] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
@@ -83,7 +43,7 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
     const fetchStatement = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`http://localhost:3001/producers/${resolvedParams.id}/statement`, {
+        const res = await fetch(`http://localhost:3001/producers/${id}/statement`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -100,7 +60,7 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
     };
 
     fetchStatement();
-  }, [resolvedParams.id]);
+  }, [id]);
 
   // Load selected transaction data
   const selectedTx = statement.find(t => t.id === selectedTxId);
@@ -116,7 +76,6 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
     setActiveTab('geral');
     setIsModalOpen(true);
   };
-  // ... rest of the component
 
   const closeModal = () => {
     setIsModalOpen(false);
@@ -260,7 +219,7 @@ export default function ExtratoPage({ params }: { params: Promise<{ id: string }
             <h1 className="title">Extrato do Cliente</h1>
           </div>
           <p className="subtitle" style={{ marginTop: '0.5rem' }}>
-            Histórico completo de transações e status de processamento (Cliente #{resolvedParams.id})
+            Histórico completo de transações e status de processamento (Cliente #{id})
           </p>
         </div>
       </div>

@@ -24,10 +24,8 @@ const MOCK_CLIENT = {
   date: '12 Mar 2026',
 };
 
-import { use } from 'react';
-
-export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default async function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // In a real application, you'd use `id` to fetch the client data.
   const client = MOCK_CLIENT;
 

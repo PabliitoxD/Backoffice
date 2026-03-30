@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import styles from './clientEdit.module.css';
-import { useState, use } from 'react';
+import { useState } from 'react';
 
 // MOCK DATA for the selected client
 const MOCK_CLIENT = {
@@ -41,8 +42,9 @@ const SYSTEM_PLANS = [
   { id: 'custom', name: 'Personalizado', description: 'Taxas configuradas manualmente', pixRate: 'Sob Consulta', boletoRate: 'Sob Consulta', type: 'custom' },
 ];
 
-export default function EditClientPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function EditClientPage() {
+  const params = useParams();
+  const id = params.id as string;
   // In a real application, fetch the client using id
   const [formData, setFormData] = useState({
     ...MOCK_CLIENT,
