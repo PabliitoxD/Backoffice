@@ -1,7 +1,10 @@
 import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProducersService } from './producers.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@ApiTags('Producers')
+@ApiBearerAuth()
 @Controller('producers')
 @UseGuards(JwtAuthGuard)
 export class ProducersController {

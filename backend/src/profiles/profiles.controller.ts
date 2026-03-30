@@ -1,7 +1,10 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@ApiTags('Profiles')
+@ApiBearerAuth()
 @Controller('profiles')
 @UseGuards(JwtAuthGuard)
 export class ProfilesController {
