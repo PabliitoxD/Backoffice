@@ -20,9 +20,13 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+import { useRouter } from 'next/navigation';
+
 export default function StatementPage() {
+  const router = useRouter();
   const [statement, setStatement] = useState<StatementItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'ALL' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
 
   useEffect(() => {
     // In a real scenario, you would fetch this with authorization headers
@@ -60,7 +64,12 @@ export default function StatementPage() {
 
   const totalIn = statement.filter(s => s.impact > 0).reduce((acc, curr) => acc + curr.impact, 0);
   const totalOut = statement.filter(s => s.impact < 0).reduce((acc, curr) => acc + Math.abs(curr.impact), 0);
-  const netBalance = totalIn - totalOut;
+
+  const filteredStatement = statement.filter(item => {
+    if (activeTab === 'WITHDRAWALS') return item.type === 'WITHDRAWAL';
+    if (activeTab === 'CHARGEBACKS') return item.status === 'CHARGEBACK';
+    return true; // ALL
+  });
 
   return (
     <div className={styles.container}>
@@ -84,12 +93,27 @@ export default function StatementPage() {
             {formatCurrency(totalOut)}
           </div>
         </div>
-        <div className={styles.statCard} style={{ borderLeft: '4px solid var(--text-main)' }}>
-          <h3 className={styles.statTitle}>Saldo Retido na Plataforma</h3>
-          <div className={styles.statValue}>
-            {formatCurrency(netBalance)}
-          </div>
-        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+        <button 
+          onClick={() => setActiveTab('ALL')}
+          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'ALL' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+        >
+          Todas as Movimentações
+        </button>
+        <button 
+          onClick={() => setActiveTab('WITHDRAWALS')}
+          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'WITHDRAWALS' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+        >
+          Apenas Saques
+        </button>
+        <button 
+          onClick={() => setActiveTab('CHARGEBACKS')}
+          style={{ padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', border: activeTab === 'CHARGEBACKS' ? '2px solid var(--text-main)' : '1px solid var(--border-color)', background: 'var(--bg-card)', color: 'var(--text-main)' }}
+        >
+          Apenas Chargebacks
+        </button>
       </div>
 
       <div className={styles.tableCard}>
@@ -113,15 +137,16 @@ export default function StatementPage() {
                 <th style={{ textAlign: 'right' }}>Valor Bruto</th>
                 <th style={{ textAlign: 'right' }}>Tarifa</th>
                 <th style={{ textAlign: 'right' }}>Impacto no Saldo</th>
+                <th style={{ textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Carregando extrato...</td></tr>
-              ) : statement.length === 0 ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Nenhuma movimentação encontrada.</td></tr>
+                <tr><td colSpan={8} className={styles.emptyState}>Carregando extrato...</td></tr>
+              ) : filteredStatement.length === 0 ? (
+                <tr><td colSpan={8} className={styles.emptyState}>Nenhuma movimentação encontrada para este filtro.</td></tr>
               ) : (
-                statement.map((item) => {
+                filteredStatement.map((item) => {
                   const isPositive = item.impact > 0;
                   const isNegative = item.impact < 0;
                   const impactColor = isPositive ? '#10b981' : isNegative ? '#ef4444' : 'var(--text-muted)';
@@ -148,6 +173,23 @@ export default function StatementPage() {
                       <td style={{ textAlign: 'right' }} className={styles.textMuted}>{item.fee > 0 ? formatCurrency(item.fee) : '-'}</td>
                       <td style={{ textAlign: 'right', fontWeight: 600, color: impactColor }}>
                         {impactSign}{formatCurrency(item.impact)}
+                      </td>
+                      <td style={{ textAlign: 'center' }}>
+                        <button 
+                          className={styles.btnAction}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                          onClick={() => {
+                            if (item.type === 'WITHDRAWAL') {
+                              router.push('/financial/withdrawals');
+                            } else if (item.status === 'CHARGEBACK') {
+                              router.push('/financial/chargebacks');
+                            } else {
+                              router.push('/transactions');
+                            }
+                          }}
+                        >
+                          Detalhes
+                        </button>
                       </td>
                     </tr>
                   );
