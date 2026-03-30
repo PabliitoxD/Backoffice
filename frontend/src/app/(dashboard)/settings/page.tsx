@@ -96,9 +96,9 @@ export default function SettingsPage() {
       const headers = { 'Authorization': `Bearer ${token}` };
       
       const [usersRes, profilesRes, logsRes] = await Promise.all([
-        fetch(`${API_URL}/users`, { headers }),
-        fetch(`${API_URL}/profiles`, { headers }),
-        fetch(`${API_URL}/audit-logs`, { headers })
+        fetch(`${API_URL}/users`, { headers, cache: 'no-store' }),
+        fetch(`${API_URL}/profiles`, { headers, cache: 'no-store' }),
+        fetch(`${API_URL}/audit-logs`, { headers, cache: 'no-store' })
       ]);
 
       if (usersRes.ok) setUsers(await usersRes.json());
