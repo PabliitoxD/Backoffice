@@ -5,11 +5,25 @@ import { PrismaService } from '../prisma.service';
 export class TransactionsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(query: { status?: string; producerId?: string } = {}) {
+  async findAll(query: { status?: string; producerId?: string; search?: string; startDate?: string; endDate?: string } = {}) {
+    const { status, producerId, search, startDate, endDate } = query;
     return this.prisma.transaction.findMany({
       where: {
-        status: query.status,
-        producerId: query.producerId,
+        status,
+        producerId,
+        ...(search ? {
+          OR: [
+            { id: { contains: search, mode: 'insensitive' } },
+            { customer: { name: { contains: search, mode: 'insensitive' } } },
+            { producer: { name: { contains: search, mode: 'insensitive' } } },
+          ]
+        } : {}),
+        ...(startDate || endDate ? {
+          chargebackAt: {
+            gte: startDate ? new Date(startDate) : undefined,
+            lte: endDate ? new Date(endDate) : undefined,
+          }
+        } : {}),
       },
       include: {
         producer: { select: { name: true } },

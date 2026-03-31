@@ -201,7 +201,11 @@ export default function StatementPage() {
                         </div>
                         <div className={styles.textMuted} style={{ fontSize: '0.85rem', marginTop: '0.2rem' }}>
                           Ref: {item.producerName}
-                          {item.fee > 0 && <span style={{ marginLeft: '0.5rem', color: '#f59e0b' }}>(Tarifa processada: -{formatCurrency(item.fee)})</span>}
+                          {item.type === 'WITHDRAWAL' && item.fee > 0 && (
+                            <span style={{ marginLeft: '0.5rem', color: '#f59e0b', fontWeight: 500 }}>
+                              ({formatCurrency(Math.abs(item.impact) - item.fee)} Líquido + {formatCurrency(item.fee)} Tarifa)
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td>

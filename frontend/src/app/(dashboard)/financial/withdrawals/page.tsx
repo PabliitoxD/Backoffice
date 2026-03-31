@@ -233,9 +233,9 @@ export default function WithdrawalsPage() {
                 </th>
                 <th>Data</th>
                 <th>Produtor</th>
-                <th>Valor Solicitado</th>
+                <th>Valor Bruto</th>
                 <th>Tarifa</th>
-                <th>Saldo a Repassar</th>
+                <th>Repasse Líquido</th>
                 <th>Status Atual</th>
                 <th style={{ textAlign: 'center' }}>Detalhes</th>
                 <th style={{ textAlign: 'right' }}>Ações</th>
@@ -342,8 +342,8 @@ export default function WithdrawalsPage() {
               
               <div style={{ padding: '0.75rem 0', margin: '0.75rem 0', borderTop: '1px dashed var(--border-color)', borderBottom: '1px dashed var(--border-color)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Valor Solicitado</span>
-                  <span>{formatCurrency(modalData.amount)}</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Valor Bruto (Impacto)</span>
+                  <span style={{ fontWeight: 600 }}>{formatCurrency(modalData.amount)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Tarifa Bancária</span>
@@ -351,7 +351,7 @@ export default function WithdrawalsPage() {
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 600 }}>Saldo a Repassar</span>
+                <span style={{ fontWeight: 600 }}>Repasse Líquido</span>
                 <span style={{ fontWeight: 700, fontSize: '1.2rem', color: '#10b981' }}>{formatCurrency(modalData.amount - (modalData.fee || 5.00))}</span>
               </div>
             </div>

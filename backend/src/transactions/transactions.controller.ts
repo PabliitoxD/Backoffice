@@ -15,8 +15,11 @@ export class TransactionsController {
   findAll(
     @Query('status') status?: string,
     @Query('producerId') producerId?: string,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
   ) {
-    return this.transactionsService.findAll({ status, producerId });
+    return this.transactionsService.findAll({ status, producerId, search, startDate, endDate });
   }
 
   @Patch(':id/chargeback')

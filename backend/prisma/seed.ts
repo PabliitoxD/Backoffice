@@ -49,24 +49,24 @@ async function main() {
     }
   });
 
-  const transaction = await prisma.transaction.create({
-    data: {
-      producerId: producer.id,
-      customerId: customer.id,
-      productId: product.id,
-      amount: 150.00,
-      method: 'PIX',
-      status: 'APPROVED',
-      history: {
-        create: [
-          { status: 'WAITING', details: 'Aguardando pagamento' },
-          { status: 'APPROVED', details: 'Pagamento aprovado via PIX' }
-        ]
+  const brands = ['Visa', 'MasterCard', 'Elo', 'Hipercard', 'Amex'];
+  for (let i = 0; i < 6; i++) {
+    await prisma.transaction.create({
+      data: {
+        producerId: producer.id,
+        customerId: customer.id,
+        productId: product.id,
+        amount: 300.00 + (i * 20),
+        method: 'Cartão de Crédito',
+        cardBrand: brands[i % brands.length],
+        status: 'CHARGEBACK',
+        chargebackAt: new Date(2026, 2, 10 + i), // March 10-15
+        chargebackObservation: i % 2 === 0 ? 'Contestação de teste do período vigente.' : 'Aguardando defesa bancária.'
       }
-    }
-  });
+    });
+  }
 
-  console.log('Seed executado com sucesso: User admin@superfin.com.br (senha: 123456) cadastrado. Exemplos de Produtor, Cliente, Produto e Transação criados.');
+  console.log('Seed executado com sucesso: User admin@superfin.com.br (senha: 123456) cadastrado. Exemplos de Chargebacks para Março/2026 criados.');
 }
 
 main()

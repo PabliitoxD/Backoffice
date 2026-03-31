@@ -14,20 +14,37 @@ export default function ChargebacksPage() {
   const [selectedChargeback, setSelectedChargeback] = useState<any | null>(null);
   const [observation, setObservation] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [deadlineFilter, setDeadlineFilter] = useState('all');
+  
+  // Current month default dates
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+  
+  const [startDate, setStartDate] = useState(firstDay);
+  const [endDate, setEndDate] = useState(lastDay);
 
   const fetchChargebacks = async () => {
     try {
       const token = localStorage.getItem('token');
-      // Fetch specifically transactions with status CHARGEBACK
-      const res = await fetch(`${API_URL}/transactions?status=CHARGEBACK`, {
+      const url = new URL(`${API_URL}/transactions`);
+      url.searchParams.append('status', 'CHARGEBACK');
+      if (searchTerm) url.searchParams.append('search', searchTerm);
+      if (startDate) url.searchParams.append('startDate', startDate);
+      if (endDate) url.searchParams.append('endDate', endDate);
+      
+      const res = await fetch(url.toString(), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setChargebacks(data);
       } else {
-        // Mock data with diverse brands and chargeback dates for demo
+        // Mock data with diverse brands and March 2026 dates
         const now = new Date();
+        const march2026 = (day: number) => new Date(2026, 2, day).toISOString();
+        
         setChargebacks([
           { 
             id: 'tx-5544', 
@@ -38,8 +55,8 @@ export default function ChargebacksPage() {
             producer: { name: 'Acme Corp' }, 
             product: { name: 'Curso Avançado' }, 
             customer: { name: 'João Comprador' }, 
-            createdAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-            chargebackAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+            createdAt: march2026(10),
+            chargebackAt: march2026(25),
             chargebackObservation: 'Cliente alega fraude.'
           },
           { 
@@ -51,8 +68,21 @@ export default function ChargebacksPage() {
             producer: { name: 'Tech Solutions' }, 
             product: { name: 'Mentoria Expert' }, 
             customer: { name: 'Maria Silva' }, 
-            createdAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-            chargebackAt: new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString()
+            createdAt: march2026(12),
+            chargebackAt: march2026(28)
+          },
+          { 
+            id: 'tx-7722', 
+            amount: 890.0, 
+            status: 'CHARGEBACK', 
+            method: 'Cartão de Crédito', 
+            cardBrand: 'Amex',
+            producer: { name: 'Health Pro' }, 
+            product: { name: 'Kit Vitaminas' }, 
+            customer: { name: 'Pedro Souza' }, 
+            createdAt: march2026(5),
+            chargebackAt: march2026(30),
+            chargebackObservation: 'Aguardando defesa.'
           }
         ]);
       }
@@ -96,8 +126,22 @@ export default function ChargebacksPage() {
   };
 
   useEffect(() => {
-    fetchChargebacks();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchChargebacks();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm, startDate, endDate]);
+
+  const filteredChargebacks = chargebacks.filter(item => {
+    if (deadlineFilter === 'all') return true;
+    if (!item.chargebackAt) return true;
+    const days = calculateRemainingDays(item.chargebackAt);
+    if (deadlineFilter === 'critical') return days > 0 && days <= 1;
+    if (deadlineFilter === 'alert') return days >= 2 && days <= 3;
+    if (deadlineFilter === 'regular') return days > 3;
+    if (deadlineFilter === 'expired') return days <= 0;
+    return true;
+  });
 
   return (
     <div className={styles.container}>
@@ -109,8 +153,51 @@ export default function ChargebacksPage() {
       <p style={{ color: 'var(--text-muted)' }}>Módulo integrado com a Adquirente. Vendas contestadas pelos titulares de cartões de crédito.</p>
 
       <div className={styles.tableCard} style={{ borderTop: '4px solid #ef4444' }}>
-        <div className={styles.tableToolbar}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Contestações Ativas</h2>
+        <div className={styles.tableToolbar} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Contestações Ativas</h2>
+          
+          <div style={{ display: 'flex', gap: '0.75rem', flex: 1, justifyContent: 'flex-end', minWidth: '300px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', backgroundColor: 'var(--background)', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ background: 'none', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>até</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ background: 'none', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}
+              />
+            </div>
+
+            <div style={{ position: 'relative', flex: 1, maxWidth: '250px' }}>
+              <input 
+                type="text" 
+                placeholder="ID, Cliente, Produtor..." 
+                className={styles.searchInput}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '0.5rem 1rem 0.5rem 2rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+              />
+              <span style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+            </div>
+
+            <select 
+              className={styles.filterSelect}
+              value={deadlineFilter}
+              onChange={(e) => setDeadlineFilter(e.target.value)}
+              style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', minWidth: '150px', fontSize: '0.85rem' }}
+            >
+              <option value="all">Filtro: Prazo</option>
+              <option value="critical">Crítico (≤ 1 dia)</option>
+              <option value="alert">Alerta (2-3 dias)</option>
+              <option value="regular">Regular (&gt; 3 dias)</option>
+              <option value="expired">Expirado</option>
+            </select>
+          </div>
         </div>
         
         <div className={styles.tableWrapper}>
@@ -131,11 +218,11 @@ export default function ChargebacksPage() {
             </thead>
             <tbody>
               {loading ? (
-                 <tr><td colSpan={7} className={styles.emptyState}>Carregando contestações...</td></tr>
-              ) : chargebacks.length === 0 ? (
-                 <tr><td colSpan={7} className={styles.emptyState}>Nenhuma contestação de chargeback encontrada. Maravilha! 🎉</td></tr>
+                 <tr><td colSpan={10} className={styles.emptyState}>Carregando contestações...</td></tr>
+              ) : filteredChargebacks.length === 0 ? (
+                 <tr><td colSpan={10} className={styles.emptyState}>Nenhuma contestação encontrada para os filtros aplicados.</td></tr>
               ) : (
-                chargebacks.map((item) => {
+                filteredChargebacks.map((item) => {
                   return (
                     <tr 
                       key={item.id} 
