@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { FinancialService } from './financial.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -12,7 +12,11 @@ export class FinancialController {
 
   @Get('statement')
   @ApiOperation({ summary: 'Obtem o extrato unificado de todas as transações e saques' })
-  getGlobalStatement() {
-    return this.financialService.getGlobalStatement();
+  getGlobalStatement(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string
+  ) {
+    return this.financialService.getGlobalStatement(startDate, endDate, search);
   }
 }

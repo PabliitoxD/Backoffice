@@ -1,4 +1,4 @@
-import { Controller, Patch, Param, UseGuards, Get, Query } from '@nestjs/common';
+import { Controller, Patch, Param, UseGuards, Get, Query, Body, Patch as PatchAction } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -23,5 +23,11 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Marca uma transação como Chargeback (Estorno da Adquirente)' })
   markChargeback(@Param('id') id: string) {
     return this.transactionsService.markChargeback(id);
+  }
+
+  @Patch(':id/chargeback/observation')
+  @ApiOperation({ summary: 'Atualiza observação de um chargeback' })
+  updateObservation(@Param('id') id: string, @Body('observation') observation: string) {
+    return this.transactionsService.updateChargebackObservation(id, observation);
   }
 }

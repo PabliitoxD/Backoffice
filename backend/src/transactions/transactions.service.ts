@@ -31,6 +31,7 @@ export class TransactionsService {
       where: { id },
       data: {
         status: 'CHARGEBACK',
+        chargebackAt: new Date(),
         history: {
           create: {
             status: 'CHARGEBACK',
@@ -38,6 +39,13 @@ export class TransactionsService {
           },
         },
       },
+    });
+  }
+
+  async updateChargebackObservation(id: string, observation: string) {
+    return this.prisma.transaction.update({
+      where: { id },
+      data: { chargebackObservation: observation },
     });
   }
 }

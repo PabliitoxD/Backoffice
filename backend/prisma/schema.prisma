@@ -13,6 +13,7 @@ model Producer {
   document  String   @unique
   email     String   @unique
   phone     String?
+  pixKey    String?
   status    String   @default("ACTIVE")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,11 +56,14 @@ model Transaction {
   customerId String
   productId  String
   amount     Float
-  method     String
-  status     String    @default("WAITING")
-  condition  String?
-  createdAt  DateTime  @default(now())
-  approvedAt DateTime?
+  method                String
+  cardBrand             String?
+  status                String    @default("WAITING")
+  condition             String?
+  createdAt             DateTime  @default(now())
+  approvedAt            DateTime?
+  chargebackAt          DateTime?
+  chargebackObservation String?
 
   producer Producer @relation(fields: [producerId], references: [id])
   customer Customer @relation(fields: [customerId], references: [id])
@@ -79,14 +83,16 @@ model TransactionHistory {
 }
 
 model Withdrawal {
-  id         String   @id @default(uuid())
-  amount     Float
-  fee        Float    @default(0)
-  status     String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REFUSED
-  producerId String
-  producer   Producer @relation(fields: [producerId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id          String   @id @default(uuid())
+  amount      Float
+  fee         Float    @default(0)
+  status      String   @default("PENDING") // PENDING, APPROVED, COMPLETED, REFUSED
+  observation String?
+  pixKey      String?
+  producerId  String
+  producer    Producer @relation(fields: [producerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model User {

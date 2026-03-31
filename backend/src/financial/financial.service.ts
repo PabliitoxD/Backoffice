@@ -5,9 +5,37 @@ import { PrismaService } from '../prisma.service';
 export class FinancialService {
   constructor(private prisma: PrismaService) {}
 
-  async getGlobalStatement() {
+  async getGlobalStatement(startDate?: string, endDate?: string, search?: string) {
+    const whereClause: any = {};
+    if (startDate && endDate) {
+      whereClause.createdAt = {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      whereClause.createdAt = { gte: new Date(startDate) };
+    } else if (endDate) {
+      whereClause.createdAt = { lte: new Date(endDate) };
+    }
+
+    const transactionWhere = { ...whereClause };
+    const withdrawalWhere = { ...whereClause };
+
+    if (search) {
+      transactionWhere.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { producer: { name: { contains: search, mode: 'insensitive' } } },
+        { customer: { name: { contains: search, mode: 'insensitive' } } }
+      ];
+      withdrawalWhere.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { producer: { name: { contains: search, mode: 'insensitive' } } }
+      ];
+    }
+
     // Busca todas as transações (ordenadas pelas mais recentes)
     const transactions = await this.prisma.transaction.findMany({
+      where: transactionWhere,
       include: {
         producer: { select: { name: true } },
       },
@@ -16,6 +44,7 @@ export class FinancialService {
 
     // Busca todos os saques
     const withdrawals = await this.prisma.withdrawal.findMany({
+      where: withdrawalWhere,
       include: {
         producer: { select: { name: true } },
       },
@@ -53,7 +82,7 @@ export class FinancialService {
       const isDebit = ['APPROVED', 'COMPLETED', 'PENDING'].includes(w.status);
       
       let impact = 0;
-      if (isDebit) impact = -(w.amount + w.fee); // Deduz o valor + tarifa
+      if (isDebit) impact = -w.amount; // Deduz o valor total solicitado (valor líquido + tarifa)
 
       return {
         id: `wt-${w.id}`,
