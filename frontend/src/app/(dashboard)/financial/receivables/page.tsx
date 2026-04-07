@@ -13,8 +13,26 @@ export default function ReceivablesPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [producerFilter, setProducerFilter] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
-  const fetchReceivables = async () => {
+  const [producers, setProducers] = useState<any[]>([]);
+
+  const fetchProducers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/producers`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProducers(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
     setLoading(true);
     try {
       // API call to the future Receivables endpoint. Currently mocking due to pending backend implementation.
@@ -114,6 +132,7 @@ export default function ReceivablesPage() {
   };
 
   useEffect(() => {
+    fetchProducers();
     fetchReceivables();
   }, []);
 
@@ -132,11 +151,23 @@ export default function ReceivablesPage() {
 
   const filteredReceivables = receivables.filter(item => {
     if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+    if (producerFilter !== 'all' && item.transaction.producerId !== producerFilter) return false;
+    
+    if (startDate) {
+      const itemDate = new Date(item.createdAt);
+      if (itemDate < new Date(startDate)) return false;
+    }
+    if (endDate) {
+      const itemDate = new Date(item.createdAt);
+      if (itemDate > new Date(endDate)) return false;
+    }
+
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       return (
         item.transactionId.toLowerCase().includes(search) ||
-        item.transaction.customer.name.toLowerCase().includes(search)
+        item.transaction.customer?.name.toLowerCase().includes(search) ||
+        item.transaction.producer?.name.toLowerCase().includes(search)
       );
     }
     return true;
@@ -167,32 +198,68 @@ export default function ReceivablesPage() {
       </div>
 
       <div className={styles.tableCard}>
-        <div className={styles.tableToolbar} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Parcelas e Recebimentos</h2>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0 }}>Filtros de Pesquisa</h2>
           
-          <div style={{ display: 'flex', gap: '0.75rem', flex: 1, justifyContent: 'flex-end', minWidth: '300px', alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: '250px' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', backgroundColor: 'var(--background)', padding: '0.4rem 0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                style={{ background: 'none', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>até</span>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                style={{ background: 'none', border: 'none', fontSize: '0.85rem', color: 'var(--text-main)', cursor: 'pointer' }}
+              />
+            </div>
+
+            <select 
+              className={styles.filterSelect}
+              value={producerFilter}
+              onChange={(e) => setProducerFilter(e.target.value)}
+              style={{ padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', minWidth: '180px', fontSize: '0.85rem' }}
+            >
+              <option value="all">Empresa: Todas</option>
+              {producers.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
               <input 
                 type="text" 
-                placeholder="ID Venda, Cliente..." 
+                placeholder="ID Venda, Cliente, Vendedor..." 
                 className={styles.searchInput}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem 1rem 0.5rem 2rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.85rem' }}
+                style={{ width: '100%', padding: '0.65rem 1rem 0.65rem 2.2rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.85rem' }}
               />
-              <span style={{ position: 'absolute', left: '0.7rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+              <span style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
             </div>
 
             <select 
               className={styles.filterSelect}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ padding: '0.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', minWidth: '150px', fontSize: '0.85rem' }}
+              style={{ padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', minWidth: '150px', fontSize: '0.85rem' }}
             >
-              <option value="all">Todas</option>
+              <option value="all">Status: Todos</option>
               <option value="WAITING_FUNDS">Aguardando Liberação</option>
               <option value="AVAILABLE">Liberado</option>
             </select>
+
+            <button 
+              onClick={fetchReceivables}
+              className={`${styles.btnAction} ${styles.btnSuccess}`}
+              style={{ padding: '0.65rem 1.5rem', fontWeight: 600 }}
+            >
+              Filtrar
+            </button>
           </div>
         </div>
         
@@ -202,25 +269,26 @@ export default function ReceivablesPage() {
               <tr>
                 <th>Data da Venda</th>
                 <th>ID Transação</th>
-                <th>Cliente</th>
+                <th>Vendedor</th>
                 <th>Método</th>
-                <th>Parcela</th>
+                <th style={{ textAlign: 'center' }}>Parcela</th>
                 <th>Previsão de Liberação</th>
                 <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Valor Líquido</th>
+                <th style={{ textAlign: 'right' }}>Valor Parcela</th>
+                <th style={{ textAlign: 'right' }}>Valor Total</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                 <tr><td colSpan={8} className={styles.emptyState}>Calculando recebíveis...</td></tr>
+                 <tr><td colSpan={9} className={styles.emptyState}>Calculando recebíveis...</td></tr>
               ) : filteredReceivables.length === 0 ? (
-                 <tr><td colSpan={8} className={styles.emptyState}>Nenhum recebível futuro encontrado.</td></tr>
+                 <tr><td colSpan={9} className={styles.emptyState}>Nenhum recebível futuro encontrado.</td></tr>
               ) : (
                 filteredReceivables.map((item) => (
                   <tr key={item.id} style={{ fontSize: '0.85rem' }}>
                     <td className={styles.textMuted}>{new Date(item.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td className={styles.textMuted}>#{item.transactionId.slice(0, 8)}</td>
-                    <td className={styles.fontWeightMedium}>{item.transaction.customer?.name}</td>
+                    <td className={styles.fontWeightMedium}>{item.transaction.producer?.name || 'Vendedor'}</td>
                     <td>
                       <div className={styles.fontWeightMedium}>{item.transaction.method}</div>
                       {item.transaction.cardBrand && (
@@ -229,15 +297,20 @@ export default function ReceivablesPage() {
                         </div>
                       )}
                     </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-muted)' }}>
-                      {item.installment} / {item.totalInstallments}
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                      <span style={{ color: item.status === 'AVAILABLE' ? '#10b981' : 'var(--text-muted)' }}>
+                        {item.installment} / {item.totalInstallments}
+                      </span>
                     </td>
-                    <td className={styles.fontWeightMedium} style={{ color: item.status === 'WAITING_FUNDS' ? 'var(--text-main)' : 'var(--text-muted)' }}>
+                    <td className={styles.fontWeightMedium}>
                       {new Date(item.expectedAt).toLocaleDateString('pt-BR')}
                     </td>
                     <td>{getStatusBadge(item.status)}</td>
                     <td style={{ textAlign: 'right', fontWeight: 700, color: '#10b981', whiteSpace: 'nowrap' }}>
                       {formatCurrency(item.amount)}
+                    </td>
+                    <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                      {formatCurrency(item.transaction.amount)}
                     </td>
                   </tr>
                 ))

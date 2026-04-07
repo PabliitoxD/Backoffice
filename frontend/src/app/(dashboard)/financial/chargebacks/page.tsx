@@ -330,30 +330,59 @@ export default function ChargebacksPage() {
             </div>
 
             {selectedChargeback.chargebackAt && calculateRemainingDays(selectedChargeback.chargebackAt) <= 0 && (
-               <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border-color)' }}>
-                 <h4 style={{ margin: '0 0 1rem 0', color: '#ef4444', fontSize: '1.05rem', fontWeight: 600 }}>Disputa Encerrada - Lançar Cobrança Extra</h4>
-                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Caso deseje repassar um custo extra, preencha os dados abaixo. O valor entrará como crédito no seu extrato e débito para o cliente.</p>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    <input 
-                      type="number" 
-                      placeholder="Valor da cobrança (ex: 50.00)" 
-                      value={extraChargeAmount}
-                      onChange={e => setExtraChargeAmount(e.target.value)}
-                      style={{ padding: '0.7srem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="Motivo da cobrança" 
-                      value={extraChargeReason}
-                      onChange={e => setExtraChargeReason(e.target.value)}
-                      style={{ padding: '0.7srem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
-                    />
+               <div style={{ 
+                 marginTop: '2rem', 
+                 padding: '1.5rem', 
+                 backgroundColor: '#fff1f2',
+                 borderRadius: '8px',
+                 border: '1px solid #fecdd3'
+               }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                   <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                   <h4 style={{ margin: 0, color: '#e11d48', fontSize: '1rem', fontWeight: 700 }}>Lançar Cobrança Extra (Disputa Encerrada)</h4>
+                 </div>
+                 <p style={{ fontSize: '0.8rem', color: '#881337', marginBottom: '1.25rem', lineHeight: '1.4' }}>
+                   A janela de defesa expirou. Você pode lançar um custo operacional extra para este cliente.
+                 </p>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#881337', marginBottom: '0.4rem' }}>Valor da Taxa (R$)</label>
+                      <input 
+                        type="number" 
+                        placeholder="0.00" 
+                        value={extraChargeAmount}
+                        onChange={e => setExtraChargeAmount(e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '6px', border: '1px solid #fda4af', backgroundColor: '#fff', color: '#111827', fontSize: '0.9rem', outline: 'none' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#881337', marginBottom: '0.4rem' }}>Motivo do Lançamento</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ex: Taxa operacional de contestação" 
+                        value={extraChargeReason}
+                        onChange={e => setExtraChargeReason(e.target.value)}
+                        style={{ width: '100%', padding: '0.65rem 0.75rem', borderRadius: '6px', border: '1px solid #fda4af', backgroundColor: '#fff', color: '#111827', fontSize: '0.9rem', outline: 'none' }}
+                      />
+                    </div>
                     <button 
                       onClick={handleLaunchExtraCharge}
                       disabled={isCharging || !extraChargeAmount || !extraChargeReason}
-                      style={{ marginTop: '0.5rem', padding: '0.75rem', borderRadius: '6px', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 }}
+                      style={{ 
+                        marginTop: '0.5rem', 
+                        padding: '0.75rem', 
+                        borderRadius: '6px', 
+                        background: '#e11d48', 
+                        color: 'white', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        fontWeight: 700, 
+                        fontSize: '0.85rem',
+                        transition: 'opacity 0.2s',
+                        opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 
+                      }}
                     >
-                      {isCharging ? 'Lançando...' : 'Lançar Cobrança no Extrato'}
+                      {isCharging ? 'Processando...' : 'Confirmar Lançamento no Extrato'}
                     </button>
                  </div>
                </div>
