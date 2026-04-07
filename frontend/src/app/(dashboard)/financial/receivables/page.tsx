@@ -33,6 +33,7 @@ export default function ReceivablesPage() {
       console.error(err);
     }
   };
+  const fetchReceivables = async () => {
     setLoading(true);
     try {
       // API call to the future Receivables endpoint. Currently mocking due to pending backend implementation.
