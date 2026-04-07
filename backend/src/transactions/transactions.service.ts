@@ -72,7 +72,7 @@ export class TransactionsService {
         amount,
         status: 'APPROVED',
         method: originalTx.method || 'PIX',
-        installments: 1,
+        condition: '1x',
         customerId: originalTx.customerId,
         producerId: originalTx.producerId,
         productId: originalTx.productId,
