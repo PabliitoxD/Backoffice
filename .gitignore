@@ -25,3 +25,6 @@ frontend/build_log*.txt
 .DS_Store
 *.tsbuildinfo
 start-preview.bat
+*.txt
+*.py
+tunnel.js

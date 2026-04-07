@@ -70,6 +70,7 @@ model Transaction {
   product  Product  @relation(fields: [productId], references: [id])
 
   history TransactionHistory[]
+  receivables Receivable[]
 }
 
 model TransactionHistory {
@@ -128,4 +129,18 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+}
+
+model Receivable {
+  id             String      @id @default(uuid())
+  transactionId  String
+  installment    Int         
+  amount         Float       
+  status         String      @default("WAITING_FUNDS") // WAITING_FUNDS, AVAILABLE, PAID
+  expectedAt     DateTime    
+  availableAt    DateTime?   
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 }

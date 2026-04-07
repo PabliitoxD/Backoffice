@@ -33,7 +33,7 @@ npx tsx create-user.ts || true
 echo "Building Backend API..."
 npm run build
 npx pm2 delete "backoffice-api" 2>/dev/null || true
-npx pm2 start dist/main.js --name "backoffice-api"
+npx pm2 start dist/src/main.js --name "backoffice-api"
 
 echo "Setting up Frontend..."
 cd /home/bravvius/backoffice/frontend
