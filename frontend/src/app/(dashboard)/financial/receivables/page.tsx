@@ -155,12 +155,12 @@ export default function ReceivablesPage() {
     if (producerFilter !== 'all' && item.transaction.producerId !== producerFilter) return false;
     
     if (startDate) {
-      const itemDate = new Date(item.createdAt);
-      if (itemDate < new Date(startDate)) return false;
+      const itemDateOnly = new Date(item.createdAt).toISOString().split('T')[0];
+      if (itemDateOnly < startDate) return false;
     }
     if (endDate) {
-      const itemDate = new Date(item.createdAt);
-      if (itemDate > new Date(endDate)) return false;
+      const itemDateOnly = new Date(item.createdAt).toISOString().split('T')[0];
+      if (itemDateOnly > endDate) return false;
     }
 
     if (searchTerm) {
