@@ -62,5 +62,23 @@ export class TransactionsService {
       data: { chargebackObservation: observation },
     });
   }
+
+  async launchExtraCharge(id: string, amount: number, reason: string) {
+    const originalTx = await this.prisma.transaction.findUnique({ where: { id } });
+    if (!originalTx) throw new NotFoundException('Transaction not found');
+
+    return this.prisma.transaction.create({
+      data: {
+        amount,
+        status: 'APPROVED',
+        method: originalTx.method || 'PIX',
+        installments: 1,
+        customerId: originalTx.customerId,
+        producerId: originalTx.producerId,
+        productId: originalTx.productId,
+        chargebackObservation: `[Cobrança Extra - Taxa Chargeback] ${reason}`
+      }
+    });
+  }
 }
 

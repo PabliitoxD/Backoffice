@@ -17,6 +17,10 @@ export default function ChargebacksPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('all');
   
+  const [extraChargeAmount, setExtraChargeAmount] = useState('');
+  const [extraChargeReason, setExtraChargeReason] = useState('');
+  const [isCharging, setIsCharging] = useState(false);
+  
   // Current month default dates
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -28,66 +32,30 @@ export default function ChargebacksPage() {
   const fetchChargebacks = async () => {
     try {
       const token = localStorage.getItem('token');
-      const url = new URL(`${API_URL}/transactions`);
-      url.searchParams.append('status', 'CHARGEBACK');
-      if (searchTerm) url.searchParams.append('search', searchTerm);
-      if (startDate) url.searchParams.append('startDate', startDate);
-      if (endDate) url.searchParams.append('endDate', endDate);
+      const queryParams = new URLSearchParams();
+      queryParams.append('status', 'CHARGEBACK');
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (startDate) queryParams.append('startDate', startDate);
+      if (endDate) queryParams.append('endDate', endDate);
       
-      const res = await fetch(url.toString(), {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setChargebacks(data);
-      } else {
-        // Mock data with diverse brands and March 2026 dates
-        const now = new Date();
-        const march2026 = (day: number) => new Date(2026, 2, day).toISOString();
-        
-        setChargebacks([
-          { 
-            id: 'tx-5544', 
-            amount: 129.9, 
-            status: 'CHARGEBACK', 
-            method: 'Cartão de Crédito', 
-            cardBrand: 'Visa',
-            producer: { name: 'Acme Corp' }, 
-            product: { name: 'Curso Avançado' }, 
-            customer: { name: 'João Comprador' }, 
-            createdAt: march2026(10),
-            chargebackAt: march2026(25),
-            chargebackObservation: 'Cliente alega fraude.'
-          },
-          { 
-            id: 'tx-9988', 
-            amount: 450.0, 
-            status: 'CHARGEBACK', 
-            method: 'Cartão de Crédito', 
-            cardBrand: 'MasterCard',
-            producer: { name: 'Tech Solutions' }, 
-            product: { name: 'Mentoria Expert' }, 
-            customer: { name: 'Maria Silva' }, 
-            createdAt: march2026(12),
-            chargebackAt: march2026(28)
-          },
-          { 
-            id: 'tx-7722', 
-            amount: 890.0, 
-            status: 'CHARGEBACK', 
-            method: 'Cartão de Crédito', 
-            cardBrand: 'Amex',
-            producer: { name: 'Health Pro' }, 
-            product: { name: 'Kit Vitaminas' }, 
-            customer: { name: 'Pedro Souza' }, 
-            createdAt: march2026(5),
-            chargebackAt: march2026(30),
-            chargebackObservation: 'Aguardando defesa.'
-          }
-        ]);
+      const fetchUrl = `${API_URL}/transactions?${queryParams.toString()}`;
+      
+      try {
+        const res = await fetch(fetchUrl, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const responseData = await res.json();
+        if (Array.isArray(responseData)) {
+          setChargebacks(responseData);
+        } else {
+          setChargebacks([]);
+        }
+      } catch (err) {
+        setChargebacks([]);
       }
     } catch(e) {
       console.error(e);
+      setChargebacks([]);
     } finally {
       setLoading(false);
     }
@@ -114,6 +82,38 @@ export default function ChargebacksPage() {
       console.error(err);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleLaunchExtraCharge = async () => {
+    if (!selectedChargeback || !extraChargeAmount || !extraChargeReason) return;
+    setIsCharging(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/transactions/${selectedChargeback.id}/extra-charge`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          amount: parseFloat(extraChargeAmount),
+          reason: extraChargeReason
+        })
+      });
+      if (res.ok) {
+        alert('Cobrança extra lançada com sucesso no extrato!');
+        setExtraChargeAmount('');
+        setExtraChargeReason('');
+        setSelectedChargeback(null);
+        fetchChargebacks();
+      } else {
+        alert('Erro ao lançar cobrança extra.');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsCharging(false);
     }
   };
 
@@ -249,8 +249,8 @@ export default function ChargebacksPage() {
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: '#ef4444', whiteSpace: 'nowrap' }}>-{formatCurrency(item.amount)}</td>
                       <td>
-                        <span className={`${styles.badge} ${styles.badgeDebit}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.6rem' }}>
-                          Disputa Aberta
+                        <span className={`${styles.badge} ${item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? styles.badgeSecondary : styles.badgeDebit}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.6rem', backgroundColor: item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? '#64748b' : undefined, color: item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? '#ffffff' : undefined }}>
+                          {item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? 'Disputa Encerrada' : 'Disputa Aberta'}
                         </span>
                       </td>
                       <td>
@@ -328,6 +328,37 @@ export default function ChargebacksPage() {
                 {isSaving ? 'Salvando...' : 'Salvar Observação'}
               </button>
             </div>
+
+            {selectedChargeback.chargebackAt && calculateRemainingDays(selectedChargeback.chargebackAt) <= 0 && (
+               <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px dashed var(--border-color)' }}>
+                 <h4 style={{ margin: '0 0 1rem 0', color: '#ef4444', fontSize: '1.05rem', fontWeight: 600 }}>Disputa Encerrada - Lançar Cobrança Extra</h4>
+                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Caso deseje repassar um custo extra, preencha os dados abaixo. O valor entrará como crédito no seu extrato e débito para o cliente.</p>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <input 
+                      type="number" 
+                      placeholder="Valor da cobrança (ex: 50.00)" 
+                      value={extraChargeAmount}
+                      onChange={e => setExtraChargeAmount(e.target.value)}
+                      style={{ padding: '0.7srem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Motivo da cobrança" 
+                      value={extraChargeReason}
+                      onChange={e => setExtraChargeReason(e.target.value)}
+                      style={{ padding: '0.7srem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)' }}
+                    />
+                    <button 
+                      onClick={handleLaunchExtraCharge}
+                      disabled={isCharging || !extraChargeAmount || !extraChargeReason}
+                      style={{ marginTop: '0.5rem', padding: '0.75rem', borderRadius: '6px', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 }}
+                    >
+                      {isCharging ? 'Lançando...' : 'Lançar Cobrança no Extrato'}
+                    </button>
+                 </div>
+               </div>
+            )}
+            
           </div>
         </div>
       )}

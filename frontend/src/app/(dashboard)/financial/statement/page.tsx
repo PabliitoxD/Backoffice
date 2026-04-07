@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../financial.module.css';
+import modalStyles from '../../transactions/transactions.module.css';
 import { API_URL } from '@/lib/api';
 
 interface StatementItem {
@@ -15,6 +16,14 @@ interface StatementItem {
   impact: number;
   status: string;
   date: string;
+  method?: string;
+  installments?: string;
+  cardBrand?: string;
+  runningBalance?: number;
+  originalId?: string;
+  customer?: any;
+  product?: any;
+  history?: any;
 }
 
 const formatCurrency = (value: number) => {
@@ -42,6 +51,32 @@ export default function StatementPage() {
   const [startDate, setStartDate] = useState(currentMonthRange.start);
   const [endDate, setEndDate] = useState(currentMonthRange.end);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
+
+  const selectedTx = statement.find(t => t.id === selectedTxId);
+
+  const handleOpenDetail = (id: string) => {
+    setSelectedTxId(id);
+    setActiveModalTab('geral');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTxId(null);
+  };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; }
+  }, [isModalOpen]);
 
   const fetchStatement = async () => {
     setLoading(true);
@@ -89,6 +124,119 @@ export default function StatementPage() {
   const totalIn = filteredStatement.filter(s => s.impact > 0).reduce((acc, curr) => acc + curr.impact, 0);
   const totalOut = filteredStatement.filter(s => s.impact < 0).reduce((acc, curr) => acc + Math.abs(curr.impact), 0);
   const filteredBalance = filteredStatement.reduce((acc, curr) => acc + curr.impact, 0);
+
+  const getStatusBadgeConfig = (status: string) => {
+    switch(status) {
+      case 'APPROVED': return { className: modalStyles.statusApproved, label: 'Aprovada' };
+      case 'COMPLETED': return { className: modalStyles.statusCompleted, label: 'Finalizada' };
+      case 'WAITING': return { className: modalStyles.statusWaiting, label: 'Aguardando' };
+      case 'REVERSED': return { className: modalStyles.statusReversed, label: 'Estornada' };
+      case 'REFUNDED': return { className: modalStyles.statusClaimed, label: 'Reembolsada' };
+      case 'CHARGEBACK': return { className: modalStyles.statusChargeback, label: 'Chargeback' };
+      default: return { className: '', label: status };
+    }
+  };
+
+  const renderTabContent = () => {
+    if (!selectedTx || selectedTx.type !== 'TRANSACTION') return null;
+    
+    if (activeModalTab === 'geral') {
+      return (
+        <>
+          <div className={modalStyles.detailGrid}>
+            <span className={modalStyles.detailLabel}>Cliente</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.name}</span>
+            <span className={modalStyles.detailLabel}>Gênero</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.gender || '-'}</span>
+            <span className={modalStyles.detailLabel}>Tipo</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.type || '-'}</span>
+            <span className={modalStyles.detailLabel}>CPF/CNPJ</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.document}</span>
+            <span className={modalStyles.detailLabel}>E-mail</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.email}</span>
+            <span className={modalStyles.detailLabel}>Telefone</span>
+            <span className={modalStyles.detailValue}>{selectedTx.customer?.phone || '-'}</span>
+          </div>
+
+          <div className={modalStyles.productSection}>
+            <div className={modalStyles.productInfo}>
+              <div style={{ fontSize: '2rem' }}>📦</div>
+              <div className={modalStyles.productDesc}>
+                <span className={modalStyles.productCode}>Código: {selectedTx.product?.code}</span>
+                <span className={modalStyles.productName}>{selectedTx.product?.name}</span>
+              </div>
+            </div>
+            <div className={modalStyles.productPrice}>{formatCurrency(selectedTx.amount)}</div>
+          </div>
+
+          <div className={modalStyles.detailGrid}>
+            <span className={modalStyles.detailLabel}>Data do pedido</span>
+            <span className={modalStyles.detailValue}>{new Date(selectedTx.date).toLocaleString('pt-BR')}</span>
+            <span className={modalStyles.detailLabel}>Total dos itens (+)</span>
+            <span className={modalStyles.detailValue}>{formatCurrency(selectedTx.amount)}</span>
+            <span className={modalStyles.detailLabel}>Valor da venda (=)</span>
+            <span className={modalStyles.detailValueBold}>{formatCurrency(selectedTx.amount)}</span>
+            <span className={modalStyles.detailLabel}>Meio de pagamento</span>
+            <span className={modalStyles.detailValue}>{selectedTx.method}</span>
+            <span className={modalStyles.detailLabel}>Condição de pagamento</span>
+            <span className={modalStyles.detailValue}>{selectedTx.installments || `À vista`}</span>
+          </div>
+        </>
+      );
+    }
+
+    if (activeModalTab === 'historico') {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>
+              Histórico de status da venda
+            </h3>
+            <table className={`${modalStyles.table} ${modalStyles.modalTable}`}>
+              <thead>
+                <tr>
+                  <th className={modalStyles.tableHeaderLight}>Data ↑↓</th>
+                  <th className={modalStyles.tableHeaderLight}>Status</th>
+                  <th className={modalStyles.tableHeaderLight} style={{ width: '100%' }}>Detalhes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedTx.history?.map((h: any) => (
+                  <tr key={h.id} style={{ backgroundColor: 'transparent' }}>
+                    <td className={modalStyles.textMuted}>{new Date(h.createdAt).toLocaleString('pt-BR')}</td>
+                    <td><span className={`${modalStyles.statusBadge} ${getStatusBadgeConfig(h.status).className}`}>{getStatusBadgeConfig(h.status).label}</span></td>
+                    <td className={modalStyles.textMuted}>{h.details || 'Atualização de status'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeModalTab === 'taxas') {
+      const isPix = selectedTx.method === 'PIX';
+      const processingFee = isPix ? 1.00 : selectedTx.amount * 0.0499; 
+      const fixedFee = isPix ? 0 : 1.00;
+      const totalFees = processingFee + fixedFee;
+      const netValue = selectedTx.amount - totalFees;
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <p className={modalStyles.textMuted}>Veja abaixo as taxas e os valores de cada participante da venda:</p>
+          <div className={modalStyles.producerBanner}>Você participou dessa venda como <strong>produtor</strong>.</div>
+          <table className={`${modalStyles.feesTable} ${modalStyles.modalTable}`}>
+            <tbody>
+              <tr><td>Total pago pelo comprador:</td><td className={modalStyles.textMuted}>{formatCurrency(selectedTx.amount)}</td></tr>
+              <tr><td style={{ fontWeight: 600, color: 'var(--text-main)' }}>Valor base:</td><td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedTx.amount)}</td></tr>
+              <tr><td style={{ fontWeight: 600, color: '#10b981' }}>Sua comissão líquida:</td><td style={{ color: '#10b981', fontWeight: 600, fontSize: '1.1rem' }}>{formatCurrency(netValue)}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -163,13 +311,16 @@ export default function StatementPage() {
         </div>
         
         <div className={styles.tableWrapper}>
-          <table className={styles.table}>
+
+<table className={styles.table}>
             <thead>
               <tr>
                 <th>Data</th>
                 <th>Lançamento / Histórico</th>
+                <th>Pagamento</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Valor</th>
+                <th style={{ textAlign: 'right' }}>Saldo Acumulado</th>
                 <th style={{ textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
@@ -183,11 +334,16 @@ export default function StatementPage() {
                   const isPositive = item.impact > 0;
                   const isNegative = item.impact < 0;
                   const impactColor = isPositive ? '#10b981' : isNegative ? '#ef4444' : 'var(--text-muted)';
-                  const impactSign = isPositive ? '+' : '';
+                  const impactSign = isPositive ? '+' : isNegative ? '-' : '';
 
                   let typeBadgeClass = styles.badgeInfo;
                   if (item.type === 'WITHDRAWAL') typeBadgeClass = styles.badgeWarning;
                   if (item.status === 'CHARGEBACK') typeBadgeClass = styles.badgeDebit;
+
+                  let methodLabel = item.method || 'Transferência';
+                  if (item.method === 'Cartão de Crédito' && item.installments) {
+                    methodLabel = `Cartão ${item.cardBrand ? `(${item.cardBrand})` : ''} em ${item.installments}`;
+                  }
 
                   return (
                     <tr key={item.id}>
@@ -209,12 +365,20 @@ export default function StatementPage() {
                         </div>
                       </td>
                       <td>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>
+                          {methodLabel}
+                        </div>
+                      </td>
+                      <td>
                          <span style={{ fontSize: '0.85rem', padding: '0.25rem 0.75rem', borderRadius: '999px', backgroundColor: 'var(--bg-secondary)', fontWeight: 500, color: 'var(--text-muted)' }}>
                            {item.status}
                          </span>
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 600, color: impactColor }}>
                         {impactSign}{formatCurrency(Math.abs(item.impact))}
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: (item.runningBalance || 0) >= 0 ? '#10b981' : '#ef4444' }}>
+                         {formatCurrency(item.runningBalance || 0)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
@@ -223,10 +387,8 @@ export default function StatementPage() {
                           onClick={() => {
                             if (item.type === 'WITHDRAWAL') {
                               router.push('/financial/withdrawals');
-                            } else if (item.status === 'CHARGEBACK') {
-                              router.push('/financial/chargebacks');
                             } else {
-                              router.push('/transactions');
+                              handleOpenDetail(item.id);
                             }
                           }}
                         >
@@ -241,10 +403,10 @@ export default function StatementPage() {
             {filteredStatement.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'right', fontWeight: 600, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                    Saldo Consolidado (Filtro Atual):
+                  <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    Saldo Consolidado (Fim do Período Filtrado):
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: filteredBalance >= 0 ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
+                  <td colSpan={2} style={{ textAlign: 'right', fontWeight: 700, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: filteredBalance >= 0 ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
                     {filteredBalance >= 0 ? '+' : ''}{formatCurrency(filteredBalance)}
                   </td>
                   <td style={{ borderTop: '2px solid var(--border-color)' }}></td>
@@ -254,6 +416,47 @@ export default function StatementPage() {
           </table>
         </div>
       </div>
+
+      {isModalOpen && selectedTx && (
+        <div className={modalStyles.modalOverlay} onClick={closeModal}>
+          <div className={modalStyles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={modalStyles.modalHeader}>
+              <h2>Detalhes da venda #{selectedTx.originalId?.slice(0,8) || selectedTx.id}</h2>
+              <button className={modalStyles.closeBtn} onClick={closeModal}>×</button>
+            </div>
+            
+            <div className={modalStyles.modalBody}>
+              <div className={modalStyles.tabs}>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'geral' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('geral')}
+                >
+                  Geral
+                </button>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'historico' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('historico')}
+                >
+                  Histórico
+                </button>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'taxas' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('taxas')}
+                >
+                  Taxas e comissões
+                </button>
+              </div>
+
+              {renderTabContent()}
+
+            </div>
+
+            <div className={modalStyles.modalFooter}>
+              <button className={modalStyles.btnCloseModal} onClick={closeModal}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
