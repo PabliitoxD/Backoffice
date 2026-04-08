@@ -22,12 +22,24 @@ export default function WithdrawalsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailBody, setEmailBody] = useState('');
 
   const statusMap: Record<string, string> = {
     'PENDING': 'Pendente',
     'APPROVED': 'Aguardando Repasse',
     'REFUSED': 'Recusado',
     'COMPLETED': 'Processado'
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch(status) {
+      case 'PENDING': return styles.badgeWarning;
+      case 'APPROVED': return styles.badgeSecondary;
+      case 'COMPLETED': return styles.badgeCredit;
+      case 'REFUSED': return styles.badgeDebit;
+      default: return styles.badgeInfo;
+    }
   };
 
   const fetchWithdrawals = async () => {
@@ -79,9 +91,40 @@ export default function WithdrawalsPage() {
     }
   };
 
+  const openEmailModal = () => {
+    const selectedItems = withdrawals.filter(w => selectedIds.includes(w.id));
+    if (!selectedItems.length) return;
+
+    const total = selectedItems.reduce((acc, curr) => acc + (curr.amount - (curr.fee || 5)), 0);
+    const todayStr = new Date().toLocaleDateString('pt-BR');
+    
+    let itemsTable = '-----------------------------------------------------------\n';
+    selectedItems.forEach((item) => {
+      const approvalDate = new Date(item.updatedAt);
+      const paymentDate = new Date(approvalDate);
+      paymentDate.setDate(paymentDate.getDate() + 1);
+
+      itemsTable += `PRODUTOR: ${item.producer?.name || 'N/A'}\n`;
+      itemsTable += `ID: ${item.id}\n`;
+      itemsTable += `VALOR LÍQUIDO: ${formatCurrency(item.amount - (item.fee || 5))}\n`;
+      itemsTable += `CHAVE PIX: ${item.pixKey || item.producer?.pixKey || 'Não registrada'}\n`;
+      itemsTable += `STATUS: Aprovado\n`;
+      itemsTable += `DATA SOLICITAÇÃO: ${new Date(item.createdAt).toLocaleDateString('pt-BR')} ${new Date(item.createdAt).toLocaleTimeString('pt-BR')}\n`;
+      itemsTable += `DATA APROVAÇÃO: ${approvalDate.toLocaleDateString('pt-BR')} ${approvalDate.toLocaleTimeString('pt-BR')}\n`;
+      itemsTable += `DATA PAGAMENTO: ${paymentDate.toLocaleDateString('pt-BR')}\n`;
+      itemsTable += `PARECER DO RISCO: Aprovado\n`;
+      itemsTable += `OBSERVAÇÃO: ${item.observation || '-'}\n`;
+      itemsTable += '-----------------------------------------------------------\n';
+    });
+
+    const body = `Olá,\nEspero que esteja bem!\n\nSegue saque aprovado para hoje: ${todayStr}\n\nVALOR TOTAL: ${formatCurrency(total)}\n\n${itemsTable}\n\nAtt,\nFinanceiro SuperFin`;
+    
+    setEmailBody(body);
+    setEmailModalOpen(true);
+  };
+
   const notifyFinance = async () => {
     if (!selectedIds.length) return;
-    if (!confirm(`Confirmar envio de ${selectedIds.length} saque(s) ao financeiro?`)) return;
     
     setLoading(true);
     try {
@@ -92,11 +135,12 @@ export default function WithdrawalsPage() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ withdrawalIds: selectedIds })
+        body: JSON.stringify({ withdrawalIds: selectedIds, customBody: emailBody })
       });
       if (res.ok) {
-        alert('Notificação enviada com sucesso! Verifique o console do backend.');
+        alert('Notificação enviada com sucesso ao e-mail operacional!');
         setSelectedIds([]);
+        setEmailModalOpen(false);
         fetchWithdrawals();
       } else {
         alert('Erro ao notificar.');
@@ -210,10 +254,10 @@ export default function WithdrawalsPage() {
             <div style={{ padding: '0.75rem 1rem', backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#0369a1', fontWeight: 600 }}>{selectedIds.length} saque(s) selecionado(s)</span>
               <button 
-                onClick={notifyFinance}
+                onClick={openEmailModal}
                 style={{ cursor: 'pointer', padding: '0.5rem 1rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600 }}
               >
-                Notificar Financeiro (E-mail)
+                Notificar Financeiro
               </button>
             </div>
           )}
@@ -276,7 +320,7 @@ export default function WithdrawalsPage() {
                       <td className={styles.textMuted}>{formatCurrency(fee)}</td>
                       <td className={styles.fontWeightMedium} style={{ color: '#10b981' }}>{formatCurrency(payout)}</td>
                       <td>
-                        <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                        <span className={`${styles.badge} ${getStatusBadgeClass(item.status)}`}>
                           {statusMap[item.status] || item.status}
                         </span>
                       </td>
@@ -404,7 +448,7 @@ export default function WithdrawalsPage() {
               <div style={{ display: 'flex', gap: '2rem' }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Status</div>
-                  <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                  <span className={`${styles.badge} ${getStatusBadgeClass(infoModalData.status)}`}>
                     {statusMap[infoModalData.status] || infoModalData.status}
                   </span>
                 </div>
@@ -446,6 +490,42 @@ export default function WithdrawalsPage() {
                 onClick={() => setInfoModalData(null)}
               >
                 Fechar Painel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {emailModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', padding: '2rem', borderRadius: '12px', width: '700px', maxWidth: '95%', boxShadow: 'var(--shadow-md)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: '#0284c7' }}>📧 Notificar Financeiro Operacional</h3>
+              <button onClick={() => setEmailModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+            
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+              Revise e edite o e-mail que será enviado para a equipe de repasse. Os dados foram gerados com base nos saques selecionados.
+            </p>
+
+            <textarea
+              value={emailBody}
+              onChange={(e) => setEmailBody(e.target.value)}
+              style={{ flex: 1, padding: '1rem', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.95rem', fontFamily: 'monospace', resize: 'none', minHeight: '350px' }}
+            />
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setEmailModalOpen(false)}
+                style={{ padding: '0.75rem 1.5rem', border: '1px solid var(--border-color)', background: 'none', color: 'var(--text-main)', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={notifyFinance}
+                disabled={loading}
+                style={{ padding: '0.75rem 2rem', border: 'none', background: '#0284c7', color: '#fff', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', opacity: loading ? 0.7 : 1 }}
+              >
+                {loading ? 'Enviando...' : 'Enviar Notificação Agora'}
               </button>
             </div>
           </div>
