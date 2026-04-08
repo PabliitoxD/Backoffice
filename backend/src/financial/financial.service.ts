@@ -47,7 +47,11 @@ export class FinancialService {
     const withdrawalWhere: any = { ...whereClause };
 
     transactionWhere.status = {
+<<<<<<< HEAD
       in: ['APPROVED', 'REFUNDED', 'REVERSED', 'CHARGEBACK', 'COMPLETED', 'WAITING']
+=======
+      in: ['APPROVED', 'REFUNDED', 'REVERSED', 'CHARGEBACK']
+>>>>>>> Feature/0006/financial
     };
     withdrawalWhere.status = {
       in: ['APPROVED', 'COMPLETED', 'PENDING']

@@ -33,6 +33,7 @@ export default function ReceivablesPage() {
       console.error(err);
     }
   };
+
   const fetchReceivables = async () => {
     setLoading(true);
     try {
@@ -49,7 +50,8 @@ export default function ReceivablesPage() {
             method: 'PIX',
             cardBrand: null,
             amount: 1500.0,
-            customer: { name: 'João Silva' }
+            customer: { name: 'João Silva' },
+            producerId: 'all'
           },
           installment: 1,
           totalInstallments: 1,
@@ -65,7 +67,8 @@ export default function ReceivablesPage() {
             method: 'Cartão de Crédito',
             cardBrand: 'MasterCard',
             amount: 900.0,
-            customer: { name: 'Maria Souza' }
+            customer: { name: 'Maria Souza' },
+            producerId: 'all'
           },
           installment: 1,
           totalInstallments: 3,
@@ -81,7 +84,8 @@ export default function ReceivablesPage() {
             method: 'Cartão de Crédito',
             cardBrand: 'MasterCard',
             amount: 900.0,
-            customer: { name: 'Maria Souza' }
+            customer: { name: 'Maria Souza' },
+            producerId: 'all'
           },
           installment: 2,
           totalInstallments: 3,
@@ -97,7 +101,8 @@ export default function ReceivablesPage() {
             method: 'Cartão de Crédito',
             cardBrand: 'MasterCard',
             amount: 900.0,
-            customer: { name: 'Maria Souza' }
+            customer: { name: 'Maria Souza' },
+            producerId: 'all'
           },
           installment: 3,
           totalInstallments: 3,
@@ -113,7 +118,8 @@ export default function ReceivablesPage() {
             method: 'Boleto',
             cardBrand: null,
             amount: 350.0,
-            customer: { name: 'Carlos Santos' }
+            customer: { name: 'Carlos Santos' },
+            producerId: 'all'
           },
           installment: 1,
           totalInstallments: 1,

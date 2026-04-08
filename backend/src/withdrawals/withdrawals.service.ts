@@ -88,18 +88,10 @@ export class WithdrawalsService {
     });
     console.log(`====================================================\n\n`);
 
-    // Registra a auditoria
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'FINANCE_NOTIFICATION_SENT',
-        entity: 'Withdrawal',
-        details: { count: withdrawals.length, ids: data.withdrawalIds }
-      }
-    });
-
     return { 
       success: true, 
       message: 'Notificação enviada com sucesso!' 
     };
   }
 }
+
