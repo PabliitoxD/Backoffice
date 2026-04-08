@@ -60,7 +60,7 @@ export class WithdrawalsService {
     });
   }
 
-  async notifyFinance(data: { withdrawalIds: string[] }) {
+  async notifyFinance(data: { withdrawalIds: string[]; customBody?: string }) {
     const withdrawals = await this.prisma.withdrawal.findMany({
       where: {
         id: { in: data.withdrawalIds },
@@ -75,18 +75,24 @@ export class WithdrawalsService {
       return { success: false, message: 'Nenhum saque válido para notificação.' };
     }
 
-    console.log(`\n\n=== [MOCK] E-MAIL DE NOTIFICAÇÃO AO FINANCEIRO ===`);
-    console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
-    console.log(`Destinatário: financeiro@plataforma.com`);
-    console.log(`\nSaques aprovados e aguardando repasse:`);
-    withdrawals.forEach(w => {
-      const payout = w.amount - w.fee;
-      console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
-      console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);
-      console.log(`  Valor a transferir: R$ ${payout.toFixed(2)}`);
-      console.log(`  ID Saque: ${w.id}\n`);
-    });
-    console.log(`====================================================\n\n`);
+    if (data.customBody) {
+      console.log(`\n\n=== [E-MAIL CUSTOMIZADO ENVIADO AO FINANCEIRO] ===`);
+      console.log(data.customBody);
+      console.log(`====================================================\n\n`);
+    } else {
+      console.log(`\n\n=== [MOCK] E-MAIL DE NOTIFICAÇÃO AO FINANCEIRO (PADRÃO) ===`);
+      console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
+      console.log(`Destinatário: financeiro@plataforma.com`);
+      console.log(`\nSaques aprovados e aguardando repasse:`);
+      withdrawals.forEach(w => {
+        const payout = w.amount - w.fee;
+        console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
+        console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);
+        console.log(`  Valor a transferir: R$ ${payout.toFixed(2)}`);
+        console.log(`  ID Saque: ${w.id}\n`);
+      });
+      console.log(`====================================================\n\n`);
+    }
 
     return { 
       success: true, 
