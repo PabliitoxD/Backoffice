@@ -59,7 +59,6 @@ export class TransactionsService {
       data: { chargebackObservation: observation },
     });
   }
-<<<<<<< HEAD
 
   async launchExtraCharge(id: string, amount: number, reason: string) {
     const originalTx = await this.prisma.transaction.findUnique({ where: { id } });
@@ -76,26 +75,6 @@ export class TransactionsService {
         productId: originalTx.productId,
         chargebackObservation: `[Cobrança Extra - Taxa Chargeback] ${reason}`
       }
-    });
-  }
-}
-=======
->>>>>>> Feature/0006/financial
-
-  async launchExtraCharge(id: string, amount: number, reason: string) {
-    const originalTx = await this.prisma.transaction.findUnique({ where: { id } });
-    if (!originalTx) throw new NotFoundException('Transaction not found');
-
-    return this.prisma.transaction.create({
-      data: {
-        amount,
-        status: 'APPROVED',
-        method: originalTx.method || 'PIX',
-        customerId: originalTx.customerId,
-        producerId: originalTx.producerId,
-        productId: originalTx.productId,
-        chargebackObservation: `[Cobrança Extra - Taxa Chargeback] ${reason}`,
-      },
     });
   }
 
@@ -142,7 +121,7 @@ export class TransactionsService {
       data: {
         transactionId: id,
         status: 'DEFENSE_SUBMITTED',
-        details: `Defesa enviada à adquirente. Ref: ${acquirerRef}. Arquivos: ${files.map((f) => f.originalname).join(', ')}`,
+        details: `Defesa enviada à adquirente. Ref: ${acquirerRef}. Arquivos: ${files.map((f: any) => f.originalname).join(', ')}`,
       },
     });
 

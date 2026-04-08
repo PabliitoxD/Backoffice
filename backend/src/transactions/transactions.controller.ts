@@ -1,18 +1,12 @@
-<<<<<<< HEAD
-import { Controller, Patch, Param, UseGuards, Get, Query, Body, Post, Patch as PatchAction } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-=======
 import {
   Controller, Patch, Param, UseGuards, Get, Query, Body,
   Post, UseInterceptors, UploadedFiles, BadRequestException, Req,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiConsumes } from '@nestjs/swagger';
->>>>>>> Feature/0006/financial
 import { TransactionsService } from './transactions.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { Request } from 'express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 
@@ -55,15 +49,6 @@ export class TransactionsController {
 
   @Post(':id/extra-charge')
   @ApiOperation({ summary: 'Lança uma cobrança extra referente a um chargeback expirado' })
-<<<<<<< HEAD
-  launchExtraCharge(
-    @Param('id') id: string, 
-    @Body('amount') amount: number, 
-    @Body('reason') reason: string
-  ) {
-    return this.transactionsService.launchExtraCharge(id, amount, reason);
-  }
-=======
   async launchExtraCharge(
     @Param('id') id: string,
     @Body('amount') amount: number,
@@ -121,6 +106,4 @@ export class TransactionsController {
 
     return result;
   }
->>>>>>> Feature/0006/financial
 }
-
