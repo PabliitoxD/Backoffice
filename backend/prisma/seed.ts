@@ -1,72 +1,140 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('123456', 10);
+  console.log('--- Iniciando limpeza seletiva (Preservando Usuários e Perfis) ---');
   
-  const user = await prisma.user.upsert({
-    where: { email: 'admin@superfin.com.br' },
-    update: { password: hashedPassword },
-    create: {
-      email: 'admin@superfin.com.br',
-      name: 'Administrador',
-      password: hashedPassword,
-      role: 'ADMIN',
-    },
-  });
+  // Limpeza de logs e dados transacionais
+  await prisma.auditLog.deleteMany();
+  await prisma.chargebackDefense.deleteMany();
+  await prisma.transactionHistory.deleteMany();
+  await prisma.receivable.deleteMany();
+  await prisma.transaction.deleteMany();
+  await prisma.withdrawal.deleteMany();
+  await prisma.product.deleteMany();
+  await prisma.customer.deleteMany();
+  await prisma.producer.deleteMany();
 
-  const producer = await prisma.producer.upsert({
-    where: { document: '12345678900' },
-    update: {},
-    create: {
-      name: 'Produtor Exemplo',
-      document: '12345678900',
-      email: 'produtor@exemplo.com',
-      phone: '11999999999'
+  console.log('--- Criando Novos Exemplos ---');
+
+  // Produtores
+  const producer1 = await prisma.producer.create({
+    data: {
+      name: 'Super Player Games',
+      document: '99888777000100',
+      email: 'contato@superplayer.com',
+      phone: '11977776666',
+      pixKey: '99888777000100'
     }
   });
 
-  const customer = await prisma.customer.upsert({
-    where: { document: '09876543211' },
-    update: {},
-    create: {
-      name: 'Cliente Exemplo',
-      document: '09876543211',
-      email: 'cliente@exemplo.com',
+  const producer2 = await prisma.producer.create({
+    data: {
+      name: 'Educa Mais Online',
+      document: '44555666000111',
+      email: 'financeiro@educamais.com',
+      pixKey: 'financeiro@educamais.com'
     }
   });
 
-  const product = await prisma.product.upsert({
-    where: { code: 'PROD-001' },
-    update: {},
-    create: {
-      code: 'PROD-001',
-      name: 'Produto Inicial',
-      price: 150.00,
-      producerId: producer.id,
+  // Clientes
+  const customer1 = await prisma.customer.create({
+    data: { name: 'Roberto Alencar', document: '22233344455', email: 'roberto@email.com' }
+  });
+
+  const customer2 = await prisma.customer.create({
+    data: { name: 'Alice Fernandes', document: '88877766655', email: 'alice@email.com' }
+  });
+
+  // Produtos
+  const product1 = await prisma.product.create({
+    data: {
+      code: 'GEM-500',
+      name: 'Pacote 500 Gemas - Battle Arena',
+      price: 49.90,
+      producerId: producer1.id,
     }
   });
 
-  const brands = ['Visa', 'MasterCard', 'Elo', 'Hipercard', 'Amex'];
-  for (let i = 0; i < 6; i++) {
-    await prisma.transaction.create({
+  const product2 = await prisma.product.create({
+    data: {
+      code: 'PLANO-MASTER',
+      name: 'Assinatura Master Anual',
+      price: 1200.00,
+      producerId: producer2.id,
+    }
+  });
+
+  console.log('--- Criando Transações e Chargebacks ---');
+  const now = new Date();
+  const someDaysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+
+  // Vendas Normais
+  await prisma.transaction.create({
+    data: {
+      producerId: producer1.id, customerId: customer1.id, productId: product1.id,
+      amount: 49.90, method: 'PIX', status: 'COMPLETED', createdAt: someDaysAgo(5)
+    }
+  });
+
+  // Chargeback Crítico (4 dias atrás - restando 1 dia para defesa)
+  const txCritico = await prisma.transaction.create({
+    data: {
+      producerId: producer2.id, customerId: customer2.id, productId: product2.id,
+      amount: 1200.00, method: 'Cartão de Crédito', cardBrand: 'MasterCard',
+      status: 'CHARGEBACK', chargebackAt: someDaysAgo(4), createdAt: someDaysAgo(40),
+      installments: 12,
+      history: {
+        create: [
+          { status: 'APPROVED', details: 'Venda parcelada em 12x' },
+          { status: 'CHARGEBACK', details: 'Disputa aberta pelo titular' }
+        ]
+      }
+    }
+  });
+
+  // Chargeback Regular (1 dia atrás - restando 4 dias)
+  await prisma.transaction.create({
+    data: {
+      producerId: producer1.id, customerId: customer2.id, productId: product1.id,
+      amount: 49.90, method: 'Cartão de Crédito', cardBrand: 'Visa',
+      status: 'CHARGEBACK', chargebackAt: someDaysAgo(1), createdAt: someDaysAgo(10),
+      history: {
+        create: { status: 'CHARGEBACK', details: 'Aguardando manifestação' }
+      }
+    }
+  });
+
+  console.log('--- Criando Saques (Apenas PENDENTES) ---');
+  await prisma.withdrawal.create({
+    data: {
+      amount: 2500.00, fee: 5.00, status: 'PENDING', 
+      producerId: producer1.id, pixKey: producer1.pixKey || ''
+    }
+  });
+
+  await prisma.withdrawal.create({
+    data: {
+      amount: 150.00, fee: 5.00, status: 'PENDING', 
+      producerId: producer2.id, pixKey: producer2.pixKey || ''
+    }
+  });
+
+  console.log('--- Criando Recebíveis ---');
+  for (let i = 1; i <= 6; i++) {
+    await prisma.receivable.create({
       data: {
-        producerId: producer.id,
-        customerId: customer.id,
-        productId: product.id,
-        amount: 300.00 + (i * 20),
-        method: 'Cartão de Crédito',
-        cardBrand: brands[i % brands.length],
-        status: 'CHARGEBACK',
-        chargebackAt: new Date(2026, 2, 10 + i), // March 10-15
-        chargebackObservation: i % 2 === 0 ? 'Contestação de teste do período vigente.' : 'Aguardando defesa bancária.'
+        transactionId: txCritico.id,
+        installment: i,
+        amount: 100.00,
+        status: i === 1 ? 'AVAILABLE' : 'WAITING_FUNDS',
+        expectedAt: new Date(now.getFullYear(), now.getMonth() + (i - 1), now.getDate())
       }
     });
   }
 
-  console.log('Seed executado com sucesso: User admin@superfin.com.br (senha: 123456) cadastrado. Exemplos de Chargebacks para Março/2026 criados.');
+  console.log('--- Seed finalizado com sucesso (Usuários mantidos) ---');
 }
 
 main()
