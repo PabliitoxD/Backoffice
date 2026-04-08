@@ -23,13 +23,6 @@ export default function ChargebacksPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [deadlineFilter, setDeadlineFilter] = useState('all');
-<<<<<<< HEAD
-  
-  const [extraChargeAmount, setExtraChargeAmount] = useState('');
-  const [extraChargeReason, setExtraChargeReason] = useState('');
-  const [isCharging, setIsCharging] = useState(false);
-  
-=======
 
   const [extraChargeAmount, setExtraChargeAmount] = useState('');
   const [extraChargeReason, setExtraChargeReason] = useState('');
@@ -43,7 +36,6 @@ export default function ChargebacksPage() {
   const [defenseError, setDefenseError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
->>>>>>> Feature/0006/financial
   // Current month default dates
   const now = new Date();
   const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
@@ -60,26 +52,6 @@ export default function ChargebacksPage() {
       if (searchTerm) queryParams.append('search', searchTerm);
       if (startDate) queryParams.append('startDate', startDate);
       if (endDate) queryParams.append('endDate', endDate);
-<<<<<<< HEAD
-      
-      const fetchUrl = `${API_URL}/transactions?${queryParams.toString()}`;
-      
-      try {
-        const res = await fetch(fetchUrl, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const responseData = await res.json();
-        if (Array.isArray(responseData)) {
-          setChargebacks(responseData);
-        } else {
-          setChargebacks([]);
-        }
-      } catch (err) {
-        setChargebacks([]);
-      }
-    } catch(e) {
-      console.error(e);
-=======
 
       const res = await fetch(`${API_URL}/transactions?${queryParams.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -87,7 +59,6 @@ export default function ChargebacksPage() {
       const responseData = await res.json();
       setChargebacks(Array.isArray(responseData) ? responseData : []);
     } catch (err) {
->>>>>>> Feature/0006/financial
       setChargebacks([]);
     } finally {
       setLoading(false);
@@ -122,19 +93,8 @@ export default function ChargebacksPage() {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/transactions/${selectedChargeback.id}/extra-charge`, {
         method: 'POST',
-<<<<<<< HEAD
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          amount: parseFloat(extraChargeAmount),
-          reason: extraChargeReason
-        })
-=======
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ amount: parseFloat(extraChargeAmount), reason: extraChargeReason })
->>>>>>> Feature/0006/financial
       });
       if (res.ok) {
         alert('Cobrança extra lançada com sucesso no extrato!');
@@ -152,8 +112,6 @@ export default function ChargebacksPage() {
     }
   };
 
-<<<<<<< HEAD
-=======
   const handleAddFiles = (fileList: FileList | null) => {
     if (!fileList) return;
     const valid: File[] = [];
@@ -214,7 +172,6 @@ export default function ChargebacksPage() {
     }
   };
 
->>>>>>> Feature/0006/financial
   const calculateRemainingDays = (chargebackAt: string) => {
     const regDate = new Date(chargebackAt);
     const now = new Date();
@@ -332,13 +289,8 @@ export default function ChargebacksPage() {
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: '#ef4444', whiteSpace: 'nowrap' }}>-{formatCurrency(item.amount)}</td>
                       <td>
-<<<<<<< HEAD
-                        <span className={`${styles.badge} ${item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? styles.badgeSecondary : styles.badgeDebit}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.6rem', backgroundColor: item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? '#64748b' : undefined, color: item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? '#ffffff' : undefined }}>
-                          {item.chargebackAt && calculateRemainingDays(item.chargebackAt) <= 0 ? 'Disputa Encerrada' : 'Disputa Aberta'}
-=======
                         <span className={`${styles.badge} ${days !== null && days <= 0 ? styles.badgeSecondary : styles.badgeDebit}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.6rem', backgroundColor: days !== null && days <= 0 ? '#64748b' : undefined, color: days !== null && days <= 0 ? '#ffffff' : undefined }}>
                           {days !== null && days <= 0 ? 'Disputa Encerrada' : 'Disputa Aberta'}
->>>>>>> Feature/0006/financial
                         </span>
                       </td>
                       <td>
@@ -505,9 +457,15 @@ export default function ChargebacksPage() {
                   <h4 style={{ margin: '0 0 0.5rem', color: '#ef4444', fontSize: '0.95rem', fontWeight: 700 }}>Disputa Encerrada — Lançar Cobrança Extra</h4>
                   <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>Repasse um custo extra ao cliente como crédito no extrato.</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                    <input type="number" placeholder="Valor (ex: 50.00)" value={extraChargeAmount} onChange={e => setExtraChargeAmount(e.target.value)} style={{ padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.875rem' }} />
-                    <input type="text" placeholder="Motivo da cobrança" value={extraChargeReason} onChange={e => setExtraChargeReason(e.target.value)} style={{ padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.875rem' }} />
-                    <button onClick={handleLaunchExtraCharge} disabled={isCharging || !extraChargeAmount || !extraChargeReason} style={{ padding: '0.75rem', borderRadius: '6px', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 }}>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Valor da cobrança (ex: 50.00)</label>
+                      <input type="number" placeholder="Valor (ex: 50.00)" value={extraChargeAmount} onChange={e => setExtraChargeAmount(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.875rem' }} />
+                    </div>
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Motivo da cobrança</label>
+                      <input type="text" placeholder="Motivo da cobrança" value={extraChargeReason} onChange={e => setExtraChargeReason(e.target.value)} style={{ width: '100%', padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.875rem' }} />
+                    </div>
+                    <button onClick={handleLaunchExtraCharge} disabled={isCharging || !extraChargeAmount || !extraChargeReason} style={{ padding: '0.75rem', width: '100%', borderRadius: '6px', background: '#10b981', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 }}>
                       {isCharging ? 'Lançando...' : 'Lançar Cobrança no Extrato'}
                     </button>
                   </div>
@@ -521,66 +479,6 @@ export default function ChargebacksPage() {
                 Fechar
               </button>
             </div>
-
-            {selectedChargeback.chargebackAt && calculateRemainingDays(selectedChargeback.chargebackAt) <= 0 && (
-               <div style={{ 
-                 marginTop: '2rem', 
-                 padding: '1.5rem', 
-                 backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                 borderRadius: '8px',
-                 border: '1px solid #ef4444'
-               }}>
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                   <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-                   <h4 style={{ margin: 0, color: '#ef4444', fontSize: '1rem', fontWeight: 700 }}>Disputa Encerrada - Lançar Cobrança Extra</h4>
-                 </div>
-                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem', lineHeight: '1.5' }}>
-                   Caso deseje repassar um custo extra, preencha os dados abaixo. O valor entrará como crédito no seu extrato e débito para o cliente.
-                 </p>
-                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Valor da cobrança (ex: 50.00)</label>
-                      <input 
-                        type="number" 
-                        placeholder="0.00" 
-                        value={extraChargeAmount}
-                        onChange={e => setExtraChargeAmount(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.9rem', outline: 'none' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.4rem' }}>Motivo da cobrança</label>
-                      <input 
-                        type="text" 
-                        placeholder="Descreva o motivo..." 
-                        value={extraChargeReason}
-                        onChange={e => setExtraChargeReason(e.target.value)}
-                        style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--background)', color: 'var(--text-main)', fontSize: '0.9rem', outline: 'none' }}
-                      />
-                    </div>
-                    <button 
-                      onClick={handleLaunchExtraCharge}
-                      disabled={isCharging || !extraChargeAmount || !extraChargeReason}
-                      style={{ 
-                        marginTop: '0.5rem', 
-                        padding: '0.75rem', 
-                        borderRadius: '6px', 
-                        background: '#10b981', 
-                        color: 'white', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        fontWeight: 700, 
-                        fontSize: '0.9rem',
-                        transition: 'opacity 0.2s',
-                        opacity: (isCharging || !extraChargeAmount || !extraChargeReason) ? 0.5 : 1 
-                      }}
-                    >
-                      {isCharging ? 'Processando...' : 'Lançar Cobrança no Extrato'}
-                    </button>
-                 </div>
-               </div>
-            )}
-            
           </div>
         </div>
       )}
