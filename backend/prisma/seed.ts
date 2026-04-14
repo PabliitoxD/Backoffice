@@ -5,136 +5,132 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('--- Iniciando limpeza seletiva (Preservando Usuários e Perfis) ---');
   
-  // Limpeza de logs e dados transacionais
-  await prisma.auditLog.deleteMany();
-  await prisma.chargebackDefense.deleteMany();
-  await prisma.transactionHistory.deleteMany();
-  await prisma.receivable.deleteMany();
-  await prisma.transaction.deleteMany();
-  await prisma.withdrawal.deleteMany();
-  await prisma.product.deleteMany();
-  await prisma.customer.deleteMany();
-  await prisma.producer.deleteMany();
+  console.log('Limpando AuditLog...'); await prisma.auditLog.deleteMany();
+  console.log('Limpando ChargebackDefense...'); await prisma.chargebackDefense.deleteMany();
+  console.log('Limpando TransactionHistory...'); await prisma.transactionHistory.deleteMany();
+  console.log('Limpando Receivable...'); await prisma.receivable.deleteMany();
+  console.log('Limpando Transaction...'); await prisma.transaction.deleteMany();
+  console.log('Limpando Withdrawal...'); await prisma.withdrawal.deleteMany();
+  console.log('Limpando Product...'); await prisma.product.deleteMany();
+  console.log('Limpando Customer...'); await prisma.customer.deleteMany();
+  console.log('Limpando Producer...'); await prisma.producer.deleteMany();
 
-  console.log('--- Criando Novos Exemplos ---');
+  console.log('--- Criando Produtores e Produtos ---');
 
-  // Produtores
-  const producer1 = await prisma.producer.create({
-    data: {
-      name: 'Super Player Games',
-      document: '99888777000100',
-      email: 'contato@superplayer.com',
-      phone: '11977776666',
-      pixKey: '99888777000100'
-    }
-  });
+  const producerNames = ['Super Player Games', 'Educa Mais Online', 'Fábrica de Apps', 'Designer Pro', 'Invest Master'];
+  const producers = await Promise.all(
+    producerNames.map((name, i) => 
+      prisma.producer.create({
+        data: {
+          name,
+          document: `112223330001${i}0`,
+          email: `${name.toLowerCase().replace(/ /g, '.')}@email.com`,
+          pixKey: `${name.toLowerCase().replace(/ /g, '.')}@pix.com`
+        }
+      })
+    )
+  );
 
-  const producer2 = await prisma.producer.create({
-    data: {
-      name: 'Educa Mais Online',
-      document: '44555666000111',
-      email: 'financeiro@educamais.com',
-      pixKey: 'financeiro@educamais.com'
-    }
-  });
+  const products = await Promise.all(
+    producers.map((p, i) => 
+      prisma.product.create({
+        data: {
+          code: `PROD-${i}${i}${i}`,
+          name: `Produto Especial ${p.name}`,
+          price: 50 + (i * 150),
+          producerId: p.id
+        }
+      })
+    )
+  );
 
-  // Clientes
-  const customer1 = await prisma.customer.create({
-    data: { name: 'Roberto Alencar', document: '22233344455', email: 'roberto@email.com' }
-  });
+  const customers = await Promise.all(
+    Array.from({ length: 20 }).map((_, i) => 
+      prisma.customer.create({
+        data: {
+          name: `Cliente Teste ${i + 1}`,
+          document: `1112223334${i}`,
+          email: `cliente${i + 1}@email.com`
+        }
+      })
+    )
+  );
 
-  const customer2 = await prisma.customer.create({
-    data: { name: 'Alice Fernandes', document: '88877766655', email: 'alice@email.com' }
-  });
-
-  // Produtos
-  const product1 = await prisma.product.create({
-    data: {
-      code: 'GEM-500',
-      name: 'Pacote 500 Gemas - Battle Arena',
-      price: 49.90,
-      producerId: producer1.id,
-    }
-  });
-
-  const product2 = await prisma.product.create({
-    data: {
-      code: 'PLANO-MASTER',
-      name: 'Assinatura Master Anual',
-      price: 1200.00,
-      producerId: producer2.id,
-    }
-  });
-
-  console.log('--- Criando Transações e Chargebacks ---');
+  console.log('--- Gerando Transações (Volume Realista) ---');
   const now = new Date();
-  const someDaysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  
+  const getDate = (daysAgo: number, hour: number) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(hour, 0, 0, 0);
+    return d;
+  };
 
-  // Vendas Normais
-  await prisma.transaction.create({
-    data: {
-      producerId: producer1.id, customerId: customer1.id, productId: product1.id,
-      amount: 49.90, method: 'PIX', status: 'COMPLETED', createdAt: someDaysAgo(5)
+  const transactionEntries = [];
+
+  for (let day = 0; day <= 30; day++) {
+    const transactionCount = day === 0 ? 15 : day === 1 ? 10 : Math.floor(Math.random() * 8) + 2;
+
+    for (let i = 0; i < transactionCount; i++) {
+      const prodIdx = Math.floor(Math.random() * producers.length);
+      const custIdx = Math.floor(Math.random() * customers.length);
+      const product = products[prodIdx];
+      const method = i % 3 === 0 ? 'PIX' : i % 3 === 1 ? 'CARTAO_CREDITO' : 'BOLETO';
+      
+      const isChargeback = day > 2 && Math.random() > 0.95;
+      const status = isChargeback ? 'CHARGEBACK' : 'COMPLETED';
+
+      transactionEntries.push({
+        producerId: producers[prodIdx].id,
+        customerId: customers[custIdx].id,
+        productId: product.id,
+        amount: product.price,
+        method,
+        status,
+        createdAt: getDate(day, 10 + (i % 8)),
+        approvedAt: status === 'COMPLETED' ? getDate(day, 11) : null,
+        chargebackAt: isChargeback ? getDate(day - 1, 14) : null,
+        installments: method === 'CARTAO_CREDITO' ? (Math.random() > 0.5 ? 12 : 1) : 1
+      });
     }
-  });
+  }
 
-  // Chargeback Crítico (4 dias atrás - restando 1 dia para defesa)
-  const txCritico = await prisma.transaction.create({
-    data: {
-      producerId: producer2.id, customerId: customer2.id, productId: product2.id,
-      amount: 1200.00, method: 'Cartão de Crédito', cardBrand: 'MasterCard',
-      status: 'CHARGEBACK', chargebackAt: someDaysAgo(4), createdAt: someDaysAgo(40),
-      installments: 12,
-      history: {
-        create: [
-          { status: 'APPROVED', details: 'Venda parcelada em 12x' },
-          { status: 'CHARGEBACK', details: 'Disputa aberta pelo titular' }
-        ]
-      }
-    }
-  });
+  await Promise.all(transactionEntries.map(tx => prisma.transaction.create({ data: tx })));
 
-  // Chargeback Regular (1 dia atrás - restando 4 dias)
-  await prisma.transaction.create({
-    data: {
-      producerId: producer1.id, customerId: customer2.id, productId: product1.id,
-      amount: 49.90, method: 'Cartão de Crédito', cardBrand: 'Visa',
-      status: 'CHARGEBACK', chargebackAt: someDaysAgo(1), createdAt: someDaysAgo(10),
-      history: {
-        create: { status: 'CHARGEBACK', details: 'Aguardando manifestação' }
-      }
-    }
-  });
-
-  console.log('--- Criando Saques (Apenas PENDENTES) ---');
-  await prisma.withdrawal.create({
-    data: {
-      amount: 2500.00, fee: 5.00, status: 'PENDING', 
-      producerId: producer1.id, pixKey: producer1.pixKey || ''
-    }
-  });
-
-  await prisma.withdrawal.create({
-    data: {
-      amount: 150.00, fee: 5.00, status: 'PENDING', 
-      producerId: producer2.id, pixKey: producer2.pixKey || ''
-    }
-  });
-
-  console.log('--- Criando Recebíveis ---');
-  for (let i = 1; i <= 6; i++) {
-    await prisma.receivable.create({
+  console.log('--- Gerando Saques ---');
+  for (let i = 0; i < 10; i++) {
+    const prodIdx = Math.floor(Math.random() * producers.length);
+    const status = i < 7 ? 'PROCESSADO' : 'PENDENTE';
+    
+    await prisma.withdrawal.create({
       data: {
-        transactionId: txCritico.id,
-        installment: i,
-        amount: 100.00,
-        status: i === 1 ? 'AVAILABLE' : 'WAITING_FUNDS',
-        expectedAt: new Date(now.getFullYear(), now.getMonth() + (i - 1), now.getDate())
+        amount: 500 + (Math.random() * 2000),
+        fee: 5.00,
+        status,
+        producerId: producers[prodIdx].id,
+        pixKey: producers[prodIdx].pixKey,
+        createdAt: getDate(i, 9),
+        updatedAt: getDate(i, 15)
       }
     });
   }
 
-  console.log('--- Seed finalizado com sucesso (Usuários mantidos) ---');
+  for (let i = 0; i < 5; i++) {
+    await prisma.transaction.create({
+      data: {
+        producerId: producers[0].id,
+        customerId: customers[0].id,
+        productId: products[0].id,
+        amount: 5000,
+        method: 'PIX',
+        status: 'COMPLETED',
+        createdAt: getDate(1, 10)
+      }
+    });
+  }
+
+  console.log('--- Seed finalizado com sucesso! ---');
+  console.log(`Resumo: ${producers.length} produtores, ${transactionEntries.length} transações geradas.`);
 }
 
 main()

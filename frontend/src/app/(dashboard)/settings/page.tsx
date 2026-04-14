@@ -50,7 +50,7 @@ export default function SettingsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modals state
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -94,7 +94,7 @@ export default function SettingsPage() {
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Authorization': `Bearer ${token}` };
-      
+
       const [usersRes, profilesRes, logsRes] = await Promise.all([
         fetch(`${API_URL}/users`, { headers, cache: 'no-store' }),
         fetch(`${API_URL}/profiles`, { headers, cache: 'no-store' }),
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       if (usersRes.ok) setUsers(await usersRes.json());
       if (profilesRes.ok) setProfiles(await profilesRes.json());
       if (logsRes.ok) setLogs(await logsRes.json());
-      
+
     } catch (err) {
       setError('Erro ao conectar com o servidor');
     } finally {
@@ -127,7 +127,7 @@ export default function SettingsPage() {
         },
         body: JSON.stringify(userFormData)
       });
-      
+
       if (res.ok) {
         setIsUserModalOpen(false);
         setUserFormData({ name: '', email: '', password: '', profileId: '' });
@@ -152,7 +152,7 @@ export default function SettingsPage() {
       const token = localStorage.getItem('token');
       const method = profileFormData.id ? 'PUT' : 'POST';
       const url = profileFormData.id ? `${API_URL}/profiles/${profileFormData.id}` : `${API_URL}/profiles`;
-      
+
       const res = await fetch(url, {
         method,
         headers: {
@@ -164,7 +164,7 @@ export default function SettingsPage() {
           permissions: profileFormData.permissions
         })
       });
-      
+
       if (res.ok) {
         setIsProfileModalOpen(false);
         setProfileFormData({ id: '', name: '', permissions: [] });
@@ -371,13 +371,13 @@ export default function SettingsPage() {
                         <td style={{ fontWeight: 500 }}>{profile.name}</td>
                         <td>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                            {profile.permissions.length === AVAILABLE_PERMISSIONS.length 
+                            {profile.permissions.length === AVAILABLE_PERMISSIONS.length
                               ? <span className={styles.statusBadge} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>Acesso Total</span>
                               : profile.permissions.slice(0, 2).map(p => (
-                                  <span key={p} className={styles.statusBadge} style={{ background: 'rgba(100, 116, 139, 0.1)', color: 'var(--text-muted)' }}>
-                                    {AVAILABLE_PERMISSIONS.find(ap => ap.id === p)?.label || p}
-                                  </span>
-                                ))
+                                <span key={p} className={styles.statusBadge} style={{ background: 'rgba(100, 116, 139, 0.1)', color: 'var(--text-muted)' }}>
+                                  {AVAILABLE_PERMISSIONS.find(ap => ap.id === p)?.label || p}
+                                </span>
+                              ))
                             }
                             {profile.permissions.length > 2 && profile.permissions.length !== AVAILABLE_PERMISSIONS.length && (
                               <span className={styles.statusBadge} style={{ background: 'rgba(100, 116, 139, 0.1)', color: 'var(--text-muted)' }}>
@@ -388,7 +388,7 @@ export default function SettingsPage() {
                         </td>
                         <td className={styles.textMuted}>{profile._count?.users || 0} usuários</td>
                         <td className={styles.actionsCell}>
-                          <button 
+                          <button
                             className={styles.btnActionDots}
                             onClick={() => {
                               setProfileFormData({ id: profile.id, name: profile.name, permissions: profile.permissions });
@@ -506,10 +506,10 @@ export default function SettingsPage() {
             <form onSubmit={handleCreateUser}>
               <div className={styles.modalBody}>
                 {formError && <div className={styles.error}>{formError}</div>}
-                <div className={styles.formGroup}><label className={styles.label}>Nome</label><input type="text" className={styles.input} required value={userFormData.name} onChange={e => setUserFormData({...userFormData, name: e.target.value})} /></div>
-                <div className={styles.formGroup}><label className={styles.label}>Email</label><input type="email" className={styles.input} required value={userFormData.email} onChange={e => setUserFormData({...userFormData, email: e.target.value})} /></div>
-                <div className={styles.formGroup}><label className={styles.label}>Senha</label><input type="password" className={styles.input} required value={userFormData.password} onChange={e => setUserFormData({...userFormData, password: e.target.value})} /></div>
-                <div className={styles.formGroup}><label className={styles.label}>Perfil</label><select className={styles.input} required value={userFormData.profileId} onChange={e => setUserFormData({...userFormData, profileId: e.target.value})}><option value="">Selecione...</option>{profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+                <div className={styles.formGroup}><label className={styles.label}>Nome</label><input type="text" className={styles.input} required value={userFormData.name} onChange={e => setUserFormData({ ...userFormData, name: e.target.value })} /></div>
+                <div className={styles.formGroup}><label className={styles.label}>Email</label><input type="email" className={styles.input} required value={userFormData.email} onChange={e => setUserFormData({ ...userFormData, email: e.target.value })} /></div>
+                <div className={styles.formGroup}><label className={styles.label}>Senha</label><input type="password" className={styles.input} required value={userFormData.password} onChange={e => setUserFormData({ ...userFormData, password: e.target.value })} /></div>
+                <div className={styles.formGroup}><label className={styles.label}>Perfil</label><select className={styles.input} required value={userFormData.profileId} onChange={e => setUserFormData({ ...userFormData, profileId: e.target.value })}><option value="">Selecione...</option>{profiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
               </div>
               <div className={styles.modalFooter}><button type="button" className={styles.btnCancel} onClick={() => setIsUserModalOpen(false)}>Cancelar</button><button type="submit" className={styles.btnSave} disabled={formLoading}>Cadastrar</button></div>
             </form>
@@ -524,7 +524,7 @@ export default function SettingsPage() {
             <div className={styles.modalHeader}><h2>{profileFormData.id ? 'Editar Perfil' : 'Novo Perfil'}</h2><button className={styles.closeBtn} onClick={() => setIsProfileModalOpen(false)}>×</button></div>
             <form onSubmit={handleSaveProfile}>
               <div className={styles.modalBody}>
-                <div className={styles.formGroup}><label className={styles.label}>Nome do Perfil</label><input type="text" className={styles.input} required value={profileFormData.name} onChange={e => setProfileFormData({...profileFormData, name: e.target.value})} /></div>
+                <div className={styles.formGroup}><label className={styles.label}>Nome do Perfil</label><input type="text" className={styles.input} required value={profileFormData.name} onChange={e => setProfileFormData({ ...profileFormData, name: e.target.value })} /></div>
                 <div className={styles.formGroup}><label className={styles.label}>Permissões</label><div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>{AVAILABLE_PERMISSIONS.map(p => (<label key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem' }}><input type="checkbox" checked={profileFormData.permissions.includes(p.id)} onChange={() => togglePermission(p.id)} />{p.label}</label>))}</div></div>
               </div>
               <div className={styles.modalFooter}><button type="button" className={styles.btnCancel} onClick={() => setIsProfileModalOpen(false)}>Cancelar</button><button type="submit" className={styles.btnSave} disabled={formLoading}>Salvar</button></div>
