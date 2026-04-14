@@ -1,0 +1,29 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  /* Make the first card (Revenue) span across if needed? 
+     Or keep them uniform for a clean look. 
+     The user said "5 pequenos paineis", usually that means a balanced grid.
+  */
+}
+
+@media (min-width: 1280px) {
+  /* For very large screens, we can do a 5-column layout if they are "small" cards.
+     But since some cards have lists, maybe 3-2 or 3-columns is better.
+     Let's try a responsive 1-2-3-3 pattern.
+  */
+}

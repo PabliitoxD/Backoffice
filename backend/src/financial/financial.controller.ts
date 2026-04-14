@@ -19,4 +19,13 @@ export class FinancialController {
   ) {
     return this.financialService.getGlobalStatement(startDate, endDate, search);
   }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Obtem as estatísticas da dashboard com comparativo' })
+  getDashboardStats(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    return this.financialService.getDashboardStats(startDate, endDate);
+  }
 }

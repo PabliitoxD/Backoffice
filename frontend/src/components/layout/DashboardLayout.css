@@ -1,9 +1,9 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background-color: var(--background);
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .dashboard-main {
@@ -13,12 +13,39 @@
   margin-left: var(--sidebar-width);
   min-height: 100vh;
   transition: margin-left 0.3s ease;
+  width: 100%;
 }
 
 .dashboard-content {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
-  /* Adjusting height to viewport minus topbar height to ensure proper scrolling inside the main area */
   height: calc(100vh - var(--header-height));
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 90;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
+  
+  .dashboard-content {
+    padding: 1rem;
+  }
 }
