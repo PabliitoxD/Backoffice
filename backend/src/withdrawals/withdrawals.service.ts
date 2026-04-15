@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class WithdrawalsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   async create(data: { amount: number; producerId: string }) {
     return this.prisma.withdrawal.create({
@@ -75,23 +78,45 @@ export class WithdrawalsService {
       return { success: false, message: 'Nenhum saque válido para notificação.' };
     }
 
-    if (data.customBody) {
-      console.log(`\n\n=== [E-MAIL CUSTOMIZADO ENVIADO AO FINANCEIRO] ===`);
-      console.log(data.customBody);
-      console.log(`====================================================\n\n`);
-    } else {
-      console.log(`\n\n=== [MOCK] E-MAIL DE NOTIFICAÇÃO AO FINANCEIRO (PADRÃO) ===`);
-      console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
-      console.log(`Destinatário: financeiro@plataforma.com`);
-      console.log(`\nSaques aprovados e aguardando repasse:`);
-      withdrawals.forEach(w => {
-        const payout = w.amount - w.fee;
-        console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
-        console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);
-        console.log(`  Valor a transferir: R$ ${payout.toFixed(2)}`);
-        console.log(`  ID Saque: ${w.id}\n`);
+    const recipients = ['tania.souza@superfin.com.br', 'pablo.werner@superfin.com.br'];
+    
+    const emailBody = data.customBody || `
+      <h2>Notificação de Saques Autorizados</h2>
+      <p>Os seguintes saques foram aprovados e aguardam repasse via PIX:</p>
+      <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th>Produtor</th>
+            <th>Documento</th>
+            <th>Valor Líquido</th>
+            <th>Chave PIX</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${withdrawals.map(w => `
+            <tr>
+              <td>${w.producer.name}</td>
+              <td>${w.producer.document}</td>
+              <td>R$ ${(w.amount - w.fee).toFixed(2)}</td>
+              <td>${w.pixKey || 'Não informada'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <p style="margin-top: 20px;">Por favor, realize os pagamentos e atualize o status no sistema.</p>
+    `;
+
+    try {
+      await this.mailerService.sendMail({
+        to: recipients.join(','),
+        subject: `Repasse PIX Autorizado (${withdrawals.length} solicitações) - SuperFin`,
+        html: emailBody,
       });
-      console.log(`====================================================\n\n`);
+
+      console.log(`[EMAIL] Notificação enviada para ${recipients.join(', ')}`);
+    } catch (error) {
+      console.error('[EMAIL ERROR] Falha ao enviar e-mail:', error);
+      return { success: false, message: 'Erro ao enviar e-mail para o financeiro.' };
     }
 
     return { 
