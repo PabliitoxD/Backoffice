@@ -74,15 +74,6 @@ async function main() {
     return d;
   };
 
-  console.log('--- Gerando Transações (Volume Realista) ---');
-  const now = new Date();
-  const getDate = (daysAgo: number, hour: number) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() - daysAgo);
-    d.setHours(hour, 0, 0, 0);
-    return d;
-  };
-
   const transactionEntries = [];
   // Status pool based on user's list
   const statusPool = [
@@ -152,7 +143,8 @@ async function main() {
 
   console.log('--- Gerando Defesas de Chargeback (Apenas para cartões) ---');
   const cbTransactions = createdTransactions.filter(t => t.status === 'CHARGEBACK').slice(0, 10);
-  for (const tx of cbTransactions) {
+  for (let i = 0; i < cbTransactions.length; i++) {
+    const tx = cbTransactions[i];
     await prisma.chargebackDefense.create({
       data: {
         transactionId: tx.id,
