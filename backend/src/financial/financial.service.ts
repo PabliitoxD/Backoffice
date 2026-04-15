@@ -8,7 +8,9 @@ export class FinancialService {
   async getDashboardStats(startDateStr: string, endDateStr: string) {
     const startDate = new Date(startDateStr);
     const endDate = new Date(endDateStr);
-    const duration = endDate.getTime() - startDate.getTime() + 1000; // +1s to ensure full day if needed
+    endDate.setHours(23, 59, 59, 999); // Fix: Ensure the end date covers the full day
+    
+    const duration = endDate.getTime() - startDate.getTime();
 
     const prevStartDate = new Date(startDate.getTime() - duration);
     const prevEndDate = new Date(endDate.getTime() - duration);
@@ -174,15 +176,14 @@ export class FinancialService {
     transactionWhere.status = {
       in: [
         'APPROVED',
-        'REFUNDED',
+        'COMPLETED', // Added COMPLETED since it's an advanced APPROVED state
         'REVERSED',
+        'CLAIMED',
         'CHARGEBACK',
-        'COMPLETED',
-        'WAITING',
       ],
     };
     withdrawalWhere.status = {
-      in: ['APPROVED', 'COMPLETED', 'PENDING'],
+      in: ['PENDING', 'APPROVED', 'COMPLETED'],
     };
 
     if (search) {

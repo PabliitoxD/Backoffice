@@ -74,19 +74,44 @@ async function main() {
     return d;
   };
 
+  console.log('--- Gerando Transações (Volume Realista) ---');
+  const now = new Date();
+  const getDate = (daysAgo: number, hour: number) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - daysAgo);
+    d.setHours(hour, 0, 0, 0);
+    return d;
+  };
+
   const transactionEntries = [];
-  const statusPool = ['COMPLETED', 'APPROVED', 'COMPLETED', 'WAITING', 'CHARGEBACK', 'CHARGEBACK'];
+  // Status pool based on user's list
+  const statusPool = [
+    'APPROVED', 'COMPLETED', 'WAITING', 'EXIT-CHECKOUT', 
+    'REFUSED', 'NOT_COMPLETED', 'REVERSED', 'CLAIMED', 'CHARGEBACK'
+  ];
   const methods = ['PIX', 'Cartão de Crédito', 'Boleto'];
 
   for (let day = 0; day <= 30; day++) {
-    const dailyCount = day === 0 ? 12 : 4;
+    // High volume for today (day 0) to ensure dashboard is populated
+    const dailyCount = day === 0 ? 15 : 4;
     for (let i = 0; i < dailyCount; i++) {
       const prodIdx = Math.floor(Math.random() * producers.length);
       const custIdx = Math.floor(Math.random() * customers.length);
       const product = products[Math.floor(Math.random() * products.length)];
-      const status = statusPool[Math.floor(Math.random() * statusPool.length)];
-      const method = methods[i % 3];
       
+      const method = methods[i % 3];
+      let status = statusPool[Math.floor(Math.random() * statusPool.length)];
+
+      // Business Rule: CHARGEBACK, REFUSED, NOT_COMPLETED only for cards
+      if (['CHARGEBACK', 'REFUSED', 'NOT_COMPLETED'].includes(status) && method !== 'Cartão de Crédito') {
+        status = 'WAITING';
+      }
+      
+      // Business Rule: WAITING only for PIX or Boleto
+      if (status === 'WAITING' && method === 'Cartão de Crédito') {
+        status = 'NOT_COMPLETED';
+      }
+
       transactionEntries.push({
         producerId: producers[prodIdx].id,
         customerId: customers[custIdx].id,
@@ -96,8 +121,8 @@ async function main() {
         status,
         cardBrand: method === 'Cartão de Crédito' ? 'Mastercard' : null,
         condition: method === 'Cartão de Crédito' ? '12x' : null,
-        createdAt: getDate(day, 10 + (i % 8)),
-        approvedAt: ['COMPLETED', 'APPROVED'].includes(status) ? getDate(day, 11) : null,
+        createdAt: getDate(day, 8 + (i % 12)),
+        approvedAt: ['COMPLETED', 'APPROVED'].includes(status) ? getDate(day, 9) : null,
         chargebackAt: status === 'CHARGEBACK' ? getDate(day, 14) : null,
         installments: method === 'Cartão de Crédito' ? 12 : 1
       });
@@ -110,80 +135,81 @@ async function main() {
     createdTransactions.push(tx);
   }
 
-  console.log('--- Gerando Recebíveis (5-10 exemplos) ---');
-  const ccTransactions = createdTransactions.filter(t => t.method === 'Cartão de Crédito').slice(0, 10);
-  for (const tx of ccTransactions) {
+  console.log('--- Gerando Recebíveis (Alinhado com as transações) ---');
+  // Criar recebíveis para todas as transações APPROVED ou COMPLETED
+  const paidTransactions = createdTransactions.filter(t => ['APPROVED', 'COMPLETED'].includes(t.status));
+  for (const tx of paidTransactions) {
     await prisma.receivable.create({
       data: {
         transactionId: tx.id,
         installment: 1,
-        amount: tx.amount * 0.95, // 5% fee
-        status: ['COMPLETED', 'APPROVED'].includes(tx.status) ? 'AVAILABLE' : 'WAITING_FUNDS',
+        amount: tx.amount * 0.90, // 10% de taxa padrão
+        status: tx.status === 'COMPLETED' ? 'AVAILABLE' : 'WAITING_FUNDS',
         expectedAt: new Date(tx.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000),
       }
     });
   }
 
-  console.log('--- Gerando Defesas de Chargeback (5-10 exemplos) ---');
-  const cbTransactions = createdTransactions.filter(t => t.status === 'CHARGEBACK').slice(0, 8);
+  console.log('--- Gerando Defesas de Chargeback (Apenas para cartões) ---');
+  const cbTransactions = createdTransactions.filter(t => t.status === 'CHARGEBACK').slice(0, 10);
   for (const tx of cbTransactions) {
     await prisma.chargebackDefense.create({
       data: {
         transactionId: tx.id,
-        description: 'Defesa enviada com comprovante de entrega e logs de acesso.',
-        status: Math.random() > 0.5 ? 'SENT' : 'PENDING',
+        description: 'Defesa automática gerada: Comprovante de acesso via IP e e-mail disponível.',
+        status: i < 5 ? 'SENT' : 'PENDING',
         files: [
-          { name: 'documento.pdf', url: 'https://example.com/doc', type: 'application/pdf', size: 1024 },
-          { name: 'print.png', url: 'https://example.com/print', type: 'image/png', size: 512 }
+          { name: 'log_acesso.txt', url: 'https://example.com/log', type: 'text/plain', size: 1024 }
         ],
         submittedAt: tx.chargebackAt ? new Date(tx.chargebackAt.getTime() + 86400000) : new Date()
       }
     });
   }
 
-  console.log('--- Gerando Histórico de Transações (5-10 exemplos) ---');
-  const histTransactions = createdTransactions.slice(0, 10);
+  console.log('--- Gerando Histórico de Transações ---');
+  const histTransactions = createdTransactions.slice(0, 20);
   for (const tx of histTransactions) {
     await prisma.transactionHistory.create({
       data: {
         transactionId: tx.id,
         status: tx.status,
-        details: 'Status atualizado via Gateway de Pagamento.',
+        details: `Log de transação: Mudança de estado para ${tx.status}.`,
         createdAt: tx.createdAt
       }
     });
   }
 
   console.log('--- Gerando Saques (Todos PENDENTES) ---');
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     const prodIdx = i % producers.length;
     await prisma.withdrawal.create({
       data: {
-        amount: 250 + (i * 100),
+        amount: 500 + (Math.random() * 1000),
         status: 'PENDING',
         producerId: producers[prodIdx].id,
         pixKey: producers[prodIdx].pixKey,
-        createdAt: getDate(i + 1, 9)
+        createdAt: getDate(i % 5, 10)
       }
     });
   }
 
-  console.log('--- Gerando Logs de Auditoria (10 exemplos) ---');
-  const actionsPool = ['LOGIN', 'UPDATE_PRODUCT', 'CREATE_WITHDRAWAL', 'UPDATE_PRODUCER', 'VIEW_REVENUE'];
-  for (let i = 0; i < 10; i++) {
+  console.log('--- Gerando Logs de Auditoria ---');
+  const dashActions = ['LOGIN', 'VIEW_DASHBOARD', 'EXPORT_REPORT', 'UPDATE_SETTINGS', 'SEARCH_TRANSACTION'];
+  for (let i = 0; i < 15; i++) {
     await prisma.auditLog.create({
       data: {
-        action: actionsPool[i % actionsPool.length],
-        entity: i % 2 === 0 ? 'Transaction' : 'Producer',
-        ip: '127.0.0.1',
-        details: { message: `Simulação de ação ${i + 1}` },
-        createdAt: getDate(i, 11)
+        action: dashActions[i % dashActions.length],
+        entity: 'System',
+        ip: '189.122.33.1',
+        details: { info: `Ação de sistema efetuada` },
+        createdAt: getDate(i % 3, 11)
       }
     });
   }
 
   console.log('--- Seed finalizado com sucesso! ---');
   console.log(`Resumo: ${producers.length} produtores, ${products.length} produtos, ${createdTransactions.length} transações.`);
+
 
 }
 
