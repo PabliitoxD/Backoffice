@@ -75,16 +75,17 @@ async function main() {
   };
 
   const transactionEntries = [];
-  const statusPool = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'WAITING', 'CHARGEBACK', 'CHARGEBACK'];
+  const statusPool = ['COMPLETED', 'APPROVED', 'COMPLETED', 'WAITING', 'CHARGEBACK', 'CHARGEBACK'];
+  const methods = ['PIX', 'Cartão de Crédito', 'Boleto'];
 
   for (let day = 0; day <= 30; day++) {
-    const dailyCount = day === 0 ? 10 : 3;
+    const dailyCount = day === 0 ? 12 : 4;
     for (let i = 0; i < dailyCount; i++) {
       const prodIdx = Math.floor(Math.random() * producers.length);
       const custIdx = Math.floor(Math.random() * customers.length);
       const product = products[Math.floor(Math.random() * products.length)];
       const status = statusPool[Math.floor(Math.random() * statusPool.length)];
-      const method = i % 3 === 0 ? 'CARTAO_CREDITO' : i % 3 === 1 ? 'PIX' : 'BOLETO';
+      const method = methods[i % 3];
       
       transactionEntries.push({
         producerId: producers[prodIdx].id,
@@ -93,10 +94,12 @@ async function main() {
         amount: product.price,
         method,
         status,
-        createdAt: getDate(day, 10 + i),
-        approvedAt: status === 'COMPLETED' ? getDate(day, 11) : null,
+        cardBrand: method === 'Cartão de Crédito' ? 'Mastercard' : null,
+        condition: method === 'Cartão de Crédito' ? '12x' : null,
+        createdAt: getDate(day, 10 + (i % 8)),
+        approvedAt: ['COMPLETED', 'APPROVED'].includes(status) ? getDate(day, 11) : null,
         chargebackAt: status === 'CHARGEBACK' ? getDate(day, 14) : null,
-        installments: method === 'CARTAO_CREDITO' ? (Math.random() > 0.5 ? 12 : 1) : 1
+        installments: method === 'Cartão de Crédito' ? 12 : 1
       });
     }
   }
@@ -108,14 +111,14 @@ async function main() {
   }
 
   console.log('--- Gerando Recebíveis (5-10 exemplos) ---');
-  const ccTransactions = createdTransactions.filter(t => t.method === 'CARTAO_CREDITO').slice(0, 10);
+  const ccTransactions = createdTransactions.filter(t => t.method === 'Cartão de Crédito').slice(0, 10);
   for (const tx of ccTransactions) {
     await prisma.receivable.create({
       data: {
         transactionId: tx.id,
         installment: 1,
         amount: tx.amount * 0.95, // 5% fee
-        status: tx.status === 'COMPLETED' ? 'AVAILABLE' : 'WAITING_FUNDS',
+        status: ['COMPLETED', 'APPROVED'].includes(tx.status) ? 'AVAILABLE' : 'WAITING_FUNDS',
         expectedAt: new Date(tx.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000),
       }
     });
@@ -151,13 +154,13 @@ async function main() {
     });
   }
 
-  console.log('--- Gerando Saques (10 exemplos) ---');
+  console.log('--- Gerando Saques (Todos PENDENTES) ---');
   for (let i = 0; i < 10; i++) {
     const prodIdx = i % producers.length;
     await prisma.withdrawal.create({
       data: {
         amount: 250 + (i * 100),
-        status: i < 5 ? 'COMPLETED' : 'PENDING',
+        status: 'PENDING',
         producerId: producers[prodIdx].id,
         pixKey: producers[prodIdx].pixKey,
         createdAt: getDate(i + 1, 9)
@@ -166,11 +169,11 @@ async function main() {
   }
 
   console.log('--- Gerando Logs de Auditoria (10 exemplos) ---');
-  const actions = ['LOGIN', 'UPDATE_PRODUCT', 'CREATE_WITHDRAWAL', 'UPDATE_PRODUCER', 'VIEW_REVENUE'];
+  const actionsPool = ['LOGIN', 'UPDATE_PRODUCT', 'CREATE_WITHDRAWAL', 'UPDATE_PRODUCER', 'VIEW_REVENUE'];
   for (let i = 0; i < 10; i++) {
     await prisma.auditLog.create({
       data: {
-        action: actions[i % actions.length],
+        action: actionsPool[i % actionsPool.length],
         entity: i % 2 === 0 ? 'Transaction' : 'Producer',
         ip: '127.0.0.1',
         details: { message: `Simulação de ação ${i + 1}` },
@@ -181,6 +184,7 @@ async function main() {
 
   console.log('--- Seed finalizado com sucesso! ---');
   console.log(`Resumo: ${producers.length} produtores, ${products.length} produtos, ${createdTransactions.length} transações.`);
+
 }
 
 main()
