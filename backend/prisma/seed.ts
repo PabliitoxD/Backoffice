@@ -15,42 +15,50 @@ async function main() {
   console.log('Limpando Customer...'); await prisma.customer.deleteMany();
   console.log('Limpando Producer...'); await prisma.producer.deleteMany();
 
-  console.log('--- Criando Produtores e Produtos ---');
+  console.log('--- Criando 10 Produtores e 15 Produtos ---');
 
-  const producerNames = ['Super Player Games', 'Educa Mais Online', 'Fábrica de Apps', 'Designer Pro', 'Invest Master'];
+  const producerNames = [
+    'Super Player Games', 'Educa Mais Online', 'Fábrica de Apps', 'Designer Pro', 'Invest Master',
+    'Tech Solutions', 'Artes Digitais', 'Marketing Ninja', 'Code Academy', 'Health & Mind'
+  ];
+  
   const producers = await Promise.all(
     producerNames.map((name, i) => 
       prisma.producer.create({
         data: {
           name,
-          document: `112223330001${i}0`,
+          document: `112223330001${i}0`.slice(0, 14),
           email: `${name.toLowerCase().replace(/ /g, '.')}@email.com`,
-          pixKey: `${name.toLowerCase().replace(/ /g, '.')}@pix.com`
+          pixKey: `${name.toLowerCase().replace(/ /g, '.')}@pix.com`,
+          status: 'ACTIVE'
         }
       })
     )
   );
 
   const products = await Promise.all(
-    producers.map((p, i) => 
-      prisma.product.create({
+    Array.from({ length: 15 }).map((_, i) => {
+      const pIdx = i % producers.length;
+      return prisma.product.create({
         data: {
-          code: `PROD-${i}${i}${i}`,
-          name: `Produto Especial ${p.name}`,
-          price: 50 + (i * 150),
-          producerId: p.id
+          code: `PROD-${100 + i}`,
+          name: `Produto Premium #${i + 1}`,
+          price: 97 + (i * 47),
+          producerId: producers[pIdx].id
         }
-      })
-    )
+      });
+    })
   );
 
+  console.log('--- Criando 20 Clientes ---');
   const customers = await Promise.all(
     Array.from({ length: 20 }).map((_, i) => 
       prisma.customer.create({
         data: {
           name: `Cliente Teste ${i + 1}`,
-          document: `1112223334${i}`,
-          email: `cliente${i + 1}@email.com`
+          document: `1112223334${i}`.slice(0, 11),
+          email: `cliente${i + 1}@email.com`,
+          type: i % 5 === 0 ? 'Pessoa jurídica' : 'Pessoa física'
         }
       })
     )
@@ -58,7 +66,6 @@ async function main() {
 
   console.log('--- Gerando Transações (Volume Realista) ---');
   const now = new Date();
-  
   const getDate = (daysAgo: number, hour: number) => {
     const d = new Date(now);
     d.setDate(d.getDate() - daysAgo);
@@ -67,19 +74,17 @@ async function main() {
   };
 
   const transactionEntries = [];
+  const statusPool = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'WAITING', 'CHARGEBACK', 'CHARGEBACK'];
 
   for (let day = 0; day <= 30; day++) {
-    const transactionCount = day === 0 ? 15 : day === 1 ? 10 : Math.floor(Math.random() * 8) + 2;
-
-    for (let i = 0; i < transactionCount; i++) {
+    const dailyCount = day === 0 ? 10 : 3;
+    for (let i = 0; i < dailyCount; i++) {
       const prodIdx = Math.floor(Math.random() * producers.length);
       const custIdx = Math.floor(Math.random() * customers.length);
-      const product = products[prodIdx];
-      const method = i % 3 === 0 ? 'PIX' : i % 3 === 1 ? 'CARTAO_CREDITO' : 'BOLETO';
+      const product = products[Math.floor(Math.random() * products.length)];
+      const status = statusPool[Math.floor(Math.random() * statusPool.length)];
+      const method = i % 3 === 0 ? 'CARTAO_CREDITO' : i % 3 === 1 ? 'PIX' : 'BOLETO';
       
-      const isChargeback = day > 2 && Math.random() > 0.95;
-      const status = isChargeback ? 'CHARGEBACK' : 'COMPLETED';
-
       transactionEntries.push({
         producerId: producers[prodIdx].id,
         customerId: customers[custIdx].id,
@@ -87,50 +92,94 @@ async function main() {
         amount: product.price,
         method,
         status,
-        createdAt: getDate(day, 10 + (i % 8)),
+        createdAt: getDate(day, 10 + i),
         approvedAt: status === 'COMPLETED' ? getDate(day, 11) : null,
-        chargebackAt: isChargeback ? getDate(day - 1, 14) : null,
+        chargebackAt: status === 'CHARGEBACK' ? getDate(day, 14) : null,
         installments: method === 'CARTAO_CREDITO' ? (Math.random() > 0.5 ? 12 : 1) : 1
       });
     }
   }
 
-  await Promise.all(transactionEntries.map(tx => prisma.transaction.create({ data: tx })));
+  const createdTransactions = [];
+  for (const entry of transactionEntries) {
+    const tx = await prisma.transaction.create({ data: entry });
+    createdTransactions.push(tx);
+  }
 
-  console.log('--- Gerando Saques ---');
-  for (let i = 0; i < 10; i++) {
-    const prodIdx = Math.floor(Math.random() * producers.length);
-    const status = i < 7 ? 'PROCESSADO' : 'PENDENTE';
-    
-    await prisma.withdrawal.create({
+  console.log('--- Gerando Recebíveis (5-10 exemplos) ---');
+  const ccTransactions = createdTransactions.filter(t => t.method === 'CARTAO_CREDITO').slice(0, 10);
+  for (const tx of ccTransactions) {
+    await prisma.receivable.create({
       data: {
-        amount: 500 + (Math.random() * 2000),
-        fee: 5.00,
-        status,
-        producerId: producers[prodIdx].id,
-        pixKey: producers[prodIdx].pixKey,
-        createdAt: getDate(i, 9),
-        updatedAt: getDate(i, 15)
+        transactionId: tx.id,
+        installment: 1,
+        amount: tx.amount * 0.95, // 5% fee
+        status: tx.status === 'COMPLETED' ? 'AVAILABLE' : 'WAITING_FUNDS',
+        expectedAt: new Date(tx.createdAt.getTime() + 30 * 24 * 60 * 60 * 1000),
       }
     });
   }
 
-  for (let i = 0; i < 5; i++) {
-    await prisma.transaction.create({
+  console.log('--- Gerando Defesas de Chargeback (5-10 exemplos) ---');
+  const cbTransactions = createdTransactions.filter(t => t.status === 'CHARGEBACK').slice(0, 8);
+  for (const tx of cbTransactions) {
+    await prisma.chargebackDefense.create({
       data: {
-        producerId: producers[0].id,
-        customerId: customers[0].id,
-        productId: products[0].id,
-        amount: 5000,
-        method: 'PIX',
-        status: 'COMPLETED',
-        createdAt: getDate(1, 10)
+        transactionId: tx.id,
+        description: 'Defesa enviada com comprovante de entrega e logs de acesso.',
+        status: Math.random() > 0.5 ? 'SENT' : 'PENDING',
+        files: [
+          { name: 'documento.pdf', url: 'https://example.com/doc', type: 'application/pdf', size: 1024 },
+          { name: 'print.png', url: 'https://example.com/print', type: 'image/png', size: 512 }
+        ],
+        submittedAt: tx.chargebackAt ? new Date(tx.chargebackAt.getTime() + 86400000) : new Date()
+      }
+    });
+  }
+
+  console.log('--- Gerando Histórico de Transações (5-10 exemplos) ---');
+  const histTransactions = createdTransactions.slice(0, 10);
+  for (const tx of histTransactions) {
+    await prisma.transactionHistory.create({
+      data: {
+        transactionId: tx.id,
+        status: tx.status,
+        details: 'Status atualizado via Gateway de Pagamento.',
+        createdAt: tx.createdAt
+      }
+    });
+  }
+
+  console.log('--- Gerando Saques (10 exemplos) ---');
+  for (let i = 0; i < 10; i++) {
+    const prodIdx = i % producers.length;
+    await prisma.withdrawal.create({
+      data: {
+        amount: 250 + (i * 100),
+        status: i < 5 ? 'COMPLETED' : 'PENDING',
+        producerId: producers[prodIdx].id,
+        pixKey: producers[prodIdx].pixKey,
+        createdAt: getDate(i + 1, 9)
+      }
+    });
+  }
+
+  console.log('--- Gerando Logs de Auditoria (10 exemplos) ---');
+  const actions = ['LOGIN', 'UPDATE_PRODUCT', 'CREATE_WITHDRAWAL', 'UPDATE_PRODUCER', 'VIEW_REVENUE'];
+  for (let i = 0; i < 10; i++) {
+    await prisma.auditLog.create({
+      data: {
+        action: actions[i % actions.length],
+        entity: i % 2 === 0 ? 'Transaction' : 'Producer',
+        ip: '127.0.0.1',
+        details: { message: `Simulação de ação ${i + 1}` },
+        createdAt: getDate(i, 11)
       }
     });
   }
 
   console.log('--- Seed finalizado com sucesso! ---');
-  console.log(`Resumo: ${producers.length} produtores, ${transactionEntries.length} transações geradas.`);
+  console.log(`Resumo: ${producers.length} produtores, ${products.length} produtos, ${createdTransactions.length} transações.`);
 }
 
 main()
@@ -141,3 +190,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
