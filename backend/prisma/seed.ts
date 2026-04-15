@@ -27,7 +27,7 @@ async function main() {
       prisma.producer.create({
         data: {
           name,
-          document: `112223330001${i}0`.slice(0, 14),
+          document: `112223330001${String(i).padStart(2, '0')}`,
           email: `${name.toLowerCase().replace(/ /g, '.')}@email.com`,
           pixKey: `${name.toLowerCase().replace(/ /g, '.')}@pix.com`,
           status: 'ACTIVE'
@@ -56,13 +56,14 @@ async function main() {
       prisma.customer.create({
         data: {
           name: `Cliente Teste ${i + 1}`,
-          document: `1112223334${i}`.slice(0, 11),
+          document: `111222333${String(i).padStart(2, '0')}`,
           email: `cliente${i + 1}@email.com`,
           type: i % 5 === 0 ? 'Pessoa jurídica' : 'Pessoa física'
         }
       })
     )
   );
+
 
   console.log('--- Gerando Transações (Volume Realista) ---');
   const now = new Date();
