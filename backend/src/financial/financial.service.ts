@@ -19,11 +19,11 @@ export class FinancialService {
       whereClause.createdAt = { lte: new Date(endDate) };
     }
 
-    const transactionWhere = { 
+    const transactionWhere: any = { 
       ...whereClause,
       status: { in: ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'] }
     };
-    const withdrawalWhere = { 
+    const withdrawalWhere: any = { 
       ...whereClause,
       status: { in: ['COMPLETED'] }
     };
@@ -68,8 +68,8 @@ export class FinancialService {
       if (isDebit) impact = -t.amount;
 
       let installments = '';
-      if (t.method === 'Cartão de Crédito' && t.installments) {
-        installments = `${t.installments}x`;
+      if (t.method === 'Cartão de Crédito' && (t as any).installments) {
+        installments = `${(t as any).installments}x`;
       }
 
       return {
