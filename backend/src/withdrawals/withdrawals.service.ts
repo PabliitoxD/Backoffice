@@ -9,10 +9,41 @@ export class WithdrawalsService {
     private mailService: MailService,
   ) {}
 
-  async findAll(status?: string) {
+  async create(data: any) {
+    return this.prisma.withdrawal.create({
+      data: {
+        amount: data.amount,
+        status: 'PENDING',
+        producerId: data.producerId,
+        pixKey: data.pixKey,
+        fee: data.fee || 0,
+      },
+    });
+  }
+
+  async findAll(filters: any) {
+    const { status, producerId, startDate, endDate, search } = filters;
     const where: any = {};
+
     if (status && status !== 'ALL') {
       where.status = status;
+    }
+
+    if (producerId) {
+      where.producerId = producerId;
+    }
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: 'insensitive' } },
+        { producer: { name: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     return this.prisma.withdrawal.findMany({
