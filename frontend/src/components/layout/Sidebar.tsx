@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import './Sidebar.css';
+import { X } from 'lucide-react';
 
 // Mock data for navigation links
 const NAV_ITEMS = [
@@ -7,26 +8,60 @@ const NAV_ITEMS = [
   { label: 'Clientes', href: '/clients', icon: '👥' },
   { label: 'Planos e Liquidação', href: '/plans', icon: '💳' },
   { label: 'Transações', href: '/transactions', icon: '💰' },
-  { label: 'Extrato', href: '/financial/statement', icon: '🧾' },
+  { 
+    label: 'Extrato', 
+    href: '/financial/statement', 
+    icon: '🧾',
+    subItems: [
+      { label: 'Recebíveis', href: '/financial/receivables' }
+    ]
+  },
   { label: 'Saques', href: '/financial/withdrawals', icon: '🏦' },
   { label: 'Chargebacks', href: '/financial/chargebacks', icon: '⚠️' },
   { label: 'Configurações', href: '/settings', icon: '⚙️' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <h2>Admin Pro</h2>
+        <button className="sidebar-close" onClick={onClose} aria-label="Close Menu">
+          <X size={24} />
+        </button>
       </div>
       <nav className="sidebar-nav">
         <ul>
           {NAV_ITEMS.map((item) => (
-            <li key={item.href}>
-              <Link href={item.href} className="sidebar-link">
+            <li key={item.label}>
+              <Link href={item.href} className="sidebar-link" onClick={() => {
+                if (window.innerWidth < 1024) onClose();
+              }}>
                 <span className="sidebar-icon">{item.icon}</span>
                 {item.label}
               </Link>
+              {item.subItems && (
+                <ul className="sidebar-submenu">
+                  {item.subItems.map((subItem) => (
+                    <li key={subItem.label}>
+                      <Link 
+                        href={subItem.href} 
+                        className="sidebar-submenu-link"
+                        onClick={() => {
+                          if (window.innerWidth < 1024) onClose();
+                        }}
+                      >
+                        {subItem.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>

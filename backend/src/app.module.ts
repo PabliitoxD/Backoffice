@@ -2,6 +2,8 @@ import { Module, Global } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
+import { ConfigModule } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
 import { ProducersModule } from './producers/producers.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { WithdrawalsModule } from './withdrawals/withdrawals.module';
@@ -15,6 +17,21 @@ import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT),
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      },
+      defaults: {
+        from: process.env.SMTP_FROM,
+      },
+    }),
     AuthModule,
     UsersModule,
     ProfilesModule,

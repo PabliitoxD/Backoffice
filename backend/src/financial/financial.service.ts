@@ -7,6 +7,7 @@ export class FinancialService {
 
   async getGlobalStatement(startDate?: string, endDate?: string, search?: string) {
     const whereClause: any = {};
+
     if (startDate && endDate) {
       whereClause.createdAt = {
         gte: new Date(startDate),
@@ -39,16 +40,17 @@ export class FinancialService {
       ];
     }
 
-    // Busca todas as transações (ordenadas pelas mais recentes)
     const transactions = await this.prisma.transaction.findMany({
       where: transactionWhere,
       include: {
         producer: { select: { name: true } },
+        customer: true,
+        product: true,
+        history: { orderBy: { createdAt: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    // Busca todos os saques
     const withdrawals = await this.prisma.withdrawal.findMany({
       where: withdrawalWhere,
       include: {
@@ -57,11 +59,7 @@ export class FinancialService {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Remapear transações para o formato unificado do extrato
     const mappedTransactions = transactions.map((t) => {
-      // Impacto no Saldo: 
-      // APPROVED/COMPLETED = Adiciona saldo (crédito)
-      // CHARGEBACK/REFUNDED/REVERSED/CLAIMED = Retira saldo (débito)
       const isCredit = ['APPROVED', 'COMPLETED'].includes(t.status);
       const isDebit = ['CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'].includes(t.status);
       
@@ -69,8 +67,14 @@ export class FinancialService {
       if (isCredit) impact = t.amount;
       if (isDebit) impact = -t.amount;
 
+      let installments = '';
+      if (t.method === 'Cartão de Crédito' && t.installments) {
+        installments = `${t.installments}x`;
+      }
+
       return {
         id: `tx-${t.id}`,
+        originalId: t.id,
         type: 'TRANSACTION',
         description: `Venda (#${t.id.slice(0, 8)})`,
         producerName: t.producer.name,
@@ -79,13 +83,17 @@ export class FinancialService {
         impact, 
         status: t.status,
         date: t.createdAt,
+        method: t.method || '',
+        installments,
+        cardBrand: t.cardBrand || '',
+        customer: t.customer,
+        product: t.product,
+        history: t.history,
       };
     });
 
-    // Remapear saques para o formato unificado do extrato
     const mappedWithdrawals = withdrawals.map((w) => {
-      // Apenas saques processados (COMPLETED) entram no extrato conforme regra de negócio
-      const impact = -w.amount; // Deduz o valor total solicitado (valor líquido + tarifa)
+      const impact = -w.amount;
 
       return {
         id: `wt-${w.id}`,
@@ -93,26 +101,31 @@ export class FinancialService {
         description: `Saque Realizado`,
         producerName: w.producer.name,
         amount: w.amount,
-        fee: w.fee, // Tarifa do saque
+        fee: w.fee,
         impact,
         status: w.status,
         date: w.createdAt,
+        method: 'TRANSFER',
+        installments: '',
+        cardBrand: '',
       };
     });
 
-    // Unir tudo numa única timeline ordenada de forma decrescente
-    const statement = [...mappedTransactions, ...mappedWithdrawals].sort(
+    const combined = [...mappedTransactions, ...mappedWithdrawals].sort(
       (a, b) => b.date.getTime() - a.date.getTime(),
     );
 
-    return statement;
+    let currentBalance = 0;
+    // Note: To have a true running balance, you'd need the initial balance before the filter period.
+    // For now, we return the items as a list.
+    
+    return combined;
   }
 
   async getDashboardSummary() {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // 1. Total Volume (All time and current month)
     const totalVolumeAgg = await this.prisma.transaction.aggregate({
       where: { status: { in: ['APPROVED', 'COMPLETED'] } },
       _sum: { amount: true },
@@ -126,18 +139,15 @@ export class FinancialService {
       _sum: { amount: true },
     });
 
-    // 2. Producers (Total active)
     const activeProducersCount = await this.prisma.producer.count({
       where: { status: 'ACTIVE' },
     });
 
-    // 3. Customers (Total and new this month)
     const totalCustomersCount = await this.prisma.customer.count();
     const monthCustomersCount = await this.prisma.customer.count({
       where: { createdAt: { gte: startOfMonth } },
     });
 
-    // 4. Pending Withdrawals
     const pendingWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
       where: { status: 'PENDING' },
       _sum: { amount: true },

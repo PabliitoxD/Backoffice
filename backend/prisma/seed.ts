@@ -4,13 +4,15 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('--- Iniciando Limpeza de Dados ---');
+  console.log('--- Iniciando Limpeza de Dados (Reset Total) ---');
   
   // Limpeza em ordem para evitar erros de chave estrangeira
+  await prisma.auditLog.deleteMany({});
+  await prisma.chargebackDefense.deleteMany({});
+  await prisma.receivable.deleteMany({});
   await prisma.transactionHistory.deleteMany({});
   await prisma.transaction.deleteMany({});
   await prisma.withdrawal.deleteMany({});
-  await prisma.auditLog.deleteMany({});
   await prisma.product.deleteMany({});
   await prisma.customer.deleteMany({});
   await prisma.producer.deleteMany({});
@@ -47,26 +49,21 @@ async function main() {
 
   // 3. Criar Clientes (10 exemplos)
   const customersData = [
-    { name: 'João Ricardo Silva', document: '123.456.789-01', email: 'joao.silva@email.com' },
-    { name: 'Maria Eduarda Santos', document: '234.567.890-12', email: 'maria.santos@gmail.com' },
-    { name: 'Carlos Augusto Ferreira', document: '345.678.901-23', email: 'carlos.augusto@outlook.com' },
-    { name: 'Ana Beatriz Souza', document: '456.789.012-34', email: 'ana.souza@yahoo.com' },
-    { name: 'Ricardo Alberto Lima', document: '567.890.123-45', email: 'ricardo.lima@email.com' },
-    { name: 'Fernanda Oliveira Costa', document: '678.901.234-56', email: 'fernanda.costa@gmail.com' },
-    { name: 'Juliana Paes Gomes', document: '789.012.345-67', email: 'juliana.gomes@outlook.com' },
-    { name: 'Lucas Gabriel Martins', document: '890.123.456-78', email: 'lucas.martins@email.com' },
-    { name: 'Camila Vitória Rocha', document: '901.234.567-89', email: 'camila.rocha@gmail.com' },
-    { name: 'Gabriel Henrique Silva', document: '012.345.678-90', email: 'gabriel.silva@outlook.com' },
+    { name: 'João Ricardo Silva', document: '12345678901', email: 'joao.silva@email.com' },
+    { name: 'Maria Eduarda Santos', document: '23456789012', email: 'maria.santos@gmail.com' },
+    { name: 'Carlos Augusto Ferreira', document: '34567890123', email: 'carlos.augusto@outlook.com' },
+    { name: 'Ana Beatriz Souza', document: '45678901234', email: 'ana.souza@yahoo.com' },
+    { name: 'Ricardo Alberto Lima', document: '56789012345', email: 'ricardo.lima@email.com' },
+    { name: 'Fernanda Oliveira Costa', document: '67890123456', email: 'fernanda.costa@gmail.com' },
+    { name: 'Juliana Paes Gomes', document: '78901234567', email: 'juliana.gomes@outlook.com' },
+    { name: 'Lucas Gabriel Martins', document: '89012345678', email: 'lucas.martins@email.com' },
+    { name: 'Camila Vitória Rocha', document: '90123456789', email: 'camila.rocha@gmail.com' },
+    { name: 'Gabriel Henrique Silva', document: '01234567890', email: 'gabriel.silva@outlook.com' },
   ];
 
   const createdCustomers = [];
   for (const c of customersData) {
-    const customer = await prisma.customer.create({ 
-      data: {
-        ...c,
-        document: c.document.replace(/\D/g, '') // Remove formatação para o DB
-      } 
-    });
+    const customer = await prisma.customer.create({ data: c });
     createdCustomers.push(customer);
   }
 
@@ -96,7 +93,7 @@ async function main() {
     const amount = 50.0 + (Math.random() * 500);
     const date = new Date(2026, 3, 1 + (i % 16)); // Abril 1-16, 2026
     
-    await prisma.transaction.create({
+    const tx = await prisma.transaction.create({
       data: {
         producerId: createdProducers[i % createdProducers.length].id,
         customerId: createdCustomers[i % createdCustomers.length].id,
@@ -111,6 +108,19 @@ async function main() {
         chargebackObservation: status === 'CHARGEBACK' ? 'Contestação de teste realizada pelo gateway.' : null
       }
     });
+
+    // Criar Recebível para transações aprovadas/concluídas
+    if (['APPROVED', 'COMPLETED'].includes(status)) {
+       await prisma.receivable.create({
+         data: {
+           transactionId: tx.id,
+           installment: 1,
+           amount: amount * 0.95, // 5% taxa
+           status: status === 'COMPLETED' ? 'AVAILABLE' : 'WAITING_FUNDS',
+           expectedAt: new Date(date.getTime() + 30 * 24 * 60 * 60 * 1000)
+         }
+       });
+    }
   }
 
   // 6. Criar Saques (PENDING, 5 exemplos)
@@ -129,7 +139,6 @@ async function main() {
   }
 
   console.log('--- Seed Concluído com Sucesso ---');
-  console.log('Dica: Foram criados 5 produtores, 10 clientes e 30 transações focadas no mês de Abril/2026.');
 }
 
 main()

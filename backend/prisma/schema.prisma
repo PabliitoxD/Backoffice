@@ -69,7 +69,11 @@ model Transaction {
   customer Customer @relation(fields: [customerId], references: [id])
   product  Product  @relation(fields: [productId], references: [id])
 
+  installments          Int?      @default(1)
+
   history TransactionHistory[]
+  receivables Receivable[]
+  chargebackDefenses ChargebackDefense[]
 }
 
 model TransactionHistory {
@@ -130,4 +134,31 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id])
+}
+
+model ChargebackDefense {
+  id            String   @id @default(uuid())
+  transactionId String
+  description   String
+  files         Json     // [{ name, url, type, size }]
+  status        String   @default("PENDING") // PENDING, SENT, ACCEPTED, REJECTED
+  acquirerRef   String?  // referência retornada pela adquirente
+  submittedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+}
+
+model Receivable {
+  id             String      @id @default(uuid())
+  transactionId  String
+  installment    Int         
+  amount         Float       
+  status         String      @default("WAITING_FUNDS") // WAITING_FUNDS, AVAILABLE, PAID
+  expectedAt     DateTime    
+  availableAt    DateTime?   
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  transaction    Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 }

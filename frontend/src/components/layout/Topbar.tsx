@@ -2,17 +2,25 @@
 
 import './Topbar.css';
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Menu } from "lucide-react";
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const { theme, setTheme } = useTheme();
 
   return (
     <header className="topbar">
-      <div className="topbar-search">
-        {/* Mock Search Bar for prototype */}
-        <span className="search-icon">🔍</span>
-        <input type="text" placeholder="Pesquisar..." className="search-input" />
+      <div className="topbar-left">
+        <button className="menu-toggle" onClick={onMenuClick} aria-label="Toggle Menu">
+          <Menu size={24} />
+        </button>
+        <div className="topbar-search">
+          <span className="search-icon">🔍</span>
+          <input type="text" placeholder="Pesquisar..." className="search-input" />
+        </div>
       </div>
 
       <div className="topbar-actions">

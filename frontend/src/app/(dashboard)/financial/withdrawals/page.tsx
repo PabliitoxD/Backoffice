@@ -22,6 +22,7 @@ export default function WithdrawalsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const statusMap: Record<string, string> = {
     'PENDING': 'Pendente',
@@ -30,13 +31,20 @@ export default function WithdrawalsPage() {
     'COMPLETED': 'Processado'
   };
 
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const getStatusBadgeClass = (status: string) => {
+    switch(status) {
+      case 'PENDING': return styles.badgeWarning;
+      case 'APPROVED': return styles.badgeSecondary;
+      case 'COMPLETED': return styles.badgeCredit;
+      case 'REFUSED': return styles.badgeDebit;
+      default: return styles.badgeInfo;
+    }
+  };
 
   const fetchWithdrawals = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      // Build query params
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -49,12 +57,6 @@ export default function WithdrawalsPage() {
       if (res.ok) {
          const data = await res.json();
          setWithdrawals(data);
-      } else {
-        // Mock se falhar
-        setWithdrawals([
-          { id: 'wt-11', amount: 1500, fee: 5.0, status: 'PENDING', producer: { name: 'Acme Corp' }, createdAt: new Date().toISOString() },
-          { id: 'wt-22', amount: 320, fee: 5.0, status: 'PENDING', producer: { name: 'Tech Solutions' }, createdAt: new Date(Date.now() - 3600000).toISOString() }
-        ]);
       }
     } catch(e) {
       console.error(e);
@@ -140,11 +142,10 @@ export default function WithdrawalsPage() {
       
       if (res.ok) {
         alert("Operação realizada com sucesso!");
-        fetchWithdrawals(); // Recarrega
+        fetchWithdrawals();
         setModalData(null);
       } else {
         alert("Erro ao realizar operação");
-        setWithdrawals(prev => prev.filter(w => w.id !== id)); // Mock behavior
         setModalData(null);
       }
     } catch(e) {
@@ -218,7 +219,7 @@ export default function WithdrawalsPage() {
                 onClick={handleNotifyFinance}
                 style={{ cursor: 'pointer', padding: '0.5rem 1rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600 }}
               >
-                Notificar Financeiro (E-mail)
+                Notificar Financeiro
               </button>
             </div>
           )}
@@ -248,12 +249,12 @@ export default function WithdrawalsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Carregando solicitações...</td></tr>
+                <tr><td colSpan={9} className={styles.emptyState}>Carregando solicitações...</td></tr>
               ) : withdrawals.length === 0 ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Nenhuma solicitação pendente no momento.</td></tr>
+                <tr><td colSpan={9} className={styles.emptyState}>Nenhuma solicitação encontrada.</td></tr>
               ) : (
                 withdrawals.map((item) => {
-                  const fee = item.fee || 5.00; // Mock fee if undefined
+                  const fee = item.fee || 5.00;
                   const payout = item.amount - fee;
                   return (
                     <tr 
@@ -263,8 +264,6 @@ export default function WithdrawalsPage() {
                         backgroundColor: selectedIds.includes(item.id) ? '#f0f9ff' : 'transparent',
                         cursor: 'pointer'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = selectedIds.includes(item.id) ? '#e0f2fe' : 'var(--bg-secondary)'}
-                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedIds.includes(item.id) ? '#f0f9ff' : 'transparent'}
                     >
                       <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <input 
@@ -281,7 +280,7 @@ export default function WithdrawalsPage() {
                       <td className={styles.textMuted}>{formatCurrency(fee)}</td>
                       <td className={styles.fontWeightMedium} style={{ color: '#10b981' }}>{formatCurrency(payout)}</td>
                       <td>
-                        <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                        <span className={`${styles.badge} ${getStatusBadgeClass(item.status)}`}>
                           {statusMap[item.status] || item.status}
                         </span>
                       </td>
@@ -409,7 +408,7 @@ export default function WithdrawalsPage() {
               <div style={{ display: 'flex', gap: '2rem' }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Status</div>
-                  <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                  <span className={`${styles.badge} ${getStatusBadgeClass(infoModalData.status)}`}>
                     {statusMap[infoModalData.status] || infoModalData.status}
                   </span>
                 </div>
@@ -439,7 +438,7 @@ export default function WithdrawalsPage() {
               <div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Motivo / Observação</div>
                 <div style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border-color)', borderRadius: '6px', minHeight: '60px', color: 'var(--text-main)', fontStyle: infoModalData.observation ? 'normal' : 'italic', fontSize: '0.95rem' }}>
-                  {infoModalData.observation || 'Não há observações operacionais registradas para alterar este status.'}
+                  {infoModalData.observation || 'Não há observações operacionais registradas.'}
                 </div>
               </div>
             </div>
@@ -450,11 +449,13 @@ export default function WithdrawalsPage() {
                 style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
                 onClick={() => setInfoModalData(null)}
               >
-                Fechar Painel
+                Fechar
               </button>
             </div>
           </div>
         </div>
+      )}
+
       {isPreviewModalOpen && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
           <div style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', padding: '2rem', borderRadius: '12px', width: '800px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)' }}>
