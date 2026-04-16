@@ -12,8 +12,11 @@ export class FinancialController {
 
   @Get('dashboard-summary')
   @ApiOperation({ summary: 'Obtem o resumo estatístico para o dashboard principal' })
-  getDashboardSummary() {
-    return this.financialService.getDashboardSummary();
+  getDashboardSummary(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.financialService.getDashboardSummary(startDate, endDate);
   }
 
   @Get('statement')

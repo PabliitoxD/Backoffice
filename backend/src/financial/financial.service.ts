@@ -122,20 +122,27 @@ export class FinancialService {
     return combined;
   }
 
-  async getDashboardSummary() {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  async getDashboardSummary(startDate?: string, endDate?: string) {
+    const periodWhere: any = {};
+    if (startDate || endDate) {
+      periodWhere.createdAt = {};
+      if (startDate) periodWhere.createdAt.gte = new Date(startDate);
+      if (endDate) periodWhere.createdAt.lte = new Date(endDate);
+    }
 
-    const totalVolumeAgg = await this.prisma.transaction.aggregate({
-      where: { status: { in: ['APPROVED', 'COMPLETED'] } },
+    // Total Volume (Filtered by period)
+    const periodVolumeAgg = await this.prisma.transaction.aggregate({
+      where: { 
+        ...periodWhere,
+        status: { in: ['APPROVED', 'COMPLETED'] } 
+      },
       _sum: { amount: true },
+      _count: true,
     });
 
-    const monthVolumeAgg = await this.prisma.transaction.aggregate({
-      where: {
-        status: { in: ['APPROVED', 'COMPLETED'] },
-        createdAt: { gte: startOfMonth },
-      },
+    // All-time Volume (Always global)
+    const totalVolumeAgg = await this.prisma.transaction.aggregate({
+      where: { status: { in: ['APPROVED', 'COMPLETED'] } },
       _sum: { amount: true },
     });
 
@@ -143,10 +150,13 @@ export class FinancialService {
       where: { status: 'ACTIVE' },
     });
 
-    const totalCustomersCount = await this.prisma.customer.count();
-    const monthCustomersCount = await this.prisma.customer.count({
-      where: { createdAt: { gte: startOfMonth } },
+    // Customers (Filtered by period)
+    const periodCustomersCount = await this.prisma.customer.count({
+      where: periodWhere,
     });
+
+    // All-time Customers
+    const totalCustomersCount = await this.prisma.customer.count();
 
     const pendingWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
       where: { status: 'PENDING' },
@@ -155,11 +165,12 @@ export class FinancialService {
     });
 
     return {
+      periodVolume: periodVolumeAgg._sum.amount || 0,
+      periodCount: periodVolumeAgg._count || 0,
       totalVolume: totalVolumeAgg._sum.amount || 0,
-      monthVolume: monthVolumeAgg._sum.amount || 0,
       activeProducers: activeProducersCount || 0,
       totalCustomers: totalCustomersCount || 0,
-      monthCustomers: monthCustomersCount || 0,
+      periodCustomers: periodCustomersCount || 0,
       pendingWithdrawalsVolume: pendingWithdrawalsAgg._sum.amount || 0,
       pendingWithdrawalsCount: pendingWithdrawalsAgg._count || 0,
     };

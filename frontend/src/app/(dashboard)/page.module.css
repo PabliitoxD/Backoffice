@@ -1,14 +1,87 @@
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2rem;
   padding: 1rem 0;
 }
 
 .header {
   display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.headerTitle {
+  display: flex;
   flex-direction: column;
+  gap: 0.25rem;
+}
+
+.filterContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.filterBtn {
+  padding: 0.4rem 1rem;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filterBtn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.filterBtnActive {
+  background: var(--primary-color);
+  color: white !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.customDateGroup {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.dateInput {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  padding: 0.2rem 0.25rem;
+  font-size: 0.8rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.dateInput::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
 }
 
 .errorBanner {
@@ -78,7 +151,7 @@
 
 .trendDown {
   background-color: rgba(245, 158, 11, 0.1);
-  color: #f59e0b; /* Using warning color for pending as it's not "bad" just waiting */
+  color: #f59e0b;
 }
 
 /* Skeleton Loading Animation */

@@ -9,15 +9,14 @@ export class WithdrawalsService {
     private mailService: MailService,
   ) {}
 
-  async create(data: { amount: number; producerId: string }) {
+  async create(data: any) {
     return this.prisma.withdrawal.create({
       data: {
         amount: data.amount,
-        producerId: data.producerId,
         status: 'PENDING',
-      },
-      include: {
-        producer: true,
+        producerId: data.producerId,
+        pixKey: data.pixKey,
+        fee: data.fee || 0,
       },
     });
   }
@@ -29,20 +28,27 @@ export class WithdrawalsService {
     endDate?: string;
     search?: string;
   }) {
+    const { status, producerId, startDate, endDate, search } = filters;
     const where: any = {};
-    if (filters.producerId) where.producerId = filters.producerId;
-    if (filters.status && filters.status !== 'ALL') where.status = filters.status;
-    
-    if (filters.startDate || filters.endDate) {
-      where.createdAt = {};
-      if (filters.startDate) where.createdAt.gte = new Date(filters.startDate);
-      if (filters.endDate) where.createdAt.lte = new Date(filters.endDate);
+
+    if (status && status !== 'ALL') {
+      where.status = status;
     }
 
-    if (filters.search) {
+    if (producerId) {
+      where.producerId = producerId;
+    }
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    if (search) {
       where.OR = [
-        { id: { contains: filters.search, mode: 'insensitive' } },
-        { producer: { name: { contains: filters.search, mode: 'insensitive' } } },
+        { id: { contains: search, mode: 'insensitive' } },
+        { producer: { name: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
