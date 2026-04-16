@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class WithdrawalsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService
+  ) {}
 
   async create(data: { amount: number; producerId: string }) {
     return this.prisma.withdrawal.create({
@@ -54,9 +56,17 @@ export class WithdrawalsService {
   }
 
   async updateStatus(id: string, status: string, observation?: string) {
+    const data: any = { status, observation };
+    
+    if (status === 'APPROVED') {
+      data.approvedAt = new Date();
+    } else if (status === 'COMPLETED') {
+      data.completedAt = new Date();
+    }
+
     return this.prisma.withdrawal.update({
       where: { id },
-      data: { status, observation },
+      data,
     });
   }
 
@@ -67,7 +77,7 @@ export class WithdrawalsService {
         status: 'APPROVED',
       },
       include: {
-        producer: { select: { name: true, document: true } }
+        producer: { select: { name: true, document: true, pixKey: true } }
       }
     });
 
@@ -75,31 +85,29 @@ export class WithdrawalsService {
       return { success: false, message: 'Nenhum saque válido para notificação.' };
     }
 
-    console.log(`\n\n=== [MOCK] E-MAIL DE NOTIFICAÇÃO AO FINANCEIRO ===`);
-    console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
-    console.log(`Destinatário: financeiro@plataforma.com`);
-    console.log(`\nSaques aprovados e aguardando repasse:`);
-    withdrawals.forEach(w => {
-      const payout = w.amount - w.fee;
-      console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
-      console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);
-      console.log(`  Valor a transferir: R$ ${payout.toFixed(2)}`);
-      console.log(`  ID Saque: ${w.id}\n`);
-    });
-    console.log(`====================================================\n\n`);
+    try {
+      // Envia o e-mail real usando o MailService
+      await this.mailService.sendWithdrawalNotification(withdrawals);
 
-    // Registra a auditoria
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'FINANCE_NOTIFICATION_SENT',
-        entity: 'Withdrawal',
-        details: { count: withdrawals.length, ids: data.withdrawalIds }
-      }
-    });
+      // Registra a auditoria
+      await this.prisma.auditLog.create({
+        data: {
+          action: 'FINANCE_NOTIFICATION_SENT',
+          entity: 'Withdrawal',
+          details: { count: withdrawals.length, ids: data.withdrawalIds, recipients: ['tania.souza@superfin.com.br', 'pablo.werner@superfin.com.br'] }
+        }
+      });
 
-    return { 
-      success: true, 
-      message: 'Notificação enviada com sucesso!' 
-    };
+      return { 
+        success: true, 
+        message: 'Notificação enviada com sucesso aos responsáveis!' 
+      };
+    } catch (error) {
+      console.error('[WithdrawalsService] Erro ao enviar e-mail:', error);
+      return { 
+        success: false, 
+        message: 'Erro técnico ao disparar e-mail. Verifique os logs do servidor.' 
+      };
+    }
   }
 }

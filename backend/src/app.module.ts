@@ -11,6 +11,8 @@ import { ProfilesModule } from './profiles/profiles.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { FinancialModule } from './financial/financial.module';
 
+import { MailModule } from './mail/mail.module';
+
 @Module({
   imports: [
     AuthModule,
@@ -21,6 +23,7 @@ import { FinancialModule } from './financial/financial.module';
     TransactionsModule,
     WithdrawalsModule,
     FinancialModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

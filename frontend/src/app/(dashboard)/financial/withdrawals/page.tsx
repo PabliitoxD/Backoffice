@@ -30,6 +30,8 @@ export default function WithdrawalsPage() {
     'COMPLETED': 'Processado'
   };
 
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
   const fetchWithdrawals = async () => {
     setLoading(true);
     try {
@@ -45,8 +47,8 @@ export default function WithdrawalsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        const data = await res.json();
-        setWithdrawals(data);
+         const data = await res.json();
+         setWithdrawals(data);
       } else {
         // Mock se falhar
         setWithdrawals([
@@ -79,10 +81,13 @@ export default function WithdrawalsPage() {
     }
   };
 
-  const notifyFinance = async () => {
+  const handleNotifyFinance = () => {
     if (!selectedIds.length) return;
-    if (!confirm(`Confirmar envio de ${selectedIds.length} saque(s) ao financeiro?`)) return;
-    
+    setIsPreviewModalOpen(true);
+  };
+
+  const confirmNotifyFinance = async () => {
+    setIsPreviewModalOpen(false);
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -95,7 +100,7 @@ export default function WithdrawalsPage() {
         body: JSON.stringify({ withdrawalIds: selectedIds })
       });
       if (res.ok) {
-        alert('Notificação enviada com sucesso! Verifique o console do backend.');
+        alert('Notificação enviada com sucesso aos responsáveis!');
         setSelectedIds([]);
         fetchWithdrawals();
       } else {
@@ -210,7 +215,7 @@ export default function WithdrawalsPage() {
             <div style={{ padding: '0.75rem 1rem', backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#0369a1', fontWeight: 600 }}>{selectedIds.length} saque(s) selecionado(s)</span>
               <button 
-                onClick={notifyFinance}
+                onClick={handleNotifyFinance}
                 style={{ cursor: 'pointer', padding: '0.5rem 1rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600 }}
               >
                 Notificar Financeiro (E-mail)
@@ -446,6 +451,75 @@ export default function WithdrawalsPage() {
                 onClick={() => setInfoModalData(null)}
               >
                 Fechar Painel
+              </button>
+            </div>
+          </div>
+        </div>
+      {isPreviewModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+          <div style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', padding: '2rem', borderRadius: '12px', width: '800px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>Pré-visualização da Notificação</h3>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Os dados abaixo serão enviados para tania.souza e pablo.werner</p>
+              </div>
+              <button onClick={() => setIsPreviewModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {withdrawals.filter(w => selectedIds.includes(w.id)).map(w => (
+                <div key={w.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '1rem', right: '1.5rem', fontWeight: 700, color: '#10b981', fontSize: '1.1rem' }}>
+                    {formatCurrency(w.amount - (w.fee || 5.00))}
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)', width: '150px' }}>PRODUTOR:</td>
+                        <td style={{ padding: '4px 0', fontWeight: 600 }}>{w.producer?.name}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>ID:</td>
+                        <td style={{ padding: '4px 0' }}><code>{w.id}</code></td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>CHAVE PIX:</td>
+                        <td style={{ padding: '4px 0', fontWeight: 600, color: '#4f46e5' }}>{w.pixKey || w.producer?.pixKey || 'Não informada'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>STATUS:</td>
+                        <td style={{ padding: '4px 0' }}>{w.status}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>DATA SOLICITAÇÃO:</td>
+                        <td style={{ padding: '4px 0' }}>{new Date(w.createdAt).toLocaleString('pt-BR')}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>DATA APROVAÇÃO:</td>
+                        <td style={{ padding: '4px 0' }}>{w.approvedAt ? new Date(w.approvedAt).toLocaleString('pt-BR') : 'Agora'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>PARECER DO RISCO:</td>
+                        <td style={{ padding: '4px 0', fontStyle: 'italic' }}>{w.observation || 'Sem parecer registrado'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+              <button 
+                onClick={() => setIsPreviewModalOpen(false)}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer', color: 'var(--text-main)', fontWeight: 600 }}
+              >
+                Voltar e Ajustar
+              </button>
+              <button 
+                onClick={confirmNotifyFinance}
+                style={{ padding: '0.75rem 2rem', borderRadius: '6px', background: '#4f46e5', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
+              >
+                Confirmar e Enviar E-mail
               </button>
             </div>
           </div>

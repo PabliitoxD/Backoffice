@@ -19,4 +19,10 @@ export class FinancialController {
   ) {
     return this.financialService.getGlobalStatement(startDate, endDate, search);
   }
+
+  @Get('dashboard-summary')
+  @ApiOperation({ summary: 'Obtem o resumo estatístico para o dashboard principal' })
+  getDashboardSummary() {
+    return this.financialService.getDashboardSummary();
+  }
 }
