@@ -88,10 +88,20 @@ async function main() {
   const statuses = ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'WAITING'];
   
   console.log('--- Criando Transações de Teste (Abril/2026) ---');
-  for (let i = 0; i < 30; i++) {
-    const status = i < 15 ? 'APPROVED' : statuses[i % statuses.length];
+  const today = new Date();
+  
+  for (let i = 0; i < 40; i++) {
+    const status = i < 20 ? 'APPROVED' : statuses[i % statuses.length];
     const amount = 50.0 + (Math.random() * 500);
-    const date = new Date(2026, 3, 1 + (i % 16)); // Abril 1-16, 2026
+    const fee = amount * 0.05; // 5% de taxa da plataforma
+    
+    // Gante que pelo menos 5 vendas sejam de HOJE para o filtro padrão
+    let date;
+    if (i < 5) {
+      date = today;
+    } else {
+      date = new Date(2026, 3, 1 + (i % 25)); // Abril 2026
+    }
     
     const tx = await prisma.transaction.create({
       data: {
@@ -99,6 +109,7 @@ async function main() {
         customerId: createdCustomers[i % createdCustomers.length].id,
         productId: createdProducts[i % createdProducts.length].id,
         amount,
+        fee,
         method: methods[i % methods.length],
         cardBrand: (i % methods.length === 0) ? brands[i % brands.length] : null,
         status,
@@ -115,7 +126,7 @@ async function main() {
          data: {
            transactionId: tx.id,
            installment: 1,
-           amount: amount * 0.95, // 5% taxa
+           amount: amount - fee, // Valor líquido do produtor
            status: status === 'COMPLETED' ? 'AVAILABLE' : 'WAITING_FUNDS',
            expectedAt: new Date(date.getTime() + 30 * 24 * 60 * 60 * 1000)
          }
@@ -123,17 +134,24 @@ async function main() {
     }
   }
 
-  // 6. Criar Saques (PENDING, 5 exemplos)
-  console.log('--- Criando Saques Pendentes ---');
-  for (let i = 0; i < 5; i++) {
+  // 6. Criar Saques (PENDING e COMPLETED)
+  console.log('--- Criando Saques ---');
+  for (let i = 0; i < 8; i++) {
+    const status = i < 3 ? 'COMPLETED' : (i < 5 ? 'APPROVED' : 'PENDING');
+    const amount = 300.00 + (Math.random() * 1000);
+    const fee = 4.90;
+    const date = i < 2 ? today : new Date(2026, 3, 10 + i);
+
     await prisma.withdrawal.create({
       data: {
-        producerId: createdProducers[i].id,
-        amount: 500.00 + (i * 200),
-        fee: 5.00,
-        status: 'PENDING',
-        pixKey: createdProducers[i].pixKey,
-        createdAt: new Date(2026, 3, 14 + i) // Abril 14-18, 2026
+        producerId: createdProducers[i % createdProducers.length].id,
+        amount,
+        fee,
+        status,
+        pixKey: createdProducers[i % createdProducers.length].pixKey,
+        createdAt: date,
+        approvedAt: status !== 'PENDING' ? date : null,
+        completedAt: status === 'COMPLETED' ? date : null,
       }
     });
   }

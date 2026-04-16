@@ -8,21 +8,27 @@ import {
   endOfDay, 
   startOfWeek, 
   startOfMonth, 
-  format,
-  subDays 
+  format 
 } from "date-fns";
 
 type FilterType = 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
 
+interface RankingItem {
+  name: string;
+  value: number;
+}
+
 interface DashboardStats {
-  periodVolume: number;
-  periodCount: number;
-  totalVolume: number;
-  activeProducers: number;
+  revenue: number;
+  tpv: number;
+  chargebackCount: number;
+  chargebackVolume: number;
+  transactionsCount: number;
+  withdrawalsCompletedVolume: number;
+  withdrawalsCompletedCount: number;
+  topTpv: RankingItem[];
+  topWithdrawals: RankingItem[];
   totalCustomers: number;
-  periodCustomers: number;
-  pendingWithdrawalsVolume: number;
-  pendingWithdrawalsCount: number;
 }
 
 export default function Dashboard() {
@@ -46,9 +52,7 @@ export default function Dashboard() {
         end = endOfDay(new Date());
         break;
       case 'WEEK':
-        // Considera semana começando no último domingo (ou segunda, dependendo da config)
-        // Aqui usamos startOfWeek padrão (domingo)
-        start = startOfWeek(new Date());
+        start = startOfWeek(new Date(), { weekStartsOn: 0 }); // Domingo
         end = endOfDay(new Date());
         break;
       case 'MONTH':
@@ -89,7 +93,7 @@ export default function Dashboard() {
       setError(null);
     } catch (err: any) {
       console.error("Dashboard error:", err);
-      setError("Não foi possível carregar os dados reais.");
+      setError("Não foi possível carregar os dados. Verifique a conexão com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -106,48 +110,42 @@ export default function Dashboard() {
     }).format(value);
   };
 
-  const getSubTitleSuffix = () => {
+  const getTimeLabel = () => {
     if (filterType === 'TODAY') return "de hoje";
-    if (filterType === 'WEEK') return "desta semana";
-    if (filterType === 'MONTH') return "deste mês";
-    return "no período selecionado";
+    if (filterType === 'WEEK') return "da semana";
+    if (filterType === 'MONTH') return "do mês";
+    return "do período";
   };
 
   const STATS_CARDS = [
     { 
-      title: "Volume Período", 
-      value: loading ? "..." : formatCurrency(stats?.periodVolume || 0), 
-      trend: getSubTitleSuffix(), 
+      title: "Receita (Lucro)", 
+      value: loading ? "..." : formatCurrency(stats?.revenue || 0), 
+      trend: "Taxas e tarifas", 
       isPositive: true 
     },
     { 
-      title: "Vendas Período", 
-      value: loading ? "..." : (stats?.periodCount || 0).toString(), 
-      trend: "Transações aprovadas", 
+      title: "TPV total", 
+      value: loading ? "..." : formatCurrency(stats?.tpv || 0), 
+      trend: `Volume ${getTimeLabel()}`, 
       isPositive: true 
     },
     { 
-      title: "Novos Clientes", 
-      value: loading ? "..." : (stats?.periodCustomers || 0).toString(), 
-      trend: getSubTitleSuffix(), 
-      isPositive: true 
-    },
-    { 
-      title: "Saques Pendentes", 
-      value: loading ? "..." : formatCurrency(stats?.pendingWithdrawalsVolume || 0), 
-      trend: `${stats?.pendingWithdrawalsCount || 0} solicitações`, 
+      title: "Chargebacks", 
+      value: loading ? "..." : formatCurrency(stats?.chargebackVolume || 0), 
+      trend: `${stats?.chargebackCount || 0} ocorrências`, 
       isPositive: false 
     },
     { 
-      title: "Volume Total", 
-      value: loading ? "..." : formatCurrency(stats?.totalVolume || 0), 
-      trend: "Acumulado histórico", 
+      title: "Transações", 
+      value: loading ? "..." : (stats?.transactionsCount || 0).toString(), 
+      trend: `Total ${getTimeLabel()}`, 
       isPositive: true 
     },
     { 
-      title: "Base de Clientes", 
-      value: loading ? "..." : (stats?.totalCustomers || 0).toString(), 
-      trend: "Total cadastrado", 
+      title: "Saques Processados", 
+      value: loading ? "..." : formatCurrency(stats?.withdrawalsCompletedVolume || 0), 
+      trend: `${stats?.withdrawalsCompletedCount || 0} saques pagos`, 
       isPositive: true 
     },
   ];
@@ -156,8 +154,8 @@ export default function Dashboard() {
     <div className={styles.dashboard}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
-          <h1 className="title">Dashboard Financeiro</h1>
-          <p className="subtitle">Visão geral do sistema de pagamentos e produtores.</p>
+          <h1 className="title">Dashboard Administrativo</h1>
+          <p className="subtitle">Relatórios consolidados de todos os clientes.</p>
         </div>
 
         <div className={styles.filterContainer}>
@@ -186,7 +184,7 @@ export default function Dashboard() {
                 onChange={(e) => setCustomRange(prev => ({ ...prev, start: e.target.value }))}
                 className={styles.dateInput}
               />
-              <span style={{ color: 'var(--text-muted)' }}>até</span>
+              <span style={{ color: 'var(--text-muted)' }}>-</span>
               <input 
                 type="date" 
                 value={customRange.end}
@@ -200,35 +198,58 @@ export default function Dashboard() {
 
       {error && (
         <div className={styles.errorBanner}>
-          <p>⚠️ {error} Exibindo valores zerados para visualização.</p>
+          <p>⚠️ {error}</p>
         </div>
       )}
 
-      <div className={styles.statsGrid}>
-        {STATS_CARDS.map((stat, idx) => (
-          <div key={idx} className={`${styles.statCard} ${loading ? styles.skeleton : ""}`}>
-            <h3 className={styles.cardTitle}>{stat.title}</h3>
-            <div className={styles.cardBody}>
-              <span className={styles.cardValue}>{stat.value}</span>
-              <span className={`${styles.cardTrend} ${stat.isPositive ? styles.trendUp : styles.trendDown}`}>
-                {stat.trend}
-              </span>
+      {/* Grid Centralizado de Stats */}
+      <div className={styles.statsContainer}>
+        <div className={styles.statsGrid}>
+          {STATS_CARDS.map((stat, idx) => (
+            <div key={idx} className={`${styles.statCard} ${loading ? styles.skeleton : ""}`}>
+              <h3 className={styles.cardTitle}>{stat.title}</h3>
+              <div className={styles.cardBody}>
+                <span className={styles.cardValue}>{stat.value}</span>
+                <span className={`${styles.cardTrend} ${stat.isPositive ? styles.trendUp : styles.trendDown}`}>
+                  {stat.trend}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className={styles.recentGrid}>
+      {/* Ranking / TOP 5 Section */}
+      <div className={styles.rankingGrid}>
         <div className="card">
           <div className={styles.cardHeader}>
-            <div>
-              <h2 className="title">Atividade Recente</h2>
-              <p className="subtitle">Resumo das operações realizadas no período selecionado.</p>
-            </div>
+            <h2 className="title">TOP 5 TPV (Vendas)</h2>
           </div>
-          <div className={styles.placeholderContent}>
-            <p>Os dados detalhados da atividade aparecerão aqui conforme o desenvolvimento dos módulos.</p>
-            <p>Os filtros acima estão integrados e refletem os resultados em tempo real do banco de dados.</p>
+          <div className={styles.rankingList}>
+            {!loading && stats?.topTpv.map((item, idx) => (
+              <div key={idx} className={styles.rankingItem}>
+                <span className={styles.rankingName}>{idx + 1}. {item.name}</span>
+                <span className={styles.rankingValue}>{formatCurrency(item.value)}</span>
+              </div>
+            ))}
+            {(!loading && stats?.topTpv.length === 0) && <p className={styles.noData}>Nenhum dado no período.</p>}
+            {loading && <div className={styles.skeleton} style={{ height: '200px' }}></div>}
+          </div>
+        </div>
+
+        <div className="card">
+          <div className={styles.cardHeader}>
+            <h2 className="title">TOP 5 Saques Aprovados</h2>
+          </div>
+          <div className={styles.rankingList}>
+            {!loading && stats?.topWithdrawals.map((item, idx) => (
+              <div key={idx} className={styles.rankingItem}>
+                <span className={styles.rankingName}>{idx + 1}. {item.name}</span>
+                <span className={styles.rankingValue}>{formatCurrency(item.value)}</span>
+              </div>
+            ))}
+            {(!loading && stats?.topWithdrawals.length === 0) && <p className={styles.noData}>Nenhum dado no período.</p>}
+            {loading && <div className={styles.skeleton} style={{ height: '200px' }}></div>}
           </div>
         </div>
       </div>

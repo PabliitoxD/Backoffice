@@ -56,6 +56,7 @@ model Transaction {
   customerId String
   productId  String
   amount     Float
+  fee        Float     @default(0)
   method                String
   cardBrand             String?
   status                String    @default("WAITING")

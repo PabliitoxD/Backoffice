@@ -233,3 +233,53 @@
   100% { transform: rotate(360deg); }
 }
 
+.statsContainer {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.rankingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.rankingList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rankingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+
+.rankingItem:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.rankingName {
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.rankingValue {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.noData {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2rem;
+  font-style: italic;
+}
+

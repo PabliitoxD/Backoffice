@@ -130,49 +130,114 @@ export class FinancialService {
       if (endDate) periodWhere.createdAt.lte = new Date(endDate);
     }
 
-    // Total Volume (Filtered by period)
-    const periodVolumeAgg = await this.prisma.transaction.aggregate({
+    // TPV & Receita (Transactions)
+    const txAgg = await this.prisma.transaction.aggregate({
       where: { 
         ...periodWhere,
         status: { in: ['APPROVED', 'COMPLETED'] } 
       },
-      _sum: { amount: true },
+      _sum: { amount: true, fee: true },
       _count: true,
     });
 
-    // All-time Volume (Always global)
-    const totalVolumeAgg = await this.prisma.transaction.aggregate({
-      where: { status: { in: ['APPROVED', 'COMPLETED'] } },
+    // Receita (Withdrawals)
+    const wdFeeAgg = await this.prisma.withdrawal.aggregate({
+      where: {
+        ...periodWhere,
+        status: 'COMPLETED',
+      },
+      _sum: { fee: true }
+    });
+
+    // Chargebacks
+    const chargebackAgg = await this.prisma.transaction.aggregate({
+      where: {
+        ...periodWhere,
+        status: 'CHARGEBACK'
+      },
       _sum: { amount: true },
+      _count: true
     });
 
-    const activeProducersCount = await this.prisma.producer.count({
-      where: { status: 'ACTIVE' },
+    // Total Transactions (Count)
+    const totalTransactionsCount = await this.prisma.transaction.count({
+      where: periodWhere
     });
 
-    // Customers (Filtered by period)
-    const periodCustomersCount = await this.prisma.customer.count({
-      where: periodWhere,
+    // Processed Withdrawals
+    const processedWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
+      where: {
+        ...periodWhere,
+        status: 'COMPLETED'
+      },
+      _sum: { amount: true },
+      _count: true
     });
 
-    // All-time Customers
+    // All-time metrics (optional context)
     const totalCustomersCount = await this.prisma.customer.count();
 
-    const pendingWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
-      where: { status: 'PENDING' },
+    // TOP 5 TPV
+    const topTpvRaw = await this.prisma.transaction.groupBy({
+      by: ['producerId'],
+      where: {
+        ...periodWhere,
+        status: { in: ['APPROVED', 'COMPLETED'] }
+      },
       _sum: { amount: true },
-      _count: true,
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 5
     });
 
+    const topTpv = await Promise.all(
+        topTpvRaw.map(async (item) => {
+            const producer = await this.prisma.producer.findUnique({
+                where: { id: item.producerId },
+                select: { name: true }
+            });
+            return {
+                name: producer?.name || 'Vendedor Desconhecido',
+                value: item._sum.amount || 0
+            }
+        })
+    );
+
+    // TOP 5 Withdrawals (COMPLETED)
+    const topWithdrawalsRaw = await this.prisma.withdrawal.groupBy({
+      by: ['producerId'],
+      where: {
+        ...periodWhere,
+        status: 'COMPLETED'
+      },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 5
+    });
+
+    const topWithdrawals = await Promise.all(
+        topWithdrawalsRaw.map(async (item) => {
+            const producer = await this.prisma.producer.findUnique({
+                where: { id: item.producerId },
+                select: { name: true }
+            });
+            return {
+                name: producer?.name || 'Vendedor Desconhecido',
+                value: item._sum.amount || 0
+            }
+        })
+    );
+
     return {
-      periodVolume: periodVolumeAgg._sum.amount || 0,
-      periodCount: periodVolumeAgg._count || 0,
-      totalVolume: totalVolumeAgg._sum.amount || 0,
-      activeProducers: activeProducersCount || 0,
-      totalCustomers: totalCustomersCount || 0,
-      periodCustomers: periodCustomersCount || 0,
-      pendingWithdrawalsVolume: pendingWithdrawalsAgg._sum.amount || 0,
-      pendingWithdrawalsCount: pendingWithdrawalsAgg._count || 0,
+      revenue: (txAgg._sum.fee || 0) + (wdFeeAgg._sum.fee || 0),
+      tpv: txAgg._sum.amount || 0,
+      chargebackCount: chargebackAgg._count || 0,
+      chargebackVolume: chargebackAgg._sum.amount || 0,
+      transactionsCount: totalTransactionsCount,
+      withdrawalsCompletedVolume: processedWithdrawalsAgg._sum.amount || 0,
+      withdrawalsCompletedCount: processedWithdrawalsAgg._count || 0,
+      topTpv,
+      topWithdrawals,
+      totalCustomers: totalCustomersCount,
     };
   }
 }
