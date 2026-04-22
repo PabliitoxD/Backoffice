@@ -23,6 +23,9 @@ export class MailService {
   async sendWithdrawalNotification(withdrawals: any[]) {
     const recipients = ['tania.souza@superfin.com.br', 'pablo.werner@superfin.com.br'];
     
+    const totalAmount = withdrawals.reduce((sum, w) => sum + (w.amount - w.fee), 0);
+    const today = new Date().toLocaleDateString('pt-BR');
+
     let htmlContent = `
       <div style="font-family: Arial, sans-serif; color: #333; max-width: 800px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
         <div style="background-color: #4f46e5; color: white; padding: 20px; text-align: center;">
@@ -32,9 +35,16 @@ export class MailService {
           <p>Olá,</p>
           <p>As seguintes solicitações de saque foram <strong>autorizadas</strong> e estão prontas para processamento financeiro:</p>
           
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+            <p style="margin: 5px 0;"><strong>Qtd:</strong> ${withdrawals.length}</p>
+            <p style="margin: 5px 0;"><strong>Valor Total:</strong> <span style="color: #10b981; font-weight: bold;">R$ ${totalAmount.toFixed(2).replace('.', ',')}</span></p>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          
           ${withdrawals.map(w => {
             const payout = w.amount - w.fee;
-            const formatDate = (date: Date | null) => date ? new Date(date).toLocaleString('pt-BR') : 'N/A';
+            const formatDate = (date: any) => date ? new Date(date).toLocaleString('pt-BR') : 'N/A';
             
             return `
               <div style="margin-bottom: 30px; padding: 15px; background-color: #f9fafb; border-radius: 6px; border-left: 4px solid #4f46e5;">
@@ -69,15 +79,11 @@ export class MailService {
                   </tr>
                   <tr>
                     <td style="padding: 5px 0; font-weight: bold;">DATA PAGAMENTO:</td>
-                    <td style="padding: 5px 0;">${formatDate(w.completedAt)}</td>
+                    <td style="padding: 5px 0;">${today}</td>
                   </tr>
                   <tr>
                     <td style="padding: 5px 0; font-weight: bold;">PARECER DO RISCO:</td>
                     <td style="padding: 5px 0; font-style: italic;">${w.observation || 'N/A'}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 5px 0; font-weight: bold;">OBSERVAÇÃO:</td>
-                    <td style="padding: 5px 0;">Status atualizado no Backoffice Administrativo.</td>
                   </tr>
                 </table>
               </div>
