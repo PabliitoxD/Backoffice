@@ -129,8 +129,16 @@ export class FinancialService {
 
     if (startDate || endDate) {
       periodWhere.createdAt = {};
-      if (startDate) periodWhere.createdAt.gte = currentStart;
-      if (endDate) periodWhere.createdAt.lte = currentEnd;
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); // Forçar início do dia
+        periodWhere.createdAt.gte = start;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Forçar fim do dia
+        periodWhere.createdAt.lte = end;
+      }
     }
 
     // Calcular período anterior para comparativo
