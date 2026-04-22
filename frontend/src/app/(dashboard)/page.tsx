@@ -20,10 +20,13 @@ interface RankingItem {
 
 interface DashboardStats {
   revenue: number;
+  revenueTrend: number;
   tpv: number;
+  tpvTrend: number;
   chargebackCount: number;
   chargebackVolume: number;
   transactionsCount: number;
+  transactionsTrend: number;
   withdrawalsCompletedVolume: number;
   withdrawalsCompletedCount: number;
   topTpv: RankingItem[];
@@ -117,18 +120,24 @@ export default function Dashboard() {
     return "do período";
   };
 
+  const formatTrend = (value: number | undefined) => {
+    if (value === undefined) return "...";
+    const prefix = value >= 0 ? "+" : "";
+    return `${prefix}${value.toFixed(1)}%`;
+  };
+
   const STATS_CARDS = [
     { 
       title: "Receita (Lucro)", 
       value: loading ? "..." : formatCurrency(stats?.revenue || 0), 
-      trend: "Taxas e tarifas", 
-      isPositive: true 
+      trend: formatTrend(stats?.revenueTrend), 
+      isPositive: (stats?.revenueTrend || 0) >= 0 
     },
     { 
       title: "TPV total", 
       value: loading ? "..." : formatCurrency(stats?.tpv || 0), 
-      trend: `Volume ${getTimeLabel()}`, 
-      isPositive: true 
+      trend: formatTrend(stats?.tpvTrend), 
+      isPositive: (stats?.tpvTrend || 0) >= 0 
     },
     { 
       title: "Chargebacks", 
@@ -139,8 +148,8 @@ export default function Dashboard() {
     { 
       title: "Transações", 
       value: loading ? "..." : (stats?.transactionsCount || 0).toString(), 
-      trend: `Total ${getTimeLabel()}`, 
-      isPositive: true 
+      trend: formatTrend(stats?.transactionsTrend), 
+      isPositive: (stats?.transactionsTrend || 0) >= 0 
     },
     { 
       title: "Saques Processados", 

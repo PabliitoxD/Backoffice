@@ -124,120 +124,114 @@ export class FinancialService {
 
   async getDashboardSummary(startDate?: string, endDate?: string) {
     const periodWhere: any = {};
+    const currentStart = startDate ? new Date(startDate) : new Date();
+    const currentEnd = endDate ? new Date(endDate) : new Date();
+
     if (startDate || endDate) {
       periodWhere.createdAt = {};
-      if (startDate) periodWhere.createdAt.gte = new Date(startDate);
-      if (endDate) periodWhere.createdAt.lte = new Date(endDate);
+      if (startDate) periodWhere.createdAt.gte = currentStart;
+      if (endDate) periodWhere.createdAt.lte = currentEnd;
     }
 
-    // TPV & Receita (Transactions)
-    const txAgg = await this.prisma.transaction.aggregate({
-      where: { 
-        ...periodWhere,
-        status: { in: ['APPROVED', 'COMPLETED'] } 
-      },
-      _sum: { amount: true, fee: true },
-      _count: true,
-    });
+    // Calcular período anterior para comparativo
+    const duration = currentEnd.getTime() - currentStart.getTime();
+    const prevStart = new Date(currentStart.getTime() - duration - 1000);
+    const prevEnd = new Date(currentEnd.getTime() - duration - 1000);
+    const prevPeriodWhere = {
+      createdAt: { gte: prevStart, lte: prevEnd }
+    };
 
-    // Receita (Withdrawals)
-    const wdFeeAgg = await this.prisma.withdrawal.aggregate({
-      where: {
-        ...periodWhere,
-        status: 'COMPLETED',
-      },
-      _sum: { fee: true }
-    });
+    const getStats = async (where: any) => {
+      const tx = await this.prisma.transaction.aggregate({
+        where: { ...where, status: { in: ['APPROVED', 'COMPLETED'] } },
+        _sum: { amount: true, fee: true },
+        _count: true,
+      });
+      const wd = await this.prisma.withdrawal.aggregate({
+        where: { ...where, status: 'COMPLETED' },
+        _sum: { fee: true }
+      });
+      return {
+        tpv: tx._sum.amount || 0,
+        revenue: (tx._sum.fee || 0) + (wd._sum.fee || 0),
+        count: tx._count || 0
+      };
+    };
 
-    // Chargebacks
+    const currentStats = await getStats(periodWhere);
+    const prevStats = await getStats(prevPeriodWhere);
+
+    const calcTrend = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return ((curr - prev) / prev) * 100;
+    };
+
+    // Chargebacks (Período Atual)
     const chargebackAgg = await this.prisma.transaction.aggregate({
-      where: {
-        ...periodWhere,
-        status: 'CHARGEBACK'
-      },
+      where: { ...periodWhere, status: 'CHARGEBACK' },
       _sum: { amount: true },
       _count: true
     });
 
-    // Total Transactions (Count)
-    const totalTransactionsCount = await this.prisma.transaction.count({
-      where: periodWhere
-    });
-
-    // Processed Withdrawals
+    // Saques (Período Atual)
     const processedWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
-      where: {
-        ...periodWhere,
-        status: 'COMPLETED'
-      },
+      where: { ...periodWhere, status: 'COMPLETED' },
       _sum: { amount: true },
       _count: true
     });
-
-    // All-time metrics (optional context)
-    const totalCustomersCount = await this.prisma.customer.count();
 
     // TOP 5 TPV
     const topTpvRaw = await this.prisma.transaction.groupBy({
       by: ['producerId'],
-      where: {
-        ...periodWhere,
-        status: { in: ['APPROVED', 'COMPLETED'] }
-      },
+      where: { ...periodWhere, status: { in: ['APPROVED', 'COMPLETED'] } },
       _sum: { amount: true },
       orderBy: { _sum: { amount: 'desc' } },
       take: 5
     });
 
     const topTpv = await Promise.all(
-        topTpvRaw.map(async (item) => {
-            const producer = await this.prisma.producer.findUnique({
-                where: { id: item.producerId },
-                select: { name: true }
-            });
-            return {
-                name: producer?.name || 'Vendedor Desconhecido',
-                value: item._sum.amount || 0
-            }
-        })
+      topTpvRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({
+          where: { id: item.producerId },
+          select: { name: true }
+        });
+        return { name: producer?.name || 'Vendedor', value: item._sum.amount || 0 }
+      })
     );
 
-    // TOP 5 Withdrawals (COMPLETED)
+    // TOP 5 Saques
     const topWithdrawalsRaw = await this.prisma.withdrawal.groupBy({
       by: ['producerId'],
-      where: {
-        ...periodWhere,
-        status: 'COMPLETED'
-      },
+      where: { ...periodWhere, status: 'COMPLETED' },
       _sum: { amount: true },
       orderBy: { _sum: { amount: 'desc' } },
       take: 5
     });
 
     const topWithdrawals = await Promise.all(
-        topWithdrawalsRaw.map(async (item) => {
-            const producer = await this.prisma.producer.findUnique({
-                where: { id: item.producerId },
-                select: { name: true }
-            });
-            return {
-                name: producer?.name || 'Vendedor Desconhecido',
-                value: item._sum.amount || 0
-            }
-        })
+      topWithdrawalsRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({
+          where: { id: item.producerId },
+          select: { name: true }
+        });
+        return { name: producer?.name || 'Vendedor', value: item._sum.amount || 0 }
+      })
     );
 
     return {
-      revenue: (txAgg._sum.fee || 0) + (wdFeeAgg._sum.fee || 0),
-      tpv: txAgg._sum.amount || 0,
+      revenue: currentStats.revenue,
+      revenueTrend: calcTrend(currentStats.revenue, prevStats.revenue),
+      tpv: currentStats.tpv,
+      tpvTrend: calcTrend(currentStats.tpv, prevStats.tpv),
+      transactionsCount: currentStats.count,
+      transactionsTrend: calcTrend(currentStats.count, prevStats.count),
       chargebackCount: chargebackAgg._count || 0,
       chargebackVolume: chargebackAgg._sum.amount || 0,
-      transactionsCount: totalTransactionsCount,
       withdrawalsCompletedVolume: processedWithdrawalsAgg._sum.amount || 0,
       withdrawalsCompletedCount: processedWithdrawalsAgg._count || 0,
       topTpv,
       topWithdrawals,
-      totalCustomers: totalCustomersCount,
+      totalCustomers: await this.prisma.customer.count(),
     };
   }
 }
