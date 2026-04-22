@@ -79,7 +79,7 @@ export default function Dashboard() {
     try {
       const { start, end } = getRange();
       const token = localStorage.getItem("token");
-      const url = new URL(`${API_URL}/financial/dashboard-summary`);
+      const url = new URL(`${API_URL}/financial/dashboard-summary`, window.location.origin);
       url.searchParams.append("startDate", start);
       url.searchParams.append("endDate", end);
 
