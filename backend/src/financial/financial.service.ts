@@ -149,7 +149,7 @@ export class FinancialService {
     let filteredItems = itemsWithBalance;
     if (search) {
       const s = search.toLowerCase();
-      filteredItems = itemsWithBalance.filter(item => 
+      filteredItems = itemsWithBalance.filter((item: any) => 
         item.originalId?.toLowerCase().includes(s) ||
         item.producerName.toLowerCase().includes(s) ||
         (item.customer?.name && item.customer.name.toLowerCase().includes(s)) ||
