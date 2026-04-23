@@ -19,44 +19,34 @@ export class FinancialService {
       whereClause.createdAt = { lte: new Date(endDate) };
     }
 
-    const transactionWhere: any = { 
+    // We fetch all records in the date range to calculate an accurate running balance
+    // even if a search filter is applied later.
+    const transactionWhereAll = { 
       ...whereClause,
       status: { in: ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'] }
     };
-    const withdrawalWhere: any = { 
+    const withdrawalWhereAll = { 
       ...whereClause,
       status: { in: ['COMPLETED'] }
     };
 
-    if (search) {
-      transactionWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { producer: { name: { contains: search, mode: 'insensitive' } } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } }
-      ];
-      withdrawalWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { producer: { name: { contains: search, mode: 'insensitive' } } }
-      ];
-    }
-
     const transactions = await this.prisma.transaction.findMany({
-      where: transactionWhere,
+      where: transactionWhereAll,
       include: {
         producer: { select: { name: true } },
         customer: true,
         product: true,
         history: { orderBy: { createdAt: 'asc' } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
 
     const withdrawals = await this.prisma.withdrawal.findMany({
-      where: withdrawalWhere,
+      where: withdrawalWhereAll,
       include: {
         producer: { select: { name: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
 
     const mappedTransactions = transactions.map((t) => {
@@ -112,14 +102,70 @@ export class FinancialService {
     });
 
     const combined = [...mappedTransactions, ...mappedWithdrawals].sort(
-      (a, b) => b.date.getTime() - a.date.getTime(),
+      (a, b) => a.date.getTime() - b.date.getTime(),
     );
 
-    let currentBalance = 0;
-    // Note: To have a true running balance, you'd need the initial balance before the filter period.
-    // For now, we return the items as a list.
+    let initialBalance = 0;
+    if (startDate) {
+      const start = new Date(startDate);
+      
+      const prevTransactions = await this.prisma.transaction.groupBy({
+        by: ['status'],
+        where: {
+          createdAt: { lt: start },
+          status: { in: ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'] }
+        },
+        _sum: { amount: true }
+      });
+
+      const prevWithdrawals = await this.prisma.withdrawal.aggregate({
+        where: {
+          createdAt: { lt: start },
+          status: 'COMPLETED'
+        },
+        _sum: { amount: true }
+      });
+
+      for (const group of prevTransactions) {
+        if (['APPROVED', 'COMPLETED'].includes(group.status)) {
+          initialBalance += group._sum.amount || 0;
+        } else {
+          initialBalance -= group._sum.amount || 0;
+        }
+      }
+      initialBalance -= prevWithdrawals._sum.amount || 0;
+    }
+
+    let currentBalance = initialBalance;
+    const itemsWithBalance = combined.map((item) => {
+      currentBalance += item.impact;
+      return {
+        ...item,
+        runningBalance: currentBalance,
+      };
+    });
     
-    return combined;
+    // Now apply search filter in memory if provided
+    let filteredItems = itemsWithBalance;
+    if (search) {
+      const s = search.toLowerCase();
+      filteredItems = itemsWithBalance.filter(item => 
+        item.originalId?.toLowerCase().includes(s) ||
+        item.producerName.toLowerCase().includes(s) ||
+        (item.customer?.name && item.customer.name.toLowerCase().includes(s)) ||
+        (item.customer?.email && item.customer.email.toLowerCase().includes(s))
+      );
+    }
+
+    const finalBalance = itemsWithBalance.length > 0 
+      ? itemsWithBalance[itemsWithBalance.length - 1].runningBalance 
+      : initialBalance;
+
+    return {
+      items: filteredItems.sort((a, b) => b.date.getTime() - a.date.getTime()),
+      initialBalance,
+      finalBalance
+    };
   }
 
   async getDashboardSummary(startDate?: string, endDate?: string) {
@@ -241,5 +287,79 @@ export class FinancialService {
       topWithdrawals,
       totalCustomers: await this.prisma.customer.count(),
     };
+  }
+
+  async getNotifications() {
+    const notifications: any[] = [];
+    const now = new Date();
+
+    // 1. New Chargebacks (last 24h)
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const newChargebacks = await this.prisma.transaction.findMany({
+      where: {
+        status: 'CHARGEBACK',
+        createdAt: { gte: last24h }
+      },
+      select: { id: true, amount: true }
+    });
+
+    newChargebacks.forEach(cb => {
+      notifications.push({
+        id: `cb-${cb.id}`,
+        type: 'CHARGEBACK',
+        title: 'Novo Chargeback Recebido',
+        message: `Venda #${cb.id.slice(0, 8)} de R$ ${cb.amount.toFixed(2)} sofreu chargeback.`,
+        date: now,
+        priority: 'HIGH'
+      });
+    });
+
+    // 2. Chargeback Defense Deadlines
+    // Assume 7 days from transaction createdAt for defense
+    const threeDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days passed = 2 left
+    const fourDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days passed = 1 left
+
+    const approachingDeadlines = await this.prisma.transaction.findMany({
+      where: {
+        status: 'CHARGEBACK',
+        createdAt: { lte: threeDaysAgo, gte: fourDaysAgo },
+        chargebackDefenses: {
+          none: { status: 'SENT' } // No defense sent yet
+        }
+      },
+      select: { id: true, createdAt: true }
+    });
+
+    approachingDeadlines.forEach(cb => {
+      const daysPassed = Math.floor((now.getTime() - cb.createdAt.getTime()) / (24 * 60 * 60 * 1000));
+      const daysLeft = 7 - daysPassed;
+      notifications.push({
+        id: `dead-${cb.id}`,
+        type: 'DEADLINE',
+        title: 'Prazo de Defesa Expirando',
+        message: `Faltam ${daysLeft} dia(s) para a defesa do chargeback #${cb.id.slice(0, 8)}.`,
+        date: now,
+        priority: 'CRITICAL'
+      });
+    });
+
+    // 3. New Withdrawals (PENDING)
+    const pendingWithdrawals = await this.prisma.withdrawal.findMany({
+      where: { status: 'PENDING' },
+      select: { id: true, amount: true }
+    });
+
+    pendingWithdrawals.forEach(wd => {
+      notifications.push({
+        id: `wd-${wd.id}`,
+        type: 'WITHDRAWAL',
+        title: 'Novo Pedido de Saque',
+        message: `Saque solicitado no valor de R$ ${wd.amount.toFixed(2)}.`,
+        date: now,
+        priority: 'MEDIUM'
+      });
+    });
+
+    return notifications.sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 }

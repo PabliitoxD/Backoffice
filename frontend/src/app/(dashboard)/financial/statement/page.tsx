@@ -46,6 +46,8 @@ export default function StatementPage() {
   const currentMonthRange = getMonthDateRange();
   
   const [statement, setStatement] = useState<StatementItem[]>([]);
+  const [initialBalance, setInitialBalance] = useState(0);
+  const [finalBalance, setFinalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'VENDAS' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
   const [startDate, setStartDate] = useState(currentMonthRange.start);
@@ -94,14 +96,18 @@ export default function StatementPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setStatement(data);
+        setStatement(data.items);
+        setInitialBalance(data.initialBalance);
+        setFinalBalance(data.finalBalance);
       } else {
         console.error("Failed to fetch statement");
+        // Fallback for demo/dev
         setStatement([
-          { id: 'tx-1234', type: 'TRANSACTION', description: 'Venda (#1234)', producerName: 'Acme Corp', amount: 997.0, fee: 0, impact: 997.0, status: 'APPROVED', date: new Date().toISOString() },
-          { id: 'wt-5678', type: 'WITHDRAWAL', description: 'Saque Bancário', producerName: 'Acme Corp', amount: 500.0, fee: 5.0, impact: -505.0, status: 'COMPLETED', date: new Date(Date.now() - 86400000).toISOString() },
-          { id: 'tx-9101', type: 'TRANSACTION', description: 'Venda (#9101)', producerName: 'Tech Solutions', amount: 297.0, fee: 0, impact: -297.0, status: 'CHARGEBACK', date: new Date(Date.now() - 172800000).toISOString() },
+          { id: 'tx-1234', type: 'TRANSACTION', description: 'Venda (#1234)', producerName: 'Acme Corp', amount: 997.0, fee: 0, impact: 997.0, status: 'APPROVED', date: new Date().toISOString(), runningBalance: 997.0 },
+          { id: 'wt-5678', type: 'WITHDRAWAL', description: 'Saque Bancário', producerName: 'Acme Corp', amount: 500.0, fee: 5.0, impact: -505.0, status: 'COMPLETED', date: new Date(Date.now() - 86400000).toISOString(), runningBalance: 492.0 },
         ]);
+        setInitialBalance(0);
+        setFinalBalance(492.0);
       }
     } catch (err) {
       console.error(err);
@@ -249,16 +255,32 @@ export default function StatementPage() {
 
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Saldo Inicial</h3>
+          <div className={styles.statValue}>
+            {formatCurrency(initialBalance)}
+          </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>Anterior a {new Date(startDate).toLocaleDateString('pt-BR')}</span>
+        </div>
+        <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Entradas</h3>
           <div className={`${styles.statValue} ${styles.statPositive}`}>
             {formatCurrency(totalIn)}
           </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>No período filtrado</span>
         </div>
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Saídas</h3>
           <div className={`${styles.statValue} ${styles.statNegative}`}>
             {formatCurrency(totalOut)}
           </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>No período filtrado</span>
+        </div>
+        <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Saldo Final</h3>
+          <div className={`${styles.statValue} ${finalBalance >= 0 ? styles.statPositive : styles.statNegative}`}>
+            {formatCurrency(finalBalance)}
+          </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>Em {new Date(endDate).toLocaleDateString('pt-BR')}</span>
         </div>
       </div>
 
@@ -327,10 +349,24 @@ export default function StatementPage() {
             <tbody>
               {loading ? (
                 <tr><td colSpan={8} className={styles.emptyState}>Carregando extrato...</td></tr>
-              ) : filteredStatement.length === 0 ? (
-                <tr><td colSpan={8} className={styles.emptyState}>Nenhuma movimentação encontrada para este filtro.</td></tr>
               ) : (
-                filteredStatement.map((item) => {
+                <>
+                  {!searchQuery && activeTab === 'ALL' && (
+                    <tr style={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                      <td className={styles.textMuted} colSpan={5} style={{ textAlign: 'right', fontWeight: 600 }}>
+                        SALDO ANTERIOR AO PERÍODO
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: initialBalance >= 0 ? '#10b981' : '#ef4444' }}>
+                        {formatCurrency(initialBalance)}
+                      </td>
+                      <td></td>
+                    </tr>
+                  )}
+                  
+                  {filteredStatement.length === 0 ? (
+                    <tr><td colSpan={8} className={styles.emptyState}>Nenhuma movimentação encontrada para este filtro.</td></tr>
+                  ) : (
+                    filteredStatement.map((item) => {
                   const isPositive = item.impact > 0;
                   const isNegative = item.impact < 0;
                   const impactColor = isPositive ? '#10b981' : isNegative ? '#ef4444' : 'var(--text-muted)';
@@ -397,9 +433,11 @@ export default function StatementPage() {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
+                  })
+                )}
+              </>
+            )}
+          </tbody>
             {filteredStatement.length > 0 && (
               <tfoot>
                 <tr>
