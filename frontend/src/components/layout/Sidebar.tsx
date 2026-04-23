@@ -37,7 +37,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
-        <h2>Admin Pro</h2>
+        <img 
+          src="https://tronnus.com/wp-content/uploads/2026/01/tronnus-png-001.png" 
+          alt="Tronnus Logo" 
+          className="sidebar-logo"
+        />
         <button className="sidebar-close" onClick={onClose} aria-label="Close Menu">
           <X size={24} />
         </button>

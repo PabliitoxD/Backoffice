@@ -21,10 +21,10 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.sidebar-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
+.sidebar-logo {
+  max-height: 40px;
+  max-width: 150px;
+  object-fit: contain;
 }
 
 .sidebar-close {
