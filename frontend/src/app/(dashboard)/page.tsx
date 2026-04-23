@@ -117,38 +117,54 @@ export default function Dashboard() {
     return "do período";
   };
 
-  const STATS_CARDS = [
-    { 
-      title: "Receita (Lucro)", 
-      value: loading ? "..." : formatCurrency(stats?.revenue || 0), 
-      trend: "Taxas e tarifas", 
-      isPositive: true 
-    },
+  const mainCards = [
     { 
       title: "TPV total", 
       value: loading ? "..." : formatCurrency(stats?.tpv || 0), 
       trend: `Volume ${getTimeLabel()}`, 
-      isPositive: true 
+      isPositive: true
+    },
+    { 
+      title: "Receita (Lucro)", 
+      value: loading ? "..." : formatCurrency(stats?.revenue || 0), 
+      trend: "Taxas e tarifas", 
+      isPositive: true
+    },
+  ];
+
+  const secondaryCards = [
+    { 
+      title: "Transações", 
+      value: loading ? "..." : (stats?.transactionsCount || 0).toString(), 
+      trend: `Total ${getTimeLabel()}`, 
+      isPositive: true
+    },
+    { 
+      title: "Saques Pagos", 
+      value: loading ? "..." : formatCurrency(stats?.withdrawalsCompletedVolume || 0), 
+      trend: `${stats?.withdrawalsCompletedCount || 0} saques`, 
+      isPositive: true
     },
     { 
       title: "Chargebacks", 
       value: loading ? "..." : formatCurrency(stats?.chargebackVolume || 0), 
       trend: `${stats?.chargebackCount || 0} ocorrências`, 
-      isPositive: false 
-    },
-    { 
-      title: "Transações", 
-      value: loading ? "..." : (stats?.transactionsCount || 0).toString(), 
-      trend: `Total ${getTimeLabel()}`, 
-      isPositive: true 
-    },
-    { 
-      title: "Saques Processados", 
-      value: loading ? "..." : formatCurrency(stats?.withdrawalsCompletedVolume || 0), 
-      trend: `${stats?.withdrawalsCompletedCount || 0} saques pagos`, 
-      isPositive: true 
+      isPositive: false,
+      isDanger: true
     },
   ];
+
+  const renderStatCard = (stat: any, idx: number) => (
+    <div key={idx} className={`${styles.statCard} ${loading ? styles.skeleton : ""}`}>
+      <h3 className={styles.cardTitle}>{stat.title}</h3>
+      <div className={styles.cardBody}>
+        <span className={styles.cardValue}>{stat.value}</span>
+        <span className={`${styles.cardTrend} ${stat.isDanger ? styles.trendDanger : stat.isPositive ? styles.trendUp : styles.trendDown}`}>
+          {stat.isPositive ? '↑' : '↓'} {stat.trend}
+        </span>
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles.dashboard}>
@@ -202,20 +218,13 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Grid Centralizado de Stats */}
+      {/* Grid de Stats Reorganizado */}
       <div className={styles.statsContainer}>
-        <div className={styles.statsGrid}>
-          {STATS_CARDS.map((stat, idx) => (
-            <div key={idx} className={`${styles.statCard} ${loading ? styles.skeleton : ""}`}>
-              <h3 className={styles.cardTitle}>{stat.title}</h3>
-              <div className={styles.cardBody}>
-                <span className={styles.cardValue}>{stat.value}</span>
-                <span className={`${styles.cardTrend} ${stat.isPositive ? styles.trendUp : styles.trendDown}`}>
-                  {stat.trend}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className={styles.mainStatsGrid}>
+          {mainCards.map((stat, idx) => renderStatCard(stat, idx))}
+        </div>
+        <div className={styles.secondaryStatsGrid}>
+          {secondaryCards.map((stat, idx) => renderStatCard(stat, idx + 10))}
         </div>
       </div>
 

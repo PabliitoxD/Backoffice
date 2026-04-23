@@ -28,4 +28,10 @@ export class FinancialController {
   ) {
     return this.financialService.getGlobalStatement(startDate, endDate, search);
   }
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Obtem as notificações de chargebacks e saques pendentes' })
+  getNotifications() {
+    return this.financialService.getNotifications();
+  }
 }
