@@ -86,31 +86,26 @@ export default function LoginPage() {
       <div className="login-brand">
         <div className="brand-content">
           <div className="brand-logo">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="40" height="40" rx="10" fill="white" fillOpacity="0.15"/>
-              <path d="M10 20C10 14.477 14.477 10 20 10s10 4.477 10 10-4.477 10-10 10S10 25.523 10 20Z" fill="white" fillOpacity="0.3"/>
-              <path d="M20 14v6l4 2" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="brand-name">Backoffice</span>
+            <img src="/logo-bravvius.png" alt="Bravvius" className="brand-logo-img" />
           </div>
 
           <div className="brand-headline">
-            <h1>Administrative Panel</h1>
-            <p>Manage your operations with full control and security.</p>
+            <h1>0% de taxas.<br />100% de lucro.</h1>
+            <p>A plataforma que devolve autoridade financeira ao empreendedor digital.</p>
           </div>
 
           <div className="brand-features">
             <div className="feature-item">
               <span className="feature-icon">🔒</span>
-              <span>End-to-end secure access</span>
+              <span>Acesso seguro de ponta a ponta</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">📊</span>
-              <span>Real-time financial data</span>
+              <span>Dados financeiros em tempo real</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">⚡</span>
-              <span>Fast and reliable operations</span>
+              <span>Operações rápidas e confiáveis</span>
             </div>
           </div>
         </div>

@@ -7,8 +7,12 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Backoffice | Admin Dashboard",
-  description: "Secure and scalable administrative panel",
+  title: "Bravvius | Backoffice",
+  description: "Painel administrativo Bravvius",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
