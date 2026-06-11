@@ -2,7 +2,7 @@
 
 import './Topbar.css';
 import { useTheme } from "next-themes";
-import { Sun, Moon, Menu, Search, Bell } from "lucide-react";
+import { Sun, Moon, Menu, Bell } from "lucide-react";
 import { useEffect, useState } from 'react';
 
 import { API_URL } from '@/lib/api';
@@ -65,19 +65,10 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <button className="menu-toggle" onClick={onMenuClick} aria-label="Toggle Menu">
           <Menu size={24} />
         </button>
-        <div className="welcome-message" style={{ marginLeft: '0.5rem', fontWeight: 600, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span>👋</span>
-          <span>Olá, <span style={{ color: 'var(--primary-color)' }}>{firstName}</span></span>
-        </div>
       </div>
 
       <div className="topbar-actions">
-        <div className="topbar-search">
-          <Search size={18} className="search-icon-svg" />
-          <input type="text" placeholder="Pesquisar..." className="search-input" />
-        </div>
-
-        <button 
+        <button
           className="icon-btn" 
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
