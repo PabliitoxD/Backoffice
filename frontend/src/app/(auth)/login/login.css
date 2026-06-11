@@ -240,7 +240,7 @@
 
 .field-group input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 0 0 3px rgba(24, 88, 131, 0.15);
 }
 
 /* Password with toggle */

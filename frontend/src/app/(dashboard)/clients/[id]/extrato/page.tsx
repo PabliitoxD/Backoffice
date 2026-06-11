@@ -183,7 +183,7 @@ export default function ExtratoPage() {
           <p className={styles.textMuted}>
             Taxas e comissões detalhadas para esta movimentação:
           </p>
-          <div className={styles.producerBanner} style={{ backgroundColor: selectedTx.type === 'WITHDRAWAL' ? '#94a3b8' : '#2cb5c6' }}>
+          <div className={styles.producerBanner} style={{ backgroundColor: selectedTx.type === 'WITHDRAWAL' ? '#94a3b8' : 'var(--secondary-color)' }}>
             Esta operação de <strong>{selectedTx.type === 'TRANSACTION' ? 'venda' : 'saque'}</strong> foi processada com sucesso.
           </div>
           <table className={`${styles.feesTable} ${styles.modalTable}`}>

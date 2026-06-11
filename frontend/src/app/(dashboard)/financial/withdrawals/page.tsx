@@ -485,7 +485,7 @@ export default function WithdrawalsPage() {
                       </tr>
                       <tr>
                         <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>CHAVE PIX:</td>
-                        <td style={{ padding: '4px 0', fontWeight: 600, color: '#4f46e5' }}>{w.pixKey || w.producer?.pixKey || 'Não informada'}</td>
+                        <td style={{ padding: '4px 0', fontWeight: 600, color: 'var(--primary-color)' }}>{w.pixKey || w.producer?.pixKey || 'Não informada'}</td>
                       </tr>
                       <tr>
                         <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>STATUS:</td>
@@ -518,7 +518,7 @@ export default function WithdrawalsPage() {
               </button>
               <button 
                 onClick={confirmNotifyFinance}
-                style={{ padding: '0.75rem 2rem', borderRadius: '6px', background: '#4f46e5', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
+                style={{ padding: '0.75rem 2rem', borderRadius: '6px', background: 'var(--primary-color)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
               >
                 Confirmar e Enviar E-mail
               </button>
