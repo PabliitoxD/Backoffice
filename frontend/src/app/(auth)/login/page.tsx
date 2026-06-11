@@ -1,16 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import { API_URL } from "@/lib/api";
 import "./login.css";
+
+function SunIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+      <line x1="2" x2="22" y1="2" y2="22"/>
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => setMounted(true), []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
     try {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -23,77 +69,143 @@ export default function LoginPage() {
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("user", JSON.stringify(data.user));
         document.cookie = `token=${data.access_token}; path=/`;
-        window.location.href = "/transactions"; // Redirect to dashboard
+        window.location.href = "/transactions";
       } else {
-        setError(data.message || "Credenciais inválidas");
+        setError(data.message || "Invalid credentials. Please try again.");
       }
-    } catch (_err) {
-      setError("Erro ao conectar com o servidor");
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleOfflineLogin = () => {
-    localStorage.setItem("token", "mock-token-local");
-    localStorage.setItem("user", JSON.stringify({ name: "Usuário Teste Local", role: "ADMIN" }));
-    document.cookie = `token=mock-token-local; path=/`;
-    window.location.href = "/transactions";
-  };
-
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h2>Entrar no Backoffice</h2>
-        <p>Acesse o painel de administração</p>
-        
-        {error && <div className="auth-error">{error}</div>}
+    <div className="login-wrapper">
+      {/* Left panel — branding */}
+      <div className="login-brand">
+        <div className="brand-content">
+          <div className="brand-logo">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="10" fill="white" fillOpacity="0.15"/>
+              <path d="M10 20C10 14.477 14.477 10 20 10s10 4.477 10 10-4.477 10-10 10S10 25.523 10 20Z" fill="white" fillOpacity="0.3"/>
+              <path d="M20 14v6l4 2" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <span className="brand-name">Backoffice</span>
+          </div>
 
-        <form onSubmit={handleLogin} className="auth-form">
-          <div className="form-group">
-            <label>E-mail Corporativo</label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-              required 
-              placeholder="admin@superfin.com.br"
-            />
+          <div className="brand-headline">
+            <h1>Administrative Panel</h1>
+            <p>Manage your operations with full control and security.</p>
           </div>
-          <div className="form-group">
-            <label>Senha</label>
-            <input 
-              type="password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              required 
-              placeholder="••••••••"
-            />
+
+          <div className="brand-features">
+            <div className="feature-item">
+              <span className="feature-icon">🔒</span>
+              <span>End-to-end secure access</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">📊</span>
+              <span>Real-time financial data</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">⚡</span>
+              <span>Fast and reliable operations</span>
+            </div>
           </div>
-          <div className="form-footer">
-            <a href="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--text-accent)' }}>Esqueceu a senha?</a>
+        </div>
+
+        {/* Decorative circles */}
+        <div className="brand-decor decor-1" />
+        <div className="brand-decor decor-2" />
+        <div className="brand-decor decor-3" />
+      </div>
+
+      {/* Right panel — form */}
+      <div className="login-panel">
+        {/* Theme toggle */}
+        {mounted && (
+          <button
+            className="theme-toggle"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+          </button>
+        )}
+
+        <div className="login-form-wrapper">
+          <div className="login-header">
+            <h2>Welcome back</h2>
+            <p>Sign in to your account to continue</p>
           </div>
-          <button type="submit" className="btn-primary">Acessar</button>
-          
-          <div style={{ marginTop: '1rem', width: '100%' }}>
-            <button 
-              type="button" 
-              onClick={handleOfflineLogin}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '8px',
-                color: 'var(--text-muted)',
-                cursor: 'pointer'
-              }}
-            >
-              🛠️ Entrar Offline (Somente Teste/Mock)
+
+          {error && (
+            <div className="login-error" role="alert">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="field-group">
+              <label htmlFor="email">Corporate Email</label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="admin@company.com.br"
+                autoComplete="email"
+              />
+            </div>
+
+            <div className="field-group">
+              <div className="field-label-row">
+                <label htmlFor="password">Password</label>
+                <a href="/forgot-password" className="forgot-link">Forgot password?</a>
+              </div>
+              <div className="password-field">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className="btn-signin" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="spinner" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="auth-footer">
-          Não tem uma conta? <a href="/signup">Cadastre-se</a>
+          <p className="login-footer">
+            © {new Date().getFullYear()} Backoffice. All rights reserved.
+          </p>
         </div>
       </div>
     </div>
