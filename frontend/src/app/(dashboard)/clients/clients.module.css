@@ -115,6 +115,8 @@
   border-radius: var(--radius-md);
   outline: none;
   font-family: inherit;
+  background: var(--background);
+  color: var(--text-main);
   transition: border-color 0.2s;
 }
 
@@ -159,20 +161,16 @@
   letter-spacing: 0.05em;
 }
 
-@media (prefers-color-scheme: dark) {
-  .table th {
-    background-color: rgba(30, 41, 59, 0.4);
-  }
+:global(.dark) .table th {
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .table tbody tr:hover {
   background-color: rgba(248, 250, 252, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  .table tbody tr:hover {
-    background-color: rgba(30, 41, 59, 0.2);
-  }
+:global(.dark) .table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.04);
 }
 
 .fontWeightMedium {
@@ -218,6 +216,25 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.btnVerDetalhe {
+  padding: 0.35rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.btnVerDetalhe:hover {
+  background: rgba(24, 88, 131, 0.08);
+  border-color: var(--primary-color);
 }
 
 .btnAction {
@@ -272,11 +289,9 @@
   border-color: #cbd5e1;
 }
 
-@media (prefers-color-scheme: dark) {
-  .btnPage:not(:disabled):hover {
-    background-color: rgba(30, 41, 59, 1);
-    border-color: #475569;
-  }
+:global(.dark) .btnPage:not(:disabled):hover {
+  background-color: rgba(30, 41, 59, 1);
+  border-color: #475569;
 }
 
 .btnPage:disabled {
@@ -364,10 +379,8 @@
   background-color: rgba(248, 250, 252, 0.8);
 }
 
-@media (prefers-color-scheme: dark) {
-  .dropdownItem:hover {
-    background-color: rgba(30, 41, 59, 1);
-  }
+:global(.dark) .dropdownItem:hover {
+  background-color: rgba(30, 41, 59, 1);
 }
 
 /* Modal Styles */
