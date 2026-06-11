@@ -7,7 +7,8 @@ import { API_URL } from "@/lib/api";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 export const BRANDS = ["MasterCard", "Visa", "Elo", "Hipercard"] as const;
-export const INSTALLMENTS = [
+
+export const INSTALLMENTS_PARCELA = [
   { key: "debito",      label: "Débito" },
   { key: "credito_1x",  label: "Crédito 1x" },
   { key: "credito_2x",  label: "Crédito 2x" },
@@ -23,7 +24,18 @@ export const INSTALLMENTS = [
   { key: "credito_12x", label: "Crédito 12x" },
 ] as const;
 
+export const INSTALLMENTS_FAIXA = [
+  { key: "debito",        label: "Débito" },
+  { key: "credito_1a6",   label: "Crédito 1x a 6x" },
+  { key: "credito_7a12",  label: "Crédito 7x a 12x" },
+] as const;
+
+// keep a flat list for CSV/import compatibility
+export const INSTALLMENTS = INSTALLMENTS_PARCELA;
+
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export type MatrixMode = "parcela" | "faixa";
 
 export interface Plan {
   id?: number;
@@ -31,8 +43,10 @@ export interface Plan {
   description: string;
   status: "Ativo" | "Inativo";
   pixRate: string;
+  saqueRate: string;
   boletoType: "fixed" | "percentage";
   boletoRate: string;
+  matrixMode: MatrixMode;
   creditCardRelease: string;
   pixRelease: string;
   boletoRelease: string;
@@ -44,8 +58,10 @@ const EMPTY_PLAN: Plan = {
   description: "",
   status: "Ativo",
   pixRate: "0.99",
+  saqueRate: "0.00",
   boletoType: "fixed",
   boletoRate: "2.50",
+  matrixMode: "parcela",
   creditCardRelease: "d30",
   pixRelease: "24h",
   boletoRelease: "d2",
@@ -104,25 +120,16 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
     try {
       const token = localStorage.getItem("token");
       const method = isEdit ? "PUT" : "POST";
-      const url = isEdit
-        ? `${API_URL}/plans/${form.id}`
-        : `${API_URL}/plans`;
-
+      const url = isEdit ? `${API_URL}/plans/${form.id}` : `${API_URL}/plans`;
       const res = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(form),
       });
-
-      // If API not available yet, use the form data directly (mock mode)
       const saved: Plan = res.ok ? await res.json() : { ...form, id: form.id ?? Date.now() };
       onSaved(saved);
       onClose();
     } catch {
-      // API not available — proceed with local state (mock mode)
       onSaved({ ...form, id: form.id ?? Date.now() });
       onClose();
     } finally {
@@ -142,16 +149,13 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
 
-        {/* Header */}
         <div className={styles.modalHeader}>
           <div>
             <p className={styles.modalTitle}>
               {isEdit ? `Editar Plano — ${form.name}` : "Novo Plano"}
             </p>
             <p className={styles.modalSubtitle}>
-              {isEdit
-                ? "Altere os dados e salve para atualizar via API."
-                : "Preencha os dados e salve para criar via API."}
+              {isEdit ? "Altere os dados e salve para atualizar via API." : "Preencha os dados e salve para criar via API."}
             </p>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
@@ -161,7 +165,6 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
           </button>
         </div>
 
-        {/* Tab bar */}
         <div className={styles.tabBar}>
           {TABS.map((t) => (
             <button
@@ -174,14 +177,12 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
           ))}
         </div>
 
-        {/* Body */}
         <div className={styles.modalBody}>
-          {activeTab === "geral" && <TabGeral form={form} set={set} />}
-          {activeTab === "taxas" && <TabTaxas form={form} set={set} setMatrix={setMatrix} />}
+          {activeTab === "geral"      && <TabGeral form={form} set={set} />}
+          {activeTab === "taxas"      && <TabTaxas form={form} set={set} setMatrix={setMatrix} />}
           {activeTab === "liquidacao" && <TabLiquidacao form={form} set={set} />}
         </div>
 
-        {/* Footer */}
         <div className={styles.modalFooter}>
           <button className={styles.btnSecondary} onClick={onClose}>Cancelar</button>
           <button className={styles.btnPrimary} onClick={handleSave} disabled={saving}>
@@ -244,21 +245,35 @@ function TabTaxas({
   set: (f: keyof Plan, v: string) => void;
   setMatrix: (brand: string, key: string, value: string) => void;
 }) {
+  const installments = form.matrixMode === "faixa" ? INSTALLMENTS_FAIXA : INSTALLMENTS_PARCELA;
+
   return (
     <div className={styles.formContent}>
-      {/* PIX + Boleto */}
+
+      {/* ── Taxas à Vista + Saque ─────────────────────────────────── */}
       <div className={styles.formSection}>
-        <h3 className={styles.sectionLabel}>Taxas à Vista</h3>
-        <div className={styles.fieldGrid}>
+        <h3 className={styles.sectionLabel}>Taxas Operacionais</h3>
+        <div className={styles.fieldGridThree}>
           <div className={styles.field}>
             <label>Taxa PIX</label>
             <div className={styles.inputUnit}>
               <input
-                type="number"
-                step="0.01"
-                min="0"
+                type="number" step="0.01" min="0"
                 value={form.pixRate}
                 onChange={(e) => set("pixRate", e.target.value)}
+              />
+              <span className={styles.unitSuffix}>%</span>
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <label>Taxa de Saque</label>
+            <div className={styles.inputUnit}>
+              <input
+                type="number" step="0.01" min="0"
+                value={form.saqueRate}
+                onChange={(e) => set("saqueRate", e.target.value)}
+                placeholder="0.00"
               />
               <span className={styles.unitSuffix}>%</span>
             </div>
@@ -279,7 +294,7 @@ function TabTaxas({
                 className={`${styles.toggleBtn} ${form.boletoType === "percentage" ? styles.toggleBtnActive : ""}`}
                 onClick={() => set("boletoType", "percentage")}
               >
-                Percentual (%)
+                % do valor
               </button>
             </div>
           </div>
@@ -288,9 +303,7 @@ function TabTaxas({
             <label>Valor Boleto</label>
             <div className={styles.inputUnit}>
               <input
-                type="number"
-                step="0.01"
-                min="0"
+                type="number" step="0.01" min="0"
                 value={form.boletoRate}
                 onChange={(e) => set("boletoRate", e.target.value)}
               />
@@ -300,9 +313,39 @@ function TabTaxas({
         </div>
       </div>
 
-      {/* Card Matrix */}
+      {/* ── Modo de Precificação de Cartão ────────────────────────── */}
       <div className={styles.formSection}>
-        <h3 className={styles.sectionLabel}>Matriz de Taxas — Cartão (por Bandeira e Parcelamento)</h3>
+        <div className={styles.matrixModeHeader}>
+          <div>
+            <h3 className={styles.sectionLabel} style={{ marginBottom: 0 }}>
+              Matriz de Taxas — Cartão
+            </h3>
+            <p className={styles.matrixModeDesc}>
+              {form.matrixMode === "parcela"
+                ? "Taxa individual por parcela (mais granular)"
+                : "Taxa agrupada por faixa — Débito, 1x–6x e 7x–12x"}
+            </p>
+          </div>
+          <div className={styles.modeSelector}>
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${form.matrixMode === "parcela" ? styles.modeBtnActive : ""}`}
+              onClick={() => set("matrixMode", "parcela")}
+            >
+              <span className={styles.modeBtnIcon}>≡</span>
+              Por Parcela
+            </button>
+            <button
+              type="button"
+              className={`${styles.modeBtn} ${form.matrixMode === "faixa" ? styles.modeBtnActive : ""}`}
+              onClick={() => set("matrixMode", "faixa")}
+            >
+              <span className={styles.modeBtnIcon}>◫</span>
+              Por Faixa
+            </button>
+          </div>
+        </div>
+
         <div className={styles.matrixWrap}>
           <table className={styles.matrixTable}>
             <thead>
@@ -312,7 +355,7 @@ function TabTaxas({
               </tr>
             </thead>
             <tbody>
-              {INSTALLMENTS.map((inst) => (
+              {installments.map((inst) => (
                 <tr key={inst.key}>
                   <td className={styles.rowHeader}>{inst.label}</td>
                   {BRANDS.map((brand) => {
@@ -322,9 +365,7 @@ function TabTaxas({
                         <div className={styles.matrixCell}>
                           <input
                             className={styles.matrixInput}
-                            type="number"
-                            step="0.01"
-                            min="0"
+                            type="number" step="0.01" min="0"
                             placeholder="0.00"
                             value={form.matrixRates[k] ?? ""}
                             onChange={(e) => setMatrix(brand, inst.key, e.target.value)}
@@ -340,6 +381,7 @@ function TabTaxas({
           </table>
         </div>
       </div>
+
     </div>
   );
 }
@@ -354,10 +396,7 @@ function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: stri
         <div className={styles.fieldGridThree}>
           <div className={styles.field}>
             <label>Cartão de Crédito</label>
-            <select
-              value={form.creditCardRelease}
-              onChange={(e) => set("creditCardRelease", e.target.value)}
-            >
+            <select value={form.creditCardRelease} onChange={(e) => set("creditCardRelease", e.target.value)}>
               <option value="d30">D+30 — Padrão</option>
               <option value="d15">D+15</option>
               <option value="d7">D+7</option>
@@ -365,24 +404,16 @@ function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: stri
               <option value="installments">Conforme parcelas</option>
             </select>
           </div>
-
           <div className={styles.field}>
             <label>PIX</label>
-            <select
-              value={form.pixRelease}
-              onChange={(e) => set("pixRelease", e.target.value)}
-            >
+            <select value={form.pixRelease} onChange={(e) => set("pixRelease", e.target.value)}>
               <option value="instant">Imediato</option>
               <option value="24h">24 Horas</option>
             </select>
           </div>
-
           <div className={styles.field}>
             <label>Boleto</label>
-            <select
-              value={form.boletoRelease}
-              onChange={(e) => set("boletoRelease", e.target.value)}
-            >
+            <select value={form.boletoRelease} onChange={(e) => set("boletoRelease", e.target.value)}>
               <option value="d1">D+1</option>
               <option value="d2">D+2 — Padrão</option>
             </select>
@@ -390,7 +421,6 @@ function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: stri
         </div>
       </div>
 
-      {/* Info block */}
       <div className={styles.formSection}>
         <h3 className={styles.sectionLabel}>Resumo da Configuração</h3>
         <div className={styles.fieldGrid}>
@@ -398,9 +428,14 @@ function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: stri
           <InfoLine label="PIX" value={releaseLabelPix(form.pixRelease)} />
           <InfoLine label="Boleto" value={releaseLabelBoleto(form.boletoRelease)} />
           <InfoLine label="Taxa PIX" value={`${form.pixRate}%`} />
+          <InfoLine label="Taxa Saque" value={`${form.saqueRate}%`} />
           <InfoLine
             label="Taxa Boleto"
             value={form.boletoType === "fixed" ? `R$ ${form.boletoRate}` : `${form.boletoRate}%`}
+          />
+          <InfoLine
+            label="Modo Cartão"
+            value={form.matrixMode === "parcela" ? "Por Parcela" : "Por Faixa (Déb / 1-6x / 7-12x)"}
           />
         </div>
       </div>
@@ -419,19 +454,10 @@ function InfoLine({ label, value }: { label: string; value: string }) {
 
 function releaseLabelCard(v: string) {
   const m: Record<string, string> = {
-    d30: "D+30 (30 dias após a venda)",
-    d15: "D+15 (15 dias após a venda)",
-    d7: "D+7 (7 dias após a venda)",
-    d2: "D+2 (2 dias após a venda)",
-    installments: "Conforme pagamento das parcelas",
+    d30: "D+30 (30 dias)", d15: "D+15 (15 dias)", d7: "D+7 (7 dias)",
+    d2: "D+2 (2 dias)", installments: "Conforme parcelas",
   };
   return m[v] ?? v;
 }
-
-function releaseLabelPix(v: string) {
-  return v === "instant" ? "Imediato" : "24 Horas";
-}
-
-function releaseLabelBoleto(v: string) {
-  return v === "d1" ? "D+1 (1 dia útil)" : "D+2 (2 dias úteis)";
-}
+function releaseLabelPix(v: string) { return v === "instant" ? "Imediato" : "24 Horas"; }
+function releaseLabelBoleto(v: string) { return v === "d1" ? "D+1 (1 dia útil)" : "D+2 (2 dias úteis)"; }

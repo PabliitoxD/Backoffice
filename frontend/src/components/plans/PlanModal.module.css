@@ -347,6 +347,66 @@
   color: var(--text-muted);
 }
 
+/* ── Matrix mode selector ────────────────────────────────── */
+.matrixModeHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.matrixModeDesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.modeSelector {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.modeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.875rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.modeBtn:hover {
+  background: var(--border-color);
+  color: var(--text-main);
+}
+
+.modeBtnActive {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #fff;
+}
+
+.modeBtnActive:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  color: #fff;
+}
+
+.modeBtnIcon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
 /* ── Boleto type toggle ──────────────────────────────────── */
 .toggleGroup {
   display: flex;
