@@ -317,14 +317,7 @@ function TabTaxas({
       <div className={styles.formSection}>
         <div className={styles.matrixModeHeader}>
           <div>
-            <h3 className={styles.sectionLabel} style={{ marginBottom: 0 }}>
-              Matriz de Taxas — Cartão
-            </h3>
-            <p className={styles.matrixModeDesc}>
-              {form.matrixMode === "parcela"
-                ? "Taxa individual por parcela (mais granular)"
-                : "Taxa agrupada por faixa — Débito, 1x–6x e 7x–12x"}
-            </p>
+            <h3 className={styles.sectionLabel}>Matriz de Taxas — Cartão</h3>
           </div>
           <div className={styles.modeSelector}>
             <button

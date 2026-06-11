@@ -198,6 +198,11 @@
   margin: 0;
 }
 
+:global(.dark) .sectionLabel {
+  border-bottom-color: transparent;
+  box-shadow: none;
+}
+
 .fieldGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
