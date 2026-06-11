@@ -225,7 +225,7 @@
 
 :global(.dark) .sectionCard {
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.09);
+  border-color: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: none;
