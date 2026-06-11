@@ -212,8 +212,8 @@
 }
 
 .kpiLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
@@ -235,16 +235,16 @@
 .iconWrapDanger { background: rgba(239, 68, 68, 0.1); color: var(--danger-color); }
 
 .kpiValue {
-  font-size: 2.25rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-main);
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   margin-top: 0.25rem;
 }
 
 .kpiValueSm {
-  font-size: 1.625rem;
+  font-size: 1.25rem;
 }
 
 .valueDanger { color: var(--danger-color); }
@@ -293,19 +293,7 @@
 }
 
 .rankingCard {
-  background: var(--surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-}
-
-:global(.dark) .rankingCard {
-  background: rgba(255, 255, 255, 0.045);
-  border-color: rgba(255, 255, 255, 0.09);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  padding: 0.25rem 0;
 }
 
 .rankingCardHeader {
@@ -313,7 +301,7 @@
 }
 
 .rankingTitle {
-  font-size: 0.9375rem;
+  font-size: 1.155rem;
   font-weight: 700;
   color: var(--text-main);
   margin: 0;
@@ -377,7 +365,7 @@
 }
 
 .rankValue {
-  font-size: 0.875rem;
+  font-size: 1.155rem;
   font-weight: 700;
   color: var(--primary-color);
   white-space: nowrap;
