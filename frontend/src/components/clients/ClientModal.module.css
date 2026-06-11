@@ -233,6 +233,7 @@
 
 :global(.dark) .sectionHeader {
   border-bottom-color: transparent;
+  box-shadow: none;
 }
 
 .sectionHeader {
