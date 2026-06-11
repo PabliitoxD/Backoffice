@@ -299,7 +299,7 @@ export default function ReceivablesPage() {
                     <td>
                       <div className={styles.fontWeightMedium}>{item.transaction.method}</div>
                       {item.transaction.cardBrand && (
-                        <div className={styles.textMuted} style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5' }}>
+                        <div className={styles.textMuted} style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-color)' }}>
                           {item.transaction.cardBrand}
                         </div>
                       )}

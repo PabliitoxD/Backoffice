@@ -285,7 +285,7 @@ export default function ChargebacksPage() {
                       </td>
                       <td>
                         <div className={styles.fontWeightMedium}>{item.method}</div>
-                        <div className={styles.textMuted} style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4f46e5' }}>{item.cardBrand || 'N/A'}</div>
+                        <div className={styles.textMuted} style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary-color)' }}>{item.cardBrand || 'N/A'}</div>
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 700, color: '#ef4444', whiteSpace: 'nowrap' }}>-{formatCurrency(item.amount)}</td>
                       <td>
@@ -306,7 +306,7 @@ export default function ChargebacksPage() {
                             <button
                               onClick={(e) => { e.stopPropagation(); openModal(item); }}
                               title="Enviar Defesa"
-                              style={{ background: 'rgba(79, 70, 229, 0.1)', border: '1px solid #4f46e5', color: '#4f46e5', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
+                              style={{ background: 'rgba(24, 88, 131, 0.1)', border: '1px solid var(--primary-color)', color: 'var(--primary-color)', borderRadius: '6px', padding: '0.3rem 0.65rem', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer' }}
                             >
                               🛡️ Defesa
                             </button>
@@ -350,17 +350,17 @@ export default function ChargebacksPage() {
 
               {/* Defense Panel — only within 5 days */}
               {defenseOpen && (
-                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(79,70,229,0.04)' }}>
+                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', background: 'rgba(24, 88, 131, 0.06)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
-                      <h4 style={{ margin: '0 0 2px 0', fontSize: '0.95rem', fontWeight: 700, color: '#4f46e5' }}>
+                      <h4 style={{ margin: '0 0 2px 0', fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary-color)' }}>
                         🛡️ Enviar Defesa à Adquirente
                       </h4>
                       <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        Prazo disponível: <strong style={{ color: remainingDays! <= 1 ? '#dc2626' : '#4f46e5' }}>{remainingDays} dia{remainingDays !== 1 ? 's' : ''}</strong>. Anexe documentos e descreva a contestação.
+                        Prazo disponível: <strong style={{ color: remainingDays! <= 1 ? '#dc2626' : 'var(--primary-color)' }}>{remainingDays} dia{remainingDays !== 1 ? 's' : ''}</strong>. Anexe documentos e descreva a contestação.
                       </p>
                     </div>
-                    <span style={{ background: remainingDays! <= 1 ? '#fee2e2' : 'rgba(79,70,229,0.1)', color: remainingDays! <= 1 ? '#dc2626' : '#4f46e5', border: `1px solid ${remainingDays! <= 1 ? '#fca5a5' : '#4f46e5'}`, borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', whiteSpace: 'nowrap' }}>
+                    <span style={{ background: remainingDays! <= 1 ? '#fee2e2' : 'rgba(24, 88, 131, 0.1)', color: remainingDays! <= 1 ? '#dc2626' : 'var(--primary-color)', border: `1px solid ${remainingDays! <= 1 ? '#fca5a5' : 'var(--primary-color)'}`, borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, padding: '3px 10px', whiteSpace: 'nowrap' }}>
                       ⏱ {remainingDays}d restante{remainingDays !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -388,7 +388,7 @@ export default function ChargebacksPage() {
                         />
                         <div style={{ fontSize: '1.5rem', marginBottom: '0.35rem' }}>📎</div>
                         <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                          Arraste arquivos aqui ou <strong style={{ color: '#4f46e5' }}>clique para selecionar</strong>
+                          Arraste arquivos aqui ou <strong style={{ color: 'var(--primary-color)' }}>clique para selecionar</strong>
                         </p>
                         <p style={{ margin: '4px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                           Formatos aceitos: PDF, DOC, DOCX
@@ -425,7 +425,7 @@ export default function ChargebacksPage() {
                       <button
                         onClick={handleSubmitDefense}
                         disabled={isSubmittingDefense || !defenseDescription.trim()}
-                        style={{ marginTop: '0.75rem', width: '100%', padding: '0.75rem', borderRadius: '6px', background: '#4f46e5', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: (isSubmittingDefense || !defenseDescription.trim()) ? 0.5 : 1, transition: 'opacity 0.2s' }}
+                        style={{ marginTop: '0.75rem', width: '100%', padding: '0.75rem', borderRadius: '6px', background: 'var(--primary-color)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: (isSubmittingDefense || !defenseDescription.trim()) ? 0.5 : 1, transition: 'opacity 0.2s' }}
                       >
                         {isSubmittingDefense ? 'Enviando à adquirente...' : '🛡️ Enviar Defesa'}
                       </button>
@@ -445,7 +445,7 @@ export default function ChargebacksPage() {
                   style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg)', color: 'var(--text-main)', fontSize: '0.875rem', resize: 'vertical', boxSizing: 'border-box' }}
                 />
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.75rem' }}>
-                  <button onClick={handleUpdateObservation} disabled={isSaving} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', background: '#4f46e5', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: isSaving ? 0.7 : 1 }}>
+                  <button onClick={handleUpdateObservation} disabled={isSaving} style={{ padding: '0.6rem 1.25rem', borderRadius: '6px', background: 'var(--primary-color)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 600, opacity: isSaving ? 0.7 : 1 }}>
                     {isSaving ? 'Salvando...' : 'Salvar Observação'}
                   </button>
                 </div>

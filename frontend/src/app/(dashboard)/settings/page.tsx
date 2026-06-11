@@ -192,7 +192,7 @@ export default function SettingsPage() {
   // Helper to get action label color
   const getActionColor = (action: string) => {
     if (action === 'LOGIN') return '#10b981';
-    if (action.startsWith('CREATE')) return '#4f46e5';
+    if (action.startsWith('CREATE')) return 'var(--primary-color)';
     if (action.startsWith('DELETE')) return '#ef4444';
     if (action.startsWith('UPDATE')) return '#f59e0b';
     return 'var(--text-muted)';
@@ -200,7 +200,7 @@ export default function SettingsPage() {
 
   const getActionBg = (action: string) => {
     if (action === 'LOGIN') return 'rgba(16, 185, 129, 0.08)';
-    if (action.startsWith('CREATE')) return 'rgba(79, 70, 229, 0.08)';
+    if (action.startsWith('CREATE')) return 'rgba(24, 88, 131, 0.08)';
     if (action.startsWith('DELETE')) return 'rgba(239, 68, 68, 0.08)';
     if (action.startsWith('UPDATE')) return 'rgba(245, 158, 11, 0.08)';
     return 'rgba(100, 116, 139, 0.08)';
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                         <td style={{ fontWeight: 500 }}>{user.name}</td>
                         <td className={styles.textMuted}>{user.email}</td>
                         <td>
-                          <span className={styles.statusBadge} style={{ background: 'rgba(79, 70, 229, 0.1)', color: 'var(--primary-color)' }}>
+                          <span className={styles.statusBadge} style={{ background: 'rgba(24, 88, 131, 0.1)', color: 'var(--primary-color)' }}>
                             {user.profile?.name || 'Sem Perfil'}
                           </span>
                         </td>
