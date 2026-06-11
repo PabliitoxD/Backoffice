@@ -329,16 +329,58 @@
 }
 
 /* ---------------------------------------------------------
-   RESPONSIVE — Hide brand panel on small screens
+   RESPONSIVE
    --------------------------------------------------------- */
-@media (max-width: 768px) {
+
+/* Small laptop (1024px) — narrow the form panel slightly */
+@media (max-width: 1024px) {
+  .login-panel {
+    width: 400px;
+  }
+}
+
+/* Tablet portrait and below (≤900px) — hide brand, full-screen form */
+@media (max-width: 900px) {
   .login-brand {
     display: none;
   }
 
+  .login-wrapper {
+    display: flex;
+    align-items: stretch;
+  }
+
   .login-panel {
     width: 100%;
+    max-width: 100%;
+    flex: 1;
     border-left: none;
-    padding: 2rem 1.5rem;
+    padding: 4rem 2.5rem;
+  }
+
+  .login-form-wrapper {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+}
+
+/* Mobile (≤480px) */
+@media (max-width: 480px) {
+  .login-panel {
+    padding: 3rem 1.5rem;
+  }
+
+  .login-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .login-form-wrapper {
+    gap: 1.5rem;
+    max-width: 100%;
+  }
+
+  .theme-toggle {
+    top: 1rem;
+    right: 1rem;
   }
 }
