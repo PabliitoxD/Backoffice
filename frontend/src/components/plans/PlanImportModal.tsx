@@ -44,6 +44,7 @@ const TEMPLATE_EXAMPLE_ROW = [
   "1.60", "2.10", "2.20", "2.30", "2.40", "2.50", "2.60", "2.70", "2.80", "2.90", "3.00", "3.10", "3.20",
 ];
 
+// Generates and triggers download of a CSV template with all required columns + one example row
 function downloadCSV() {
   const lines = [TEMPLATE_HEADERS.join(","), TEMPLATE_EXAMPLE_ROW.join(",")];
   const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
@@ -61,6 +62,7 @@ interface ParsedRow {
   [key: string]: string;
 }
 
+// Splits raw CSV text into a headers array and an array of row objects keyed by header
 function parseCSV(text: string): { headers: string[]; rows: ParsedRow[] } {
   const lines = text.trim().split(/\r?\n/);
   const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
@@ -103,6 +105,7 @@ export function PlanImportModal({ isOpen, onClose, onImported }: PlanImportModal
     return () => document.removeEventListener("keydown", handleKey);
   }, [handleKey]);
 
+  // Validates the file type and parses it for preview; rejects non-.csv files
   const processFile = (f: File) => {
     setError("");
     if (!f.name.endsWith(".csv")) {
@@ -127,6 +130,7 @@ export function PlanImportModal({ isOpen, onClose, onImported }: PlanImportModal
     reader.readAsText(f, "utf-8");
   };
 
+  // Handles drag-and-drop file input on the drop zone
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragging(false);
@@ -134,6 +138,7 @@ export function PlanImportModal({ isOpen, onClose, onImported }: PlanImportModal
     if (f) processFile(f);
   };
 
+  // POSTs the CSV to /plans/import as FormData; falls back to mock success on error
   const handleImport = async () => {
     if (!file || !preview) return;
     setImporting(true);
@@ -157,6 +162,7 @@ export function PlanImportModal({ isOpen, onClose, onImported }: PlanImportModal
     }
   };
 
+  // Clears the selected file and preview state so a new file can be chosen
   const reset = () => {
     setFile(null);
     setPreview(null);

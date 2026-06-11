@@ -76,9 +76,12 @@ export default function PlansPage() {
   const [isNewOpen,  setIsNewOpen]  = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
 
+  // Opens the modal in create mode (no plan pre-loaded)
   const openNew  = () => { setModalPlan(null); setIsNewOpen(true); };
+  // Opens the modal pre-loaded with an existing plan for editing
   const openEdit = (plan: Plan) => { setModalPlan(plan); setIsNewOpen(true); };
 
+  // Updates the plan list after save: replaces an existing entry or appends a new one
   const handleSaved = (saved: Plan) => {
     setPlans((prev) =>
       saved.id && prev.some((p) => p.id === saved.id)
@@ -87,6 +90,7 @@ export default function PlansPage() {
     );
   };
 
+  // Toggles a plan's status between Ativo and Inativo
   const toggleStatus = (id: number) => {
     setPlans((prev) =>
       prev.map((p) =>
