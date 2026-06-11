@@ -5,7 +5,17 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   
   // Define public paths that don't require authentication
-  const isPublicPath = path === '/login' || path === '/signup' || path === '/register' || path.startsWith('/_next') || path === '/favicon.ico';
+  const isPublicPath =
+    path === '/login' ||
+    path === '/signup' ||
+    path === '/register' ||
+    path.startsWith('/_next') ||
+    path.startsWith('/favicon') ||
+    path.endsWith('.png') ||
+    path.endsWith('.jpg') ||
+    path.endsWith('.svg') ||
+    path.endsWith('.ico') ||
+    path.endsWith('.webp');
 
   const token = request.cookies.get('token')?.value;
 
