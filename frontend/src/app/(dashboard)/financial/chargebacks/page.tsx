@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import styles from '../financial.module.css';
+import styles from './chargebacks.module.css';
 import { API_URL } from '@/lib/api';
 
 const formatCurrency = (value: number) => {

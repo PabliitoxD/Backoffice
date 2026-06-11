@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { API_URL } from "@/lib/api";
-import "../login/login.css"; // Reuse the same CSS
+import "./signup.css";
 
 export default function SignupPage() {
   const [name, setName] = useState("");

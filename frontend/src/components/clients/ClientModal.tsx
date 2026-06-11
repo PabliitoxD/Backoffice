@@ -82,9 +82,11 @@ const SYSTEM_PLANS = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+// Formats a number as BRL currency (R$ 1.234,56)
 const fmtCurrency = (v: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 
+// Returns the CSS module class for a given transaction or client status string
 const statusBadgeClass = (status: string) => {
   if (status === "Ativo" || status === "APPROVED" || status === "COMPLETED") return styles.badgeActive;
   if (status === "Pendente" || status === "WAITING" || status === "PENDING") return styles.badgePending;
@@ -92,6 +94,7 @@ const statusBadgeClass = (status: string) => {
   return styles.badgeInactive;
 };
 
+// Converts API status codes to their Portuguese display labels
 const statusLabel = (status: string) => {
   const map: Record<string, string> = {
     APPROVED: "Aprovada", COMPLETED: "Aprovada",
@@ -104,6 +107,7 @@ const statusLabel = (status: string) => {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
+// Single labeled field used inside the detail sections
 function InfoRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className={styles.infoRow}>
@@ -113,6 +117,7 @@ function InfoRow({ label, value }: { label: string; value?: string }) {
   );
 }
 
+// Card that groups InfoRow fields under a titled section with icon
 function SectionCard({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
   return (
     <div className={styles.sectionCard}>
@@ -127,6 +132,7 @@ function SectionCard({ title, icon, children }: { title: string; icon: string; c
 
 // ─── Tab: Detalhes ────────────────────────────────────────────────────────────
 
+// Read-only summary of all client data grouped by section
 function TabDetalhes({ detail }: { detail: ClientDetail }) {
   return (
     <div className={styles.tabGrid}>
@@ -166,6 +172,7 @@ function TabDetalhes({ detail }: { detail: ClientDetail }) {
 
 // ─── Tab: Editar ──────────────────────────────────────────────────────────────
 
+// Editable form for all client fields; calls onSave when the form is submitted
 function TabEditar({ detail, onSave }: { detail: ClientDetail; onSave: () => void }) {
   const [form, setForm] = useState({ ...detail, planId: detail.planId as number | string });
 
@@ -323,6 +330,7 @@ function TabEditar({ detail, onSave }: { detail: ClientDetail; onSave: () => voi
 
 // ─── Tab: Extrato ─────────────────────────────────────────────────────────────
 
+// Fetches and renders the client's financial statement from /producers/:id/statement
 function TabExtrato({ clientId }: { clientId: number }) {
   const [statement, setStatement] = useState<StatementItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -430,6 +438,7 @@ interface ClientModalProps {
   onClose: () => void;
 }
 
+// Modal with Detalhes / Editar / Extrato tabs, opened from the clients table
 export function ClientModal({ client, isOpen, onClose }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("detalhes");
   const [saved, setSaved] = useState(false);

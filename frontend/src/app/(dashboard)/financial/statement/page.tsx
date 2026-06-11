@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from '../financial.module.css';
+import styles from './statement.module.css';
 import modalStyles from '../../transactions/transactions.module.css';
 import { API_URL } from '@/lib/api';
 

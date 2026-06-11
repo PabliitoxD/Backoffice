@@ -79,6 +79,7 @@ type Tab = "geral" | "taxas" | "liquidacao";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// Modal with Dados Gerais / Taxas / Liquidação tabs for creating or editing a plan
 export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
   const isEdit = !!plan?.id;
   const [activeTab, setActiveTab] = useState<Tab>("geral");
@@ -106,15 +107,18 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
     return () => document.removeEventListener("keydown", handleKey);
   }, [handleKey]);
 
+  // Updates a single top-level field in the form state
   const set = (field: keyof Plan, value: string) =>
     setForm((p) => ({ ...p, [field]: value }));
 
+  // Updates a card rate cell identified by brand + installment key (e.g. "Visa_credito_1x")
   const setMatrix = (brand: string, key: string, value: string) =>
     setForm((p) => ({
       ...p,
       matrixRates: { ...p.matrixRates, [`${brand}_${key}`]: value },
     }));
 
+  // POSTs (create) or PUTs (edit) the plan via API; falls back to mock on error
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -197,6 +201,7 @@ export function PlanModal({ plan, isOpen, onClose, onSaved }: PlanModalProps) {
 
 // ─── Tab: Dados Gerais ────────────────────────────────────────────────────────
 
+// Basic plan info: name, description, and status
 function TabGeral({ form, set }: { form: Plan; set: (f: keyof Plan, v: string) => void }) {
   return (
     <div className={styles.formContent}>
@@ -236,6 +241,7 @@ function TabGeral({ form, set }: { form: Plan; set: (f: keyof Plan, v: string) =
 
 // ─── Tab: Taxas ───────────────────────────────────────────────────────────────
 
+// Operational rates (PIX, saque, boleto) and per-brand card matrix with mode toggle
 function TabTaxas({
   form,
   set,
@@ -381,6 +387,7 @@ function TabTaxas({
 
 // ─── Tab: Liquidação ──────────────────────────────────────────────────────────
 
+// Settlement deadlines per payment method and a read-only config summary
 function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: string) => void }) {
   return (
     <div className={styles.formContent}>
@@ -436,6 +443,7 @@ function TabLiquidacao({ form, set }: { form: Plan; set: (f: keyof Plan, v: stri
   );
 }
 
+// Read-only label + value pair used inside the config summary
 function InfoLine({ label, value }: { label: string; value: string }) {
   return (
     <div className={styles.field} style={{ gap: "0.2rem" }}>
@@ -445,6 +453,7 @@ function InfoLine({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Human-readable label for credit card settlement schedule
 function releaseLabelCard(v: string) {
   const m: Record<string, string> = {
     d30: "D+30 (30 dias)", d15: "D+15 (15 dias)", d7: "D+7 (7 dias)",
@@ -452,5 +461,7 @@ function releaseLabelCard(v: string) {
   };
   return m[v] ?? v;
 }
+// Human-readable label for PIX settlement schedule
 function releaseLabelPix(v: string) { return v === "instant" ? "Imediato" : "24 Horas"; }
+// Human-readable label for boleto settlement schedule
 function releaseLabelBoleto(v: string) { return v === "d1" ? "D+1 (1 dia útil)" : "D+2 (2 dias úteis)"; }
