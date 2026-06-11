@@ -90,22 +90,22 @@ export default function LoginPage() {
           </div>
 
           <div className="brand-headline">
-            <h1>0% de taxas.<br />100% de lucro.</h1>
-            <p>A plataforma que devolve autoridade financeira ao empreendedor digital.</p>
+            <h1>Painel Administrativo</h1>
+            <p>Gerencie clientes, transações e operações financeiras com total controle e segurança.</p>
           </div>
 
           <div className="brand-features">
             <div className="feature-item">
               <span className="feature-icon">🔒</span>
-              <span>Acesso seguro de ponta a ponta</span>
+              <span>Acesso seguro com autenticação JWT</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">📊</span>
-              <span>Dados financeiros em tempo real</span>
+              <span>Visão consolidada do negócio</span>
             </div>
             <div className="feature-item">
               <span className="feature-icon">⚡</span>
-              <span>Operações rápidas e confiáveis</span>
+              <span>Dados financeiros em tempo real</span>
             </div>
           </div>
         </div>
