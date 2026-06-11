@@ -6,13 +6,11 @@
   overflow-x: hidden;
 }
 
-/* Dark mode: rich Bravvius gradient background */
+/* Dark mode: Bravvius gradient — color comes from body via --background */
 .dark .dashboard-container {
-  background-color: #0B1120;
   background-image:
-    radial-gradient(ellipse 80% 60% at 10% -10%, rgba(47, 144, 168, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 90% 100%, rgba(24, 88, 131, 0.20) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(13, 31, 45, 0.6) 0%, transparent 80%);
+    radial-gradient(ellipse 70% 55% at 5% -5%,  rgba(47, 144, 168, 0.16) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 95% 105%, rgba(24, 88, 131, 0.18) 0%, transparent 55%);
 }
 
 .dashboard-main {

@@ -36,14 +36,16 @@
 }
 
 .dark {
-  /* Dark mode definitions */
-  --background: #0F172A;
-  --surface: #1E293B;
-  --border-color: #334155;
-  --header-bg: #1E293B;
-  --text-main: #F8FAFC;
+  /* Dark mode — Bravvius brand palette */
+  --background: #0B1120;                   /* Deep navy, matches gradient base */
+  --surface: rgba(255, 255, 255, 0.05);    /* Glass layer over gradient */
+  --border-color: rgba(255, 255, 255, 0.09);
+  --header-bg: rgba(11, 17, 32, 0.65);     /* Glass topbar */
+  --text-main: #F1F5F9;
   --text-muted: #94A3B8;
-  --sidebar-bg: #0B0F19; /* Even darker for contrast */
+  --sidebar-bg: rgba(8, 13, 24, 0.82);     /* Glass sidebar */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 /* 
@@ -94,6 +96,19 @@ ul, ol {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
   padding: 1.5rem;
+}
+
+.dark .card,
+.dark [class*="Card"],
+.dark [class*="tableCard"],
+.dark [class*="statCard"],
+.dark [class*="formContainer"],
+.dark [class*="section"],
+.dark [class*="rankingCard"],
+.dark [class*="kpiCard"] {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .title {

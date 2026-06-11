@@ -19,6 +19,13 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
+:global(.dark) .notifications-dropdown {
+  background: rgba(15, 22, 40, 0.92);
+  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 .topbar-left {
   display: flex;
   align-items: center;
@@ -176,7 +183,7 @@
   top: 50px;
   right: 0;
   width: 320px;
-  background: var(--bg-card);
+  background: var(--surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
@@ -202,7 +209,7 @@
   gap: 0.25rem;
   transition: background 0.2s;
   cursor: pointer;
-  background-color: var(--background);
+  background-color: transparent;
 }
 
 .notification-item:hover {
