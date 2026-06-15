@@ -1,199 +1,217 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
+import { API_URL } from '@/lib/api';
 import styles from './monitoring.module.css';
 
-type Status = 'UP' | 'DOWN' | 'DEGRADED';
+type CheckStatus = 'UP' | 'DOWN' | 'DEGRADED';
 
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
+interface CheckResult {
+  timestamp: string;
+  status: CheckStatus;
+  statusCode: number | null;
+  responseTimeMs: number | null;
+}
+
+interface CheckoutMonitor {
   url: string;
-  status: Status;
-  uptimePercent: number;
-  responseTimeMs: number;
-  lastChecked: Date;
-  history: Status[]; // last 30 checks
+  name: string;
+  current: CheckResult | null;
+  uptimePercent: number | null;
+  history: CheckResult[];
 }
 
-// Simulated integrations — replace with real API call when backend is ready
-const INTEGRATIONS_CONFIG = [
-  { id: 'pix-api', name: 'Pix API', description: 'Processamento de pagamentos Pix', url: 'https://api.tronnus.com/pix/health' },
-  { id: 'boleto', name: 'Gateway de Boleto', description: 'Emissão e consulta de boletos bancários', url: 'https://api.tronnus.com/boleto/health' },
-  { id: 'webhook', name: 'Webhook Delivery', description: 'Entrega de eventos para clientes', url: 'https://api.tronnus.com/webhooks/health' },
-  { id: 'antifraude', name: 'Antifraude', description: 'Análise de risco em transações', url: 'https://api.tronnus.com/fraud/health' },
-  { id: 'notificacoes', name: 'Notificações', description: 'Envio de SMS e e-mail', url: 'https://api.tronnus.com/notifications/health' },
-  { id: 'conciliacao', name: 'Conciliação', description: 'Reconciliação automática de recebíveis', url: 'https://api.tronnus.com/reconciliation/health' },
-];
-
-function randomStatus(seed: number): Status {
-  if (seed < 0.92) return 'UP';
-  if (seed < 0.97) return 'DEGRADED';
-  return 'DOWN';
-}
-
-function generateMockIntegration(cfg: typeof INTEGRATIONS_CONFIG[0]): Integration {
-  const seed = Math.random();
-  const status = randomStatus(seed);
-  return {
-    ...cfg,
-    status,
-    uptimePercent: status === 'UP' ? 99.5 + Math.random() * 0.5 : status === 'DEGRADED' ? 95 + Math.random() * 3 : 88 + Math.random() * 5,
-    responseTimeMs: status === 'UP' ? 40 + Math.random() * 80 : status === 'DEGRADED' ? 300 + Math.random() * 400 : 0,
-    lastChecked: new Date(),
-    history: Array.from({ length: 30 }, () => randomStatus(Math.random())),
-  };
-}
-
-function StatusBadge({ status }: { status: Status }) {
+function StatusBadge({ status }: { status: CheckStatus }) {
+  const label = status === 'UP' ? 'Operacional' : status === 'DEGRADED' ? 'Degradado' : 'Fora do ar';
   return (
     <span className={`${styles.badge} ${styles[`badge${status}`]}`}>
       <span className={styles.dot} />
-      {status === 'UP' ? 'Operacional' : status === 'DEGRADED' ? 'Degradado' : 'Fora do ar'}
+      {label}
     </span>
   );
 }
 
-function UptimeBar({ history }: { history: Status[] }) {
+function UptimeBar({ history }: { history: CheckResult[] }) {
   return (
     <div className={styles.uptimeBar}>
-      {history.map((s, i) => (
-        <span key={i} className={`${styles.uptimeBlock} ${styles[`block${s}`]}`} title={s} />
+      {history.map((r, i) => (
+        <span
+          key={i}
+          className={`${styles.uptimeBlock} ${styles[`block${r.status}`]}`}
+          title={`${r.status} · ${new Date(r.timestamp).toLocaleString('pt-BR')}${r.responseTimeMs ? ` · ${r.responseTimeMs}ms` : ''}`}
+        />
       ))}
     </div>
   );
 }
 
 export default function MonitoringPage() {
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [data, setData] = useState<CheckoutMonitor | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const loadIntegrations = useCallback(async () => {
+  const load = useCallback(async (trigger = false) => {
     setRefreshing(true);
-    // Simulate API latency
-    await new Promise(r => setTimeout(r, 600));
-    setIntegrations(INTEGRATIONS_CONFIG.map(generateMockIntegration));
-    setLastRefresh(new Date());
-    setRefreshing(false);
+    setError(null);
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = trigger ? '/monitoring/checkout/check' : '/monitoring/checkout';
+      const res = await fetch(`${API_URL}${endpoint}`, {
+        method: trigger ? 'POST' : 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json: CheckoutMonitor = await res.json();
+      setData(json);
+      setLastRefresh(new Date());
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar monitoramento');
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
-    loadIntegrations();
-    const interval = setInterval(loadIntegrations, 30000);
+    load();
+    const interval = setInterval(() => load(), 30000);
     return () => clearInterval(interval);
-  }, [loadIntegrations]);
+  }, [load]);
 
-  const allUp = integrations.every(i => i.status === 'UP');
-  const hasDown = integrations.some(i => i.status === 'DOWN');
-  const downCount = integrations.filter(i => i.status === 'DOWN').length;
-  const degradedCount = integrations.filter(i => i.status === 'DEGRADED').length;
-
-  const overallStatus: Status = hasDown ? 'DOWN' : integrations.some(i => i.status === 'DEGRADED') ? 'DEGRADED' : 'UP';
+  const status = data?.current?.status ?? null;
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Monitoramento de Integrações</h1>
+          <h1 className={styles.title}>Monitoramento de Checkout</h1>
           <p className={styles.subtitle}>
-            Verificação automática a cada 30 segundos ·{' '}
-            Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
+            Verificação automática a cada 2 minutos ·{' '}
+            Exibição atualizada: {lastRefresh.toLocaleTimeString('pt-BR')}
           </p>
         </div>
-        <button className={styles.refreshBtn} onClick={loadIntegrations} disabled={refreshing}>
+        <button className={styles.refreshBtn} onClick={() => load(true)} disabled={refreshing}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? styles.spinning : ''}>
             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
             <path d="M21 3v5h-5" />
           </svg>
-          Atualizar
+          Verificar agora
         </button>
       </div>
 
-      {/* Overall status banner */}
-      <div className={`${styles.overallBanner} ${styles[`banner${overallStatus}`]}`}>
-        <span className={styles.bannerDot} />
-        <div>
-          <strong>
-            {allUp
-              ? 'Todos os sistemas operacionais'
-              : hasDown
-              ? `${downCount} integração${downCount > 1 ? 'ões' : ''} fora do ar`
-              : `${degradedCount} integração${degradedCount > 1 ? 'ões' : ''} com desempenho degradado`}
-          </strong>
-          {!allUp && (
-            <p className={styles.bannerSub}>
-              Verifique os detalhes abaixo. A equipe técnica será notificada automaticamente.
-            </p>
-          )}
+      {error && (
+        <div className={styles.errorBanner}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          {error}
         </div>
-      </div>
+      )}
 
-      {/* Stats row */}
-      <div className={styles.statsRow}>
-        <div className="card">
-          <p className={styles.statLabel}>Total de integrações</p>
-          <p className={styles.statValue}>{integrations.length}</p>
+      {status && (
+        <div className={`${styles.overallBanner} ${styles[`banner${status}`]}`}>
+          <span className={styles.bannerDot} />
+          <div>
+            <strong>
+              {status === 'UP'
+                ? 'Checkout operacional'
+                : status === 'DEGRADED'
+                ? 'Checkout com desempenho degradado'
+                : 'Checkout fora do ar'}
+            </strong>
+            {status !== 'UP' && (
+              <p className={styles.bannerSub}>
+                A equipe técnica foi notificada. Verifique os detalhes abaixo.
+              </p>
+            )}
+          </div>
         </div>
-        <div className="card">
-          <p className={styles.statLabel}>Operacionais</p>
-          <p className={`${styles.statValue} ${styles.statGreen}`}>
-            {integrations.filter(i => i.status === 'UP').length}
-          </p>
-        </div>
-        <div className="card">
-          <p className={styles.statLabel}>Degradados</p>
-          <p className={`${styles.statValue} ${styles.statYellow}`}>
-            {degradedCount}
-          </p>
-        </div>
-        <div className="card">
-          <p className={styles.statLabel}>Fora do ar</p>
-          <p className={`${styles.statValue} ${styles.statRed}`}>
-            {downCount}
-          </p>
-        </div>
-      </div>
+      )}
 
-      {/* Integration cards */}
-      <div className={styles.grid}>
-        {integrations.map(integration => (
-          <div key={integration.id} className={`card ${styles.integrationCard} ${integration.status !== 'UP' ? styles[`card${integration.status}`] : ''}`}>
-            <div className={styles.cardHeader}>
-              <div>
-                <h3 className={styles.integrationName}>{integration.name}</h3>
-                <p className={styles.integrationDesc}>{integration.description}</p>
-              </div>
-              <StatusBadge status={integration.status} />
+      {data && (
+        <>
+          <div className={styles.statsRow}>
+            <div className="card">
+              <p className={styles.statLabel}>Uptime (últimas verificações)</p>
+              <p className={`${styles.statValue} ${data.uptimePercent && data.uptimePercent >= 99 ? styles.statGreen : data.uptimePercent && data.uptimePercent >= 95 ? styles.statYellow : styles.statRed}`}>
+                {data.uptimePercent !== null ? `${data.uptimePercent.toFixed(1)}%` : '—'}
+              </p>
             </div>
-
-            <div className={styles.metricsRow}>
-              <div className={styles.metric}>
-                <span className={styles.metricLabel}>Uptime (30d)</span>
-                <span className={styles.metricValue}>{integration.uptimePercent.toFixed(2)}%</span>
-              </div>
-              <div className={styles.metric}>
-                <span className={styles.metricLabel}>Tempo de resposta</span>
-                <span className={styles.metricValue}>
-                  {integration.status === 'DOWN' ? '—' : `${Math.round(integration.responseTimeMs)} ms`}
-                </span>
-              </div>
-              <div className={styles.metric}>
-                <span className={styles.metricLabel}>Última verificação</span>
-                <span className={styles.metricValue}>
-                  {integration.lastChecked.toLocaleTimeString('pt-BR')}
-                </span>
-              </div>
+            <div className="card">
+              <p className={styles.statLabel}>Tempo de resposta</p>
+              <p className={styles.statValue}>
+                {data.current?.responseTimeMs != null ? `${data.current.responseTimeMs} ms` : '—'}
+              </p>
             </div>
-
-            <div className={styles.historySection}>
-              <span className={styles.historyLabel}>Histórico (últimas 30 verificações)</span>
-              <UptimeBar history={integration.history} />
+            <div className="card">
+              <p className={styles.statLabel}>Código HTTP</p>
+              <p className={styles.statValue}>
+                {data.current?.statusCode ?? '—'}
+              </p>
+            </div>
+            <div className="card">
+              <p className={styles.statLabel}>Última verificação</p>
+              <p className={styles.statValue} style={{ fontSize: '1.1rem' }}>
+                {data.current ? new Date(data.current.timestamp).toLocaleTimeString('pt-BR') : '—'}
+              </p>
             </div>
           </div>
-        ))}
-      </div>
+
+          <div className="card">
+            <div className={styles.cardHeader}>
+              <div>
+                <h3 className={styles.integrationName}>{data.name}</h3>
+                <p className={styles.integrationDesc}>{data.url}</p>
+              </div>
+              {data.current && <StatusBadge status={data.current.status} />}
+            </div>
+
+            <div className={styles.historySection} style={{ marginTop: '1.25rem' }}>
+              <div className={styles.historyLabelRow}>
+                <span className={styles.historyLabel}>
+                  Histórico — últimas {data.history.length} verificações
+                </span>
+                <span className={styles.historyLegend}>
+                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockUP}`} /> Operacional</span>
+                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDEGRADED}`} /> Degradado</span>
+                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDOWN}`} /> Fora do ar</span>
+                </span>
+              </div>
+              {data.history.length > 0
+                ? <UptimeBar history={data.history} />
+                : <p className={styles.historyEmpty}>Aguardando primeiras verificações...</p>
+              }
+            </div>
+
+            {data.history.length > 0 && (
+              <div className={styles.historyTable}>
+                <div className={styles.historyTableHeader}>
+                  <span>Horário</span>
+                  <span>Status</span>
+                  <span>HTTP</span>
+                  <span>Resposta</span>
+                </div>
+                {[...data.history].reverse().slice(0, 10).map((r, i) => (
+                  <div key={i} className={styles.historyTableRow}>
+                    <span>{new Date(r.timestamp).toLocaleTimeString('pt-BR')}</span>
+                    <StatusBadge status={r.status} />
+                    <span className={styles.codeCell}>{r.statusCode ?? '—'}</span>
+                    <span>{r.responseTimeMs != null ? `${r.responseTimeMs} ms` : '—'}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {!data && !error && (
+        <div className={styles.loadingState}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
+          Realizando primeira verificação...
+        </div>
+      )}
     </div>
   );
 }

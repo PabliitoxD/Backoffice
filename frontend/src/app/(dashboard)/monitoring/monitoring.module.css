@@ -270,21 +270,129 @@
 .blockDEGRADED { background: #F59E0B; opacity: 0.8; }
 .blockDOWN { background: #EF4444; opacity: 0.9; }
 
+/* Error banner */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #EF4444;
+  font-size: 0.875rem;
+}
+
+/* Loading state */
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+/* History label row */
+.historyLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.historyLegend {
+  display: flex;
+  gap: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.historyEmpty {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  padding: 1rem 0;
+}
+
+/* History table */
+.historyTable {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.historyTableHeader {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 100px;
+  padding: 0.6rem 1rem;
+  background: var(--background);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.historyTableRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px 100px;
+  padding: 0.65rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-main);
+  border-top: 1px solid var(--border-color);
+  align-items: center;
+}
+
+.historyTableRow:hover {
+  background: var(--surface);
+}
+
+.codeCell {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
   .statsRow {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
   }
 
   .header {
     flex-direction: column;
   }
 
-  .metricsRow {
-    flex-wrap: wrap;
-    gap: 0.75rem;
+  .historyLegend {
+    display: none;
+  }
+
+  .historyTableHeader,
+  .historyTableRow {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .historyTableHeader span:nth-child(3),
+  .historyTableHeader span:nth-child(4),
+  .historyTableRow span:nth-child(3),
+  .historyTableRow span:nth-child(4) {
+    display: none;
   }
 }
