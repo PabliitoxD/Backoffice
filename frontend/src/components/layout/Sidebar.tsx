@@ -1,24 +1,29 @@
-import Link from 'next/link';
-import './Sidebar.css';
-import { X } from 'lucide-react';
+"use client";
 
-// Mock data for navigation links
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import './Sidebar.css';
+import { X, ChevronDown, LayoutDashboard, Users, CreditCard, ArrowLeftRight, FileText, ArrowDownToLine, AlertTriangle, Activity, Settings } from 'lucide-react';
+import { useState } from 'react';
+
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/', icon: '📊' },
-  { label: 'Clientes', href: '/clients', icon: '👥' },
-  { label: 'Planos e Liquidação', href: '/plans', icon: '💳' },
-  { label: 'Transações', href: '/transactions', icon: '💰' },
-  { 
-    label: 'Extrato', 
-    href: '/financial/statement', 
-    icon: '🧾',
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Clientes', href: '/clients', icon: Users },
+  { label: 'Planos e Liquidação', href: '/plans', icon: CreditCard },
+  { label: 'Transações', href: '/transactions', icon: ArrowLeftRight },
+  {
+    label: 'Extrato',
+    href: '/financial/statement',
+    icon: FileText,
     subItems: [
-      { label: 'Recebíveis', href: '/financial/receivables' }
-    ]
+      { label: 'Extrato', href: '/financial/statement' },
+      { label: 'Recebíveis', href: '/financial/receivables' },
+    ],
   },
-  { label: 'Saques', href: '/financial/withdrawals', icon: '🏦' },
-  { label: 'Chargebacks', href: '/financial/chargebacks', icon: '⚠️' },
-  { label: 'Configurações', href: '/settings', icon: '⚙️' },
+  { label: 'Saques', href: '/financial/withdrawals', icon: ArrowDownToLine },
+  { label: 'Chargebacks', href: '/financial/chargebacks', icon: AlertTriangle },
+  { label: 'Monitoramento', href: '/monitoring', icon: Activity },
+  { label: 'Configurações', href: '/settings', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -27,6 +32,25 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const pathname = usePathname();
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+
+  const toggleDropdown = (label: string) => {
+    setOpenDropdowns(prev => ({ ...prev, [label]: !prev[label] }));
+  };
+
+  const isActive = (href: string) => pathname === href;
+  const isGroupActive = (item: typeof NAV_ITEMS[0]) => {
+    if ('subItems' in item && item.subItems) {
+      return item.subItems.some(sub => pathname === sub.href);
+    }
+    return pathname === item.href;
+  };
+
+  const handleLinkClick = () => {
+    if (window.innerWidth < 1024) onClose();
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -37,50 +61,72 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
-        <img
-          src="/logo-bravvius.png"
-          alt="Bravvius"
-          className="sidebar-logo"
-        />
+        <img src="/logo-tronnus.png" alt="Tronnus" className="sidebar-logo" />
         <button className="sidebar-close" onClick={onClose} aria-label="Close Menu">
           <X size={24} />
         </button>
       </div>
+
       <nav className="sidebar-nav">
         <ul>
-          {NAV_ITEMS.map((item) => (
-            <li key={item.label}>
-              <Link href={item.href} className="sidebar-link" onClick={() => {
-                if (window.innerWidth < 1024) onClose();
-              }}>
-                <span className="sidebar-icon">{item.icon}</span>
-                {item.label}
-              </Link>
-              {item.subItems && (
-                <ul className="sidebar-submenu">
-                  {item.subItems.map((subItem) => (
-                    <li key={subItem.label}>
-                      <Link 
-                        href={subItem.href} 
-                        className="sidebar-submenu-link"
-                        onClick={() => {
-                          if (window.innerWidth < 1024) onClose();
-                        }}
-                      >
-                        {subItem.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Icon = item.icon;
+            const hasDropdown = 'subItems' in item && item.subItems && item.subItems.length > 0;
+            const isDropdownOpen = openDropdowns[item.label];
+            const groupActive = isGroupActive(item);
+
+            if (hasDropdown) {
+              return (
+                <li key={item.label}>
+                  <button
+                    className={`sidebar-link sidebar-dropdown-toggle ${groupActive ? 'active' : ''}`}
+                    onClick={() => toggleDropdown(item.label)}
+                  >
+                    <Icon size={18} className="sidebar-icon" />
+                    <span>{item.label}</span>
+                    <ChevronDown
+                      size={15}
+                      className={`sidebar-chevron ${isDropdownOpen ? 'open' : ''}`}
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <ul className="sidebar-submenu">
+                      {item.subItems!.map((sub) => (
+                        <li key={sub.href}>
+                          <Link
+                            href={sub.href}
+                            className={`sidebar-submenu-link ${isActive(sub.href) ? 'active' : ''}`}
+                            onClick={handleLinkClick}
+                          >
+                            {sub.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            }
+
+            return (
+              <li key={item.label}>
+                <Link
+                  href={item.href}
+                  className={`sidebar-link ${isActive(item.href) ? 'active' : ''}`}
+                  onClick={handleLinkClick}
+                >
+                  <Icon size={18} className="sidebar-icon" />
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
-      {/* Footer of the sidebar, e.g., for logout or user profile snippet */}
+
       <div className="sidebar-footer">
         <button className="logout-btn" onClick={handleLogout}>
-          <span>🚪</span> Sair
+          Sair
         </button>
       </div>
     </aside>

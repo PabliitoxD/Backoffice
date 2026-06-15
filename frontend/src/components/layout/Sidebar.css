@@ -62,11 +62,15 @@
 .sidebar-link {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   color: var(--sidebar-text);
   font-weight: 500;
+  font-size: 0.875rem;
   transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
 }
 
 .sidebar-link:hover, .sidebar-link.active {
@@ -74,9 +78,24 @@
   color: #ffffff;
 }
 
+.sidebar-dropdown-toggle {
+  cursor: pointer;
+}
+
+.sidebar-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.sidebar-chevron.open {
+  transform: rotate(180deg);
+}
+
 .sidebar-icon {
-  margin-right: 0.75rem;
-  font-size: 1.25rem;
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .sidebar-submenu {

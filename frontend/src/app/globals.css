@@ -2,19 +2,19 @@
 
 :root {
   /*
-   * GLOBAL COLOR PALETTE — Bravvius brand
+   * GLOBAL COLOR PALETTE — Tronnus brand
    */
-  --primary-color: #185883;
-  --primary-hover: #12426A;
-  --secondary-color: #2F90A8;
+  --primary-color: #7498B1;
+  --primary-hover: #5a7d96;
+  --secondary-color: #3E4F5C;
   --danger-color: #EF4444;
   --warning-color: #F59E0B;
-  --success-color: #10B981;
-  --success-hover: #059669;
+  --success-color: #61CE70;
+  --success-hover: #4db85e;
   --info-color: #3B82F6;
-  --sidebar-bg: #0D1F2D;
-  --sidebar-text: #CBD5E1;
-  --sidebar-hover: #1A3448;
+  --sidebar-bg: #0F0F0F;
+  --sidebar-text: #9BA8B5;
+  --sidebar-hover: #1a1a1a;
   --header-bg: #FFFFFF;
   
   /* Backgrounds and Text */
@@ -36,16 +36,16 @@
 }
 
 .dark {
-  /* Dark mode — Bravvius brand palette */
-  --background: #0B1120;                   /* Deep navy, matches gradient base */
-  --surface: rgba(255, 255, 255, 0.05);    /* Glass layer over gradient */
-  --border-color: rgba(255, 255, 255, 0.09);
-  --header-bg: rgba(11, 17, 32, 0.65);     /* Glass topbar */
-  --text-main: #F1F5F9;
-  --text-muted: #94A3B8;
-  --sidebar-bg: rgba(8, 13, 24, 0.82);     /* Glass sidebar */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  /* Dark mode — Tronnus brand palette */
+  --background: #0A0A0A;
+  --surface: rgba(255, 255, 255, 0.04);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(10, 10, 10, 0.80);
+  --text-main: #F3F3F3;
+  --text-muted: #9BA8B5;
+  --sidebar-bg: rgba(10, 10, 10, 0.95);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 /* 
