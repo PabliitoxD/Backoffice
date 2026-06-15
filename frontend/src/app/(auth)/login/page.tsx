@@ -86,7 +86,7 @@ export default function LoginPage() {
       <div className="login-brand">
         <div className="brand-content">
           <div className="brand-logo">
-            <img src="/logo-bravvius.png" alt="Bravvius" className="brand-logo-img" />
+            <img src="/logo-tronnus.png" alt="Tronnus" className="brand-logo-img" />
           </div>
 
           <div className="brand-headline">

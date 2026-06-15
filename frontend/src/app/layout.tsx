@@ -7,8 +7,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Bravvius | Backoffice",
-  description: "Painel administrativo Bravvius",
+  title: "Tronnus | Backoffice",
+  description: "Painel administrativo Tronnus",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",

@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: linear-gradient(145deg, #2F90A8 0%, #185883 45%, #0D1F2D 100%);
+  background: linear-gradient(145deg, #7498B1 0%, #3E4F5C 45%, #0A0A0A 100%);
   padding: 3rem;
 }
 
@@ -240,7 +240,7 @@
 
 .field-group input:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(24, 88, 131, 0.15);
+  box-shadow: 0 0 0 3px rgba(116, 152, 177, 0.15);
 }
 
 /* Password with toggle */
