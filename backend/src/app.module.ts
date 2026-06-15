@@ -12,7 +12,7 @@ import { UsersModule } from './users/users.module';
 import { ProfilesModule } from './profiles/profiles.module';
 import { AuditLogsModule } from './audit-logs/audit-logs.module';
 import { FinancialModule } from './financial/financial.module';
-
+import { MonitoringModule } from './monitoring/monitoring.module';
 import { MailModule } from './mail/mail.module';
 
 @Module({
@@ -40,6 +40,7 @@ import { MailModule } from './mail/mail.module';
     TransactionsModule,
     WithdrawalsModule,
     FinancialModule,
+    MonitoringModule,
     MailModule,
   ],
   controllers: [AppController],
