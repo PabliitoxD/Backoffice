@@ -45,6 +45,37 @@ function UptimeBar({ history }: { history: CheckResult[] }) {
   );
 }
 
+const PENDING_INTEGRATIONS = [
+  { name: 'Pix API', description: 'Processamento de pagamentos via Pix' },
+  { name: 'Gateway de Boleto', description: 'Emissão e consulta de boletos bancários' },
+  { name: 'Webhook Delivery', description: 'Entrega de eventos para clientes' },
+  { name: 'Antifraude', description: 'Análise de risco em transações' },
+  { name: 'Notificações', description: 'Envio de SMS e e-mail' },
+  { name: 'Conciliação', description: 'Reconciliação automática de recebíveis' },
+];
+
+function PendingCard({ name, description }: { name: string; description: string }) {
+  return (
+    <div className={`card ${styles.integrationCard} ${styles.pendingCard}`}>
+      <div className={styles.cardHeader}>
+        <div>
+          <h3 className={styles.integrationName}>{name}</h3>
+          <p className={styles.integrationDesc}>{description}</p>
+        </div>
+        <span className={styles.badgePending}>
+          <span className={styles.dot} />
+          Aguardando integração
+        </span>
+      </div>
+      <div className={styles.pendingBar}>
+        {Array.from({ length: 30 }).map((_, i) => (
+          <span key={i} className={`${styles.uptimeBlock} ${styles.blockPENDING}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function MonitoringPage() {
   const [data, setData] = useState<CheckoutMonitor | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
@@ -212,6 +243,16 @@ export default function MonitoringPage() {
           Realizando primeira verificação...
         </div>
       )}
+
+      {/* Pending integrations */}
+      <div className={styles.sectionDivider}>
+        <span>Integrações pendentes</span>
+      </div>
+      <div className={styles.pendingGrid}>
+        {PENDING_INTEGRATIONS.map(i => (
+          <PendingCard key={i.name} name={i.name} description={i.description} />
+        ))}
+      </div>
     </div>
   );
 }
