@@ -1,0 +1,23 @@
+/* Statement page — composes shared financial styles */
+
+.container    { composes: container    from '../financial.module.css'; }
+.header       { composes: header       from '../financial.module.css'; }
+.titleWrapper { composes: titleWrapper from '../financial.module.css'; }
+.statsRow     { composes: statsRow     from '../financial.module.css'; }
+.statCard     { composes: statCard     from '../financial.module.css'; }
+.statTitle    { composes: statTitle    from '../financial.module.css'; }
+.statValue    { composes: statValue    from '../financial.module.css'; }
+.statPositive { composes: statPositive from '../financial.module.css'; }
+.statNegative { composes: statNegative from '../financial.module.css'; }
+.tableCard    { composes: tableCard    from '../financial.module.css'; }
+.tableWrapper { composes: tableWrapper from '../financial.module.css'; }
+.table        { composes: table        from '../financial.module.css'; }
+.emptyState   { composes: emptyState   from '../financial.module.css'; }
+.textMuted    { composes: textMuted    from '../financial.module.css'; }
+.fontWeightMedium { composes: fontWeightMedium from '../financial.module.css'; }
+.badge        { composes: badge        from '../financial.module.css'; }
+.badgeDebit   { composes: badgeDebit   from '../financial.module.css'; }
+.badgeInfo    { composes: badgeInfo    from '../financial.module.css'; }
+.badgeWarning { composes: badgeWarning from '../financial.module.css'; }
+.btnAction    { composes: btnAction    from '../financial.module.css'; }
+.btnSuccess   { composes: btnSuccess   from '../financial.module.css'; }

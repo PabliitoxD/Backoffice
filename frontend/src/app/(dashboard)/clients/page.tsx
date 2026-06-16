@@ -1,36 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import styles from './clients.module.css';
+import { ClientModal } from '@/components/clients/ClientModal';
 
 // MOCK DATA: Will be replaced by an API endpoint later
 const MOCK_CLIENTS = [
-  { id: 1, name: 'João Silva', email: 'joao.silva@email.com', company: 'Acme Corp', status: 'Ativo', date: '12 Mar 2026' },
-  { id: 2, name: 'Maria Oliveira', email: 'maria.ol@email.com', company: 'Tech Solutions', status: 'Pendente', date: '12 Mar 2026' },
-  { id: 3, name: 'Carlos Souza', email: 'csouza@email.com', company: 'Global Finance', status: 'Ativo', date: '11 Mar 2026' },
-  { id: 4, name: 'Ana Pereira', email: 'anap@email.com', company: 'Retail Hub', status: 'Inativo', date: '10 Mar 2026' },
-  { id: 5, name: 'Roberto Firmino', email: 'betofirm@email.com', company: 'Logistics Pro', status: 'Ativo', date: '09 Mar 2026' },
+  { id: 1, name: 'João Silva',       email: 'joao.silva@email.com', company: 'Acme Corp',      status: 'Ativo',    date: '12 Mar 2026' },
+  { id: 2, name: 'Maria Oliveira',   email: 'maria.ol@email.com',   company: 'Tech Solutions',  status: 'Pendente', date: '12 Mar 2026' },
+  { id: 3, name: 'Carlos Souza',     email: 'csouza@email.com',     company: 'Global Finance',  status: 'Ativo',    date: '11 Mar 2026' },
+  { id: 4, name: 'Ana Pereira',      email: 'anap@email.com',       company: 'Retail Hub',      status: 'Inativo',  date: '10 Mar 2026' },
+  { id: 5, name: 'Roberto Firmino',  email: 'betofirm@email.com',   company: 'Logistics Pro',   status: 'Ativo',    date: '09 Mar 2026' },
 ];
 
+type Client = typeof MOCK_CLIENTS[number];
+
 export default function ClientsPage() {
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdownId(null);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleDropdown = (id: number) => {
-    setOpenDropdownId(openDropdownId === id ? null : id);
-  };
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
 
   return (
     <div className={styles.usersContainer}>
@@ -55,7 +42,6 @@ export default function ClientsPage() {
             <span className={styles.textMuted}>vs último mês</span>
           </div>
         </div>
-
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Novos Clientes (30 dias)</h3>
           <div className={styles.statValue}>142</div>
@@ -64,7 +50,6 @@ export default function ClientsPage() {
             <span className={styles.textMuted}>vs mês anterior</span>
           </div>
         </div>
-
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Clientes Ativos</h3>
           <div className={styles.statValue}>1.120</div>
@@ -74,7 +59,6 @@ export default function ClientsPage() {
           </div>
         </div>
       </div>
-
 
       <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
@@ -108,10 +92,10 @@ export default function ClientsPage() {
                   <td className={styles.textMuted}>{client.email}</td>
                   <td>{client.company}</td>
                   <td>
-                    <span 
+                    <span
                       className={`${styles.statusBadge} ${
-                        client.status === 'Ativo' ? styles.statusActive : 
-                        client.status === 'Pendente' ? styles.statusPending : 
+                        client.status === 'Ativo'    ? styles.statusActive   :
+                        client.status === 'Pendente' ? styles.statusPending  :
                         styles.statusInactive
                       }`}
                     >
@@ -120,36 +104,19 @@ export default function ClientsPage() {
                   </td>
                   <td className={styles.textMuted}>{client.date}</td>
                   <td className={styles.actionsCell}>
-                    <div className={styles.dropdownContainer} ref={openDropdownId === client.id ? dropdownRef : null}>
-                      <button 
-                        className={styles.btnActionDots} 
-                        onClick={() => toggleDropdown(client.id)}
-                        title="Ações"
-                      >
-                        ⋮
-                      </button>
-                      
-                      {openDropdownId === client.id && (
-                        <div className={styles.dropdownMenu}>
-                          <Link href={`/clients/${client.id}`} className={styles.dropdownItem}>
-                            👁️ Ver Detalhes
-                          </Link>
-                          <Link href={`/clients/${client.id}/edit`} className={styles.dropdownItem}>
-                            ✏️ Editar
-                          </Link>
-                          <Link href={`/clients/${client.id}/extrato`} className={styles.dropdownItem}>
-                            📄 Ver Extrato
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      className={styles.btnVerDetalhe}
+                      onClick={() => setSelectedClient(client)}
+                    >
+                      Ver Detalhe
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        
+
         <div className={styles.pagination}>
           <span className={styles.paginationText}>Mostrando 1 a 5 de 5 clientes</span>
           <div className={styles.paginationControls}>
@@ -159,6 +126,12 @@ export default function ClientsPage() {
           </div>
         </div>
       </div>
+
+      <ClientModal
+        client={selectedClient}
+        isOpen={selectedClient !== null}
+        onClose={() => setSelectedClient(null)}
+      />
     </div>
   );
 }
