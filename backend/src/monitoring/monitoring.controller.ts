@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { MonitoringService } from './monitoring.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -32,5 +32,26 @@ export class MonitoringController {
   @ApiOperation({ summary: 'Dispara uma verificação imediata do app' })
   async triggerApp() {
     return this.monitoringService.triggerApp();
+  }
+
+  @Get(':service/notes')
+  @ApiOperation({ summary: 'Lista notas da equipe para um serviço' })
+  getNotes(@Param('service') service: string) {
+    return this.monitoringService.getNotes(service);
+  }
+
+  @Post(':service/notes')
+  @ApiOperation({ summary: 'Adiciona uma nota da equipe' })
+  addNote(
+    @Param('service') service: string,
+    @Body() body: { content: string; author: string },
+  ) {
+    return this.monitoringService.addNote(service, body.content, body.author);
+  }
+
+  @Delete('notes/:id')
+  @ApiOperation({ summary: 'Remove uma nota da equipe' })
+  deleteNote(@Param('id') id: string) {
+    return this.monitoringService.deleteNote(id);
   }
 }
