@@ -14,8 +14,10 @@ interface CheckResult {
 }
 
 interface ServiceMonitor {
+  key: string;
   url: string;
   name: string;
+  type: 'url' | 'statuspage';
   current: CheckResult | null;
   uptimePercent: number | null;
   history: CheckResult[];
@@ -95,23 +97,14 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
   return (
     <div className={styles.notesSection}>
       <h4 className={styles.notesTitle}>Notas da equipe</h4>
-
       <div className={styles.notesList}>
-        {notes.length === 0 && (
-          <p className={styles.notesEmpty}>Nenhuma nota registrada.</p>
-        )}
+        {notes.length === 0 && <p className={styles.notesEmpty}>Nenhuma nota registrada.</p>}
         {notes.map(note => (
           <div key={note.id} className={styles.noteItem}>
             <div className={styles.noteHeader}>
               <span className={styles.noteAuthor}>{note.author}</span>
-              <span className={styles.noteDate}>
-                {new Date(note.createdAt).toLocaleString('pt-BR')}
-              </span>
-              <button
-                className={styles.noteDelete}
-                onClick={() => remove(note.id)}
-                title="Remover nota"
-              >
+              <span className={styles.noteDate}>{new Date(note.createdAt).toLocaleString('pt-BR')}</span>
+              <button className={styles.noteDelete} onClick={() => remove(note.id)} title="Remover nota">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -121,26 +114,10 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
           </div>
         ))}
       </div>
-
       <div className={styles.noteForm}>
-        <input
-          className={styles.noteInput}
-          placeholder="Seu nome"
-          value={author}
-          onChange={e => setAuthor(e.target.value)}
-        />
-        <textarea
-          className={styles.noteTextarea}
-          placeholder="Descreva o ocorrido, ação tomada ou observação..."
-          value={content}
-          onChange={e => setContent(e.target.value)}
-          rows={2}
-        />
-        <button
-          className={styles.noteSubmit}
-          onClick={submit}
-          disabled={submitting || !content.trim() || !author.trim()}
-        >
+        <input className={styles.noteInput} placeholder="Seu nome" value={author} onChange={e => setAuthor(e.target.value)} />
+        <textarea className={styles.noteTextarea} placeholder="Descreva o ocorrido, ação tomada ou observação..." value={content} onChange={e => setContent(e.target.value)} rows={2} />
+        <button className={styles.noteSubmit} onClick={submit} disabled={submitting || !content.trim() || !author.trim()}>
           {submitting ? 'Salvando...' : 'Adicionar nota'}
         </button>
       </div>
@@ -150,21 +127,23 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
 
 function MonitorCard({
   data,
-  serviceKey,
   onTrigger,
   refreshing,
 }: {
   data: ServiceMonitor;
-  serviceKey: string;
   onTrigger: () => void;
   refreshing: boolean;
 }) {
+  const isStatuspage = data.type === 'statuspage';
+
   return (
     <div className="card">
       <div className={styles.cardHeader}>
         <div>
           <h3 className={styles.integrationName}>{data.name}</h3>
-          <p className={styles.integrationDesc}>{data.url}</p>
+          <p className={styles.integrationDesc}>
+            {isStatuspage ? 'Status via página oficial' : data.url}
+          </p>
         </div>
         <div className={styles.cardHeaderRight}>
           {data.current && <StatusBadge status={data.current.status} />}
@@ -185,9 +164,12 @@ function MonitorCard({
           </span>
         </div>
         <div>
-          <span className={styles.miniLabel}>Resposta</span>
+          <span className={styles.miniLabel}>{isStatuspage ? 'Status oficial' : 'Resposta'}</span>
           <span className={styles.miniValue}>
-            {data.current?.responseTimeMs != null ? `${data.current.responseTimeMs} ms` : '—'}
+            {isStatuspage
+              ? (data.current?.status === 'UP' ? 'Operacional' : data.current?.status === 'DEGRADED' ? 'Degradado' : data.current ? 'Fora do ar' : '—')
+              : (data.current?.responseTimeMs != null ? `${data.current.responseTimeMs} ms` : '—')
+            }
           </span>
         </div>
         <div>
@@ -225,27 +207,27 @@ function MonitorCard({
             <span>Horário</span>
             <span>Status</span>
             <span>HTTP</span>
-            <span>Resposta</span>
+            <span>{isStatuspage ? 'Indicador' : 'Resposta'}</span>
           </div>
           {[...data.history].reverse().slice(0, 3).map((r, i) => (
             <div key={i} className={styles.historyTableRow}>
               <span>{new Date(r.timestamp).toLocaleTimeString('pt-BR')}</span>
               <StatusBadge status={r.status} />
               <span className={styles.codeCell}>{r.statusCode ?? '—'}</span>
-              <span>{r.responseTimeMs != null ? `${r.responseTimeMs} ms` : '—'}</span>
+              <span>{isStatuspage ? r.status : (r.responseTimeMs != null ? `${r.responseTimeMs} ms` : '—')}</span>
             </div>
           ))}
         </div>
       )}
 
-      <NotesSection serviceKey={serviceKey} />
+      <NotesSection serviceKey={data.key} />
     </div>
   );
 }
 
 const PENDING_INTEGRATIONS = [
-  { name: 'Pix API', description: 'Processamento de pagamentos via Pix' },
-  { name: 'Gateway de Boleto', description: 'Emissão e consulta de boletos bancários' },
+  { name: 'Sicoob PIX', description: 'Processamento de pagamentos via Pix — Sicoob' },
+  { name: 'Sicoob Boleto', description: 'Emissão e consulta de boletos — Sicoob' },
   { name: 'Webhook Delivery', description: 'Entrega de eventos para clientes' },
   { name: 'Antifraude', description: 'Análise de risco em transações' },
   { name: 'Notificações', description: 'Envio de SMS e e-mail' },
@@ -275,42 +257,49 @@ function PendingCard({ name, description }: { name: string; description: string 
 }
 
 export default function MonitoringPage() {
-  const [checkout, setCheckout] = useState<ServiceMonitor | null>(null);
-  const [app, setApp] = useState<ServiceMonitor | null>(null);
+  const [monitors, setMonitors] = useState<ServiceMonitor[]>([]);
+  const [refreshing, setRefreshing] = useState<Record<string, boolean>>({});
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [refreshingCheckout, setRefreshingCheckout] = useState(false);
-  const [refreshingApp, setRefreshingApp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMonitor = useCallback(async (
-    key: 'checkout' | 'app',
-    trigger: boolean,
-    setData: (d: ServiceMonitor) => void,
-    setRefreshing: (v: boolean) => void,
-  ) => {
-    setRefreshing(true);
+  const token = () => localStorage.getItem('token') ?? '';
+
+  const fetchMonitor = useCallback(async (key: string, trigger = false): Promise<ServiceMonitor | null> => {
+    const endpoint = trigger ? `/monitoring/${key}/check` : `/monitoring/${key}/status`;
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: trigger ? 'POST' : 'GET',
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }, []);
+
+  const loadAll = useCallback(async (trigger = false) => {
+    setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const endpoint = trigger ? `/monitoring/${key}/check` : `/monitoring/${key}`;
-      const res = await fetch(`${API_URL}${endpoint}`, {
-        method: trigger ? 'POST' : 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+      const listRes = await fetch(`${API_URL}/monitoring`, {
+        headers: { Authorization: `Bearer ${token()}` },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setData(await res.json());
+      if (!listRes.ok) throw new Error(`HTTP ${listRes.status}`);
+      const targets: { key: string }[] = await listRes.json();
+
+      const results = await Promise.all(targets.map(t => fetchMonitor(t.key, trigger).catch(() => null)));
+      setMonitors(results.filter(Boolean) as ServiceMonitor[]);
       setLastRefresh(new Date());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar monitoramento');
-    } finally {
-      setRefreshing(false);
     }
-  }, []);
-
-  const loadAll = useCallback((trigger = false) => {
-    setError(null);
-    fetchMonitor('checkout', trigger, setCheckout, setRefreshingCheckout);
-    fetchMonitor('app', trigger, setApp, setRefreshingApp);
   }, [fetchMonitor]);
+
+  const triggerOne = async (key: string) => {
+    setRefreshing(r => ({ ...r, [key]: true }));
+    try {
+      const data = await fetchMonitor(key, true);
+      if (data) setMonitors(prev => prev.map(m => m.key === key ? data : m));
+    } finally {
+      setRefreshing(r => ({ ...r, [key]: false }));
+    }
+  };
 
   useEffect(() => {
     loadAll();
@@ -319,7 +308,7 @@ export default function MonitoringPage() {
   }, [loadAll]);
 
   const overallStatus = (() => {
-    const statuses = [checkout?.current?.status, app?.current?.status].filter(Boolean) as CheckStatus[];
+    const statuses = monitors.map(m => m.current?.status).filter(Boolean) as CheckStatus[];
     if (statuses.includes('DOWN')) return 'DOWN';
     if (statuses.includes('DEGRADED')) return 'DEGRADED';
     if (statuses.length > 0) return 'UP';
@@ -332,12 +321,11 @@ export default function MonitoringPage() {
         <div>
           <h1 className={styles.title}>Monitoramento de Serviços</h1>
           <p className={styles.subtitle}>
-            Verificação automática a cada 2 minutos ·{' '}
-            Atualizado: {lastRefresh.toLocaleTimeString('pt-BR')}
+            Verificação automática a cada 2 minutos · Atualizado: {lastRefresh.toLocaleTimeString('pt-BR')}
           </p>
         </div>
-        <button className={styles.refreshBtn} onClick={() => loadAll(true)} disabled={refreshingCheckout || refreshingApp}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={(refreshingCheckout || refreshingApp) ? styles.spinning : ''}>
+        <button className={styles.refreshBtn} onClick={() => loadAll(true)} disabled={Object.values(refreshing).some(Boolean)}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={Object.values(refreshing).some(Boolean) ? styles.spinning : ''}>
             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
             <path d="M21 3v5h-5" />
           </svg>
@@ -357,58 +345,36 @@ export default function MonitoringPage() {
           <span className={styles.bannerDot} />
           <div>
             <strong>
-              {overallStatus === 'UP'
-                ? 'Todos os serviços operacionais'
-                : overallStatus === 'DEGRADED'
-                ? 'Um ou mais serviços com desempenho degradado'
+              {overallStatus === 'UP' ? 'Todos os serviços operacionais'
+                : overallStatus === 'DEGRADED' ? 'Um ou mais serviços com desempenho degradado'
                 : 'Um ou mais serviços fora do ar'}
             </strong>
             {overallStatus !== 'UP' && (
-              <p className={styles.bannerSub}>
-                A equipe técnica foi notificada. Verifique os detalhes abaixo.
-              </p>
+              <p className={styles.bannerSub}>A equipe técnica foi notificada. Verifique os detalhes abaixo.</p>
             )}
           </div>
         </div>
       )}
 
       <div className={styles.monitorsGrid}>
-        {checkout ? (
-          <MonitorCard
-            data={checkout}
-            serviceKey="checkout"
-            onTrigger={() => fetchMonitor('checkout', true, setCheckout, setRefreshingCheckout)}
-            refreshing={refreshingCheckout}
-          />
-        ) : !error && (
+        {monitors.length === 0 && !error && (
           <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
-              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" />
             </svg>
-            Verificando checkout...
+            Carregando monitores...
           </div>
         )}
-
-        {app ? (
+        {monitors.map(m => (
           <MonitorCard
-            data={app}
-            serviceKey="app"
-            onTrigger={() => fetchMonitor('app', true, setApp, setRefreshingApp)}
-            refreshing={refreshingApp}
+            key={m.key}
+            data={m}
+            onTrigger={() => triggerOne(m.key)}
+            refreshing={refreshing[m.key] ?? false}
           />
-        ) : !error && (
-          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
-              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-              <path d="M21 3v5h-5" />
-            </svg>
-            Verificando app...
-          </div>
-        )}
+        ))}
       </div>
 
-      {/* Pending integrations */}
       <div className={styles.sectionDivider}>
         <span>Integrações pendentes</span>
       </div>

@@ -10,28 +10,22 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class MonitoringController {
   constructor(private readonly monitoringService: MonitoringService) {}
 
-  @Get('checkout')
-  @ApiOperation({ summary: 'Retorna status atual e histórico do checkout' })
-  getCheckoutStatus() {
-    return this.monitoringService.getCheckoutStatus();
+  @Get()
+  @ApiOperation({ summary: 'Lista todos os monitores configurados' })
+  listTargets() {
+    return this.monitoringService.listTargets();
   }
 
-  @Post('checkout/check')
-  @ApiOperation({ summary: 'Dispara uma verificação imediata do checkout' })
-  async triggerCheckout() {
-    return this.monitoringService.triggerCheckout();
+  @Get(':service/status')
+  @ApiOperation({ summary: 'Retorna status atual e histórico de um serviço' })
+  getStatus(@Param('service') service: string) {
+    return this.monitoringService.getStatus(service);
   }
 
-  @Get('app')
-  @ApiOperation({ summary: 'Retorna status atual e histórico do app' })
-  getAppStatus() {
-    return this.monitoringService.getAppStatus();
-  }
-
-  @Post('app/check')
-  @ApiOperation({ summary: 'Dispara uma verificação imediata do app' })
-  async triggerApp() {
-    return this.monitoringService.triggerApp();
+  @Post(':service/check')
+  @ApiOperation({ summary: 'Dispara uma verificação imediata de um serviço' })
+  async triggerCheck(@Param('service') service: string) {
+    return this.monitoringService.triggerCheck(service);
   }
 
   @Get(':service/notes')
