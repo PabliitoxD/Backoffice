@@ -13,13 +13,24 @@ export class MonitoringController {
   @Get('checkout')
   @ApiOperation({ summary: 'Retorna status atual e histórico do checkout' })
   getCheckoutStatus() {
-    return this.monitoringService.getStatus();
+    return this.monitoringService.getCheckoutStatus();
   }
 
   @Post('checkout/check')
   @ApiOperation({ summary: 'Dispara uma verificação imediata do checkout' })
-  async triggerCheck() {
-    await this.monitoringService.runCheck();
-    return this.monitoringService.getStatus();
+  async triggerCheckout() {
+    return this.monitoringService.triggerCheckout();
+  }
+
+  @Get('app')
+  @ApiOperation({ summary: 'Retorna status atual e histórico do app' })
+  getAppStatus() {
+    return this.monitoringService.getAppStatus();
+  }
+
+  @Post('app/check')
+  @ApiOperation({ summary: 'Dispara uma verificação imediata do app' })
+  async triggerApp() {
+    return this.monitoringService.triggerApp();
   }
 }

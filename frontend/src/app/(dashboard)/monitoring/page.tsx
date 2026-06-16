@@ -13,7 +13,7 @@ interface CheckResult {
   responseTimeMs: number | null;
 }
 
-interface CheckoutMonitor {
+interface ServiceMonitor {
   url: string;
   name: string;
   current: CheckResult | null;
@@ -41,6 +41,97 @@ function UptimeBar({ history }: { history: CheckResult[] }) {
           title={`${r.status} · ${new Date(r.timestamp).toLocaleString('pt-BR')}${r.responseTimeMs ? ` · ${r.responseTimeMs}ms` : ''}`}
         />
       ))}
+    </div>
+  );
+}
+
+function MonitorCard({
+  data,
+  onTrigger,
+  refreshing,
+}: {
+  data: ServiceMonitor;
+  onTrigger: () => void;
+  refreshing: boolean;
+}) {
+  return (
+    <div className="card">
+      <div className={styles.cardHeader}>
+        <div>
+          <h3 className={styles.integrationName}>{data.name}</h3>
+          <p className={styles.integrationDesc}>{data.url}</p>
+        </div>
+        <div className={styles.cardHeaderRight}>
+          {data.current && <StatusBadge status={data.current.status} />}
+          <button className={styles.refreshBtnSm} onClick={onTrigger} disabled={refreshing} title="Verificar agora">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? styles.spinning : ''}>
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.miniStats}>
+        <div>
+          <span className={styles.miniLabel}>Uptime</span>
+          <span className={`${styles.miniValue} ${data.uptimePercent != null && data.uptimePercent >= 99 ? styles.statGreen : data.uptimePercent != null && data.uptimePercent >= 95 ? styles.statYellow : styles.statRed}`}>
+            {data.uptimePercent !== null ? `${data.uptimePercent.toFixed(1)}%` : '—'}
+          </span>
+        </div>
+        <div>
+          <span className={styles.miniLabel}>Resposta</span>
+          <span className={styles.miniValue}>
+            {data.current?.responseTimeMs != null ? `${data.current.responseTimeMs} ms` : '—'}
+          </span>
+        </div>
+        <div>
+          <span className={styles.miniLabel}>HTTP</span>
+          <span className={styles.miniValue}>{data.current?.statusCode ?? '—'}</span>
+        </div>
+        <div>
+          <span className={styles.miniLabel}>Última checagem</span>
+          <span className={styles.miniValue} style={{ fontSize: '0.9rem' }}>
+            {data.current ? new Date(data.current.timestamp).toLocaleTimeString('pt-BR') : '—'}
+          </span>
+        </div>
+      </div>
+
+      <div className={styles.historySection} style={{ marginTop: '1.25rem' }}>
+        <div className={styles.historyLabelRow}>
+          <span className={styles.historyLabel}>
+            Histórico — últimas {data.history.length} verificações
+          </span>
+          <span className={styles.historyLegend}>
+            <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockUP}`} /> Operacional</span>
+            <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDEGRADED}`} /> Degradado</span>
+            <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDOWN}`} /> Fora do ar</span>
+          </span>
+        </div>
+        {data.history.length > 0
+          ? <UptimeBar history={data.history} />
+          : <p className={styles.historyEmpty}>Aguardando primeiras verificações...</p>
+        }
+      </div>
+
+      {data.history.length > 0 && (
+        <div className={styles.historyTable}>
+          <div className={styles.historyTableHeader}>
+            <span>Horário</span>
+            <span>Status</span>
+            <span>HTTP</span>
+            <span>Resposta</span>
+          </div>
+          {[...data.history].reverse().slice(0, 10).map((r, i) => (
+            <div key={i} className={styles.historyTableRow}>
+              <span>{new Date(r.timestamp).toLocaleTimeString('pt-BR')}</span>
+              <StatusBadge status={r.status} />
+              <span className={styles.codeCell}>{r.statusCode ?? '—'}</span>
+              <span>{r.responseTimeMs != null ? `${r.responseTimeMs} ms` : '—'}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -77,24 +168,29 @@ function PendingCard({ name, description }: { name: string; description: string 
 }
 
 export default function MonitoringPage() {
-  const [data, setData] = useState<CheckoutMonitor | null>(null);
+  const [checkout, setCheckout] = useState<ServiceMonitor | null>(null);
+  const [app, setApp] = useState<ServiceMonitor | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshingCheckout, setRefreshingCheckout] = useState(false);
+  const [refreshingApp, setRefreshingApp] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (trigger = false) => {
+  const fetchMonitor = useCallback(async (
+    key: 'checkout' | 'app',
+    trigger: boolean,
+    setData: (d: ServiceMonitor) => void,
+    setRefreshing: (v: boolean) => void,
+  ) => {
     setRefreshing(true);
-    setError(null);
     try {
       const token = localStorage.getItem('token');
-      const endpoint = trigger ? '/monitoring/checkout/check' : '/monitoring/checkout';
+      const endpoint = trigger ? `/monitoring/${key}/check` : `/monitoring/${key}`;
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: trigger ? 'POST' : 'GET',
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: CheckoutMonitor = await res.json();
-      setData(json);
+      setData(await res.json());
       setLastRefresh(new Date());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar monitoramento');
@@ -103,26 +199,38 @@ export default function MonitoringPage() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-    const interval = setInterval(() => load(), 30000);
-    return () => clearInterval(interval);
-  }, [load]);
+  const loadAll = useCallback((trigger = false) => {
+    setError(null);
+    fetchMonitor('checkout', trigger, setCheckout, setRefreshingCheckout);
+    fetchMonitor('app', trigger, setApp, setRefreshingApp);
+  }, [fetchMonitor]);
 
-  const status = data?.current?.status ?? null;
+  useEffect(() => {
+    loadAll();
+    const interval = setInterval(() => loadAll(), 30000);
+    return () => clearInterval(interval);
+  }, [loadAll]);
+
+  const overallStatus = (() => {
+    const statuses = [checkout?.current?.status, app?.current?.status].filter(Boolean) as CheckStatus[];
+    if (statuses.includes('DOWN')) return 'DOWN';
+    if (statuses.includes('DEGRADED')) return 'DEGRADED';
+    if (statuses.length > 0) return 'UP';
+    return null;
+  })();
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Monitoramento de Checkout</h1>
+          <h1 className={styles.title}>Monitoramento de Serviços</h1>
           <p className={styles.subtitle}>
             Verificação automática a cada 2 minutos ·{' '}
-            Exibição atualizada: {lastRefresh.toLocaleTimeString('pt-BR')}
+            Atualizado: {lastRefresh.toLocaleTimeString('pt-BR')}
           </p>
         </div>
-        <button className={styles.refreshBtn} onClick={() => load(true)} disabled={refreshing}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? styles.spinning : ''}>
+        <button className={styles.refreshBtn} onClick={() => loadAll(true)} disabled={refreshingCheckout || refreshingApp}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={(refreshingCheckout || refreshingApp) ? styles.spinning : ''}>
             <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
             <path d="M21 3v5h-5" />
           </svg>
@@ -137,18 +245,18 @@ export default function MonitoringPage() {
         </div>
       )}
 
-      {status && (
-        <div className={`${styles.overallBanner} ${styles[`banner${status}`]}`}>
+      {overallStatus && (
+        <div className={`${styles.overallBanner} ${styles[`banner${overallStatus}`]}`}>
           <span className={styles.bannerDot} />
           <div>
             <strong>
-              {status === 'UP'
-                ? 'Checkout operacional'
-                : status === 'DEGRADED'
-                ? 'Checkout com desempenho degradado'
-                : 'Checkout fora do ar'}
+              {overallStatus === 'UP'
+                ? 'Todos os serviços operacionais'
+                : overallStatus === 'DEGRADED'
+                ? 'Um ou mais serviços com desempenho degradado'
+                : 'Um ou mais serviços fora do ar'}
             </strong>
-            {status !== 'UP' && (
+            {overallStatus !== 'UP' && (
               <p className={styles.bannerSub}>
                 A equipe técnica foi notificada. Verifique os detalhes abaixo.
               </p>
@@ -157,92 +265,39 @@ export default function MonitoringPage() {
         </div>
       )}
 
-      {data && (
-        <>
-          <div className={styles.statsRow}>
-            <div className="card">
-              <p className={styles.statLabel}>Uptime (últimas verificações)</p>
-              <p className={`${styles.statValue} ${data.uptimePercent && data.uptimePercent >= 99 ? styles.statGreen : data.uptimePercent && data.uptimePercent >= 95 ? styles.statYellow : styles.statRed}`}>
-                {data.uptimePercent !== null ? `${data.uptimePercent.toFixed(1)}%` : '—'}
-              </p>
-            </div>
-            <div className="card">
-              <p className={styles.statLabel}>Tempo de resposta</p>
-              <p className={styles.statValue}>
-                {data.current?.responseTimeMs != null ? `${data.current.responseTimeMs} ms` : '—'}
-              </p>
-            </div>
-            <div className="card">
-              <p className={styles.statLabel}>Código HTTP</p>
-              <p className={styles.statValue}>
-                {data.current?.statusCode ?? '—'}
-              </p>
-            </div>
-            <div className="card">
-              <p className={styles.statLabel}>Última verificação</p>
-              <p className={styles.statValue} style={{ fontSize: '1.1rem' }}>
-                {data.current ? new Date(data.current.timestamp).toLocaleTimeString('pt-BR') : '—'}
-              </p>
-            </div>
+      <div className={styles.monitorsGrid}>
+        {checkout ? (
+          <MonitorCard
+            data={checkout}
+            onTrigger={() => fetchMonitor('checkout', true, setCheckout, setRefreshingCheckout)}
+            refreshing={refreshingCheckout}
+          />
+        ) : !error && (
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+            Verificando checkout...
           </div>
+        )}
 
-          <div className="card">
-            <div className={styles.cardHeader}>
-              <div>
-                <h3 className={styles.integrationName}>{data.name}</h3>
-                <p className={styles.integrationDesc}>{data.url}</p>
-              </div>
-              {data.current && <StatusBadge status={data.current.status} />}
-            </div>
-
-            <div className={styles.historySection} style={{ marginTop: '1.25rem' }}>
-              <div className={styles.historyLabelRow}>
-                <span className={styles.historyLabel}>
-                  Histórico — últimas {data.history.length} verificações
-                </span>
-                <span className={styles.historyLegend}>
-                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockUP}`} /> Operacional</span>
-                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDEGRADED}`} /> Degradado</span>
-                  <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockDOWN}`} /> Fora do ar</span>
-                </span>
-              </div>
-              {data.history.length > 0
-                ? <UptimeBar history={data.history} />
-                : <p className={styles.historyEmpty}>Aguardando primeiras verificações...</p>
-              }
-            </div>
-
-            {data.history.length > 0 && (
-              <div className={styles.historyTable}>
-                <div className={styles.historyTableHeader}>
-                  <span>Horário</span>
-                  <span>Status</span>
-                  <span>HTTP</span>
-                  <span>Resposta</span>
-                </div>
-                {[...data.history].reverse().slice(0, 10).map((r, i) => (
-                  <div key={i} className={styles.historyTableRow}>
-                    <span>{new Date(r.timestamp).toLocaleTimeString('pt-BR')}</span>
-                    <StatusBadge status={r.status} />
-                    <span className={styles.codeCell}>{r.statusCode ?? '—'}</span>
-                    <span>{r.responseTimeMs != null ? `${r.responseTimeMs} ms` : '—'}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        {app ? (
+          <MonitorCard
+            data={app}
+            onTrigger={() => fetchMonitor('app', true, setApp, setRefreshingApp)}
+            refreshing={refreshingApp}
+          />
+        ) : !error && (
+          <div className="card" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-secondary)' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+              <path d="M21 3v5h-5" />
+            </svg>
+            Verificando app...
           </div>
-        </>
-      )}
-
-      {!data && !error && (
-        <div className={styles.loadingState}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.spinning}>
-            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
-            <path d="M21 3v5h-5" />
-          </svg>
-          Realizando primeira verificação...
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Pending integrations */}
       <div className={styles.sectionDivider}>
