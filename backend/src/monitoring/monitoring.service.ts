@@ -1,7 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
 const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
-const HISTORY_SIZE = 30;
 
 export type CheckStatus = 'UP' | 'DOWN' | 'DEGRADED';
 
@@ -78,9 +77,6 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     };
 
     monitor.history.push(result);
-    if (monitor.history.length > HISTORY_SIZE) {
-      monitor.history.shift();
-    }
   }
 
   private buildStatus(monitor: MonitorTarget) {

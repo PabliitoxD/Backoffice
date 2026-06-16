@@ -100,7 +100,7 @@ function MonitorCard({
       <div className={styles.historySection} style={{ marginTop: '1.25rem' }}>
         <div className={styles.historyLabelRow}>
           <span className={styles.historyLabel}>
-            Histórico — últimas {data.history.length} verificações
+            Últimas 5 verificações · {data.history.length} no total
           </span>
           <span className={styles.historyLegend}>
             <span className={styles.legendItem}><span className={`${styles.legendDot} ${styles.blockUP}`} /> Operacional</span>
@@ -109,7 +109,7 @@ function MonitorCard({
           </span>
         </div>
         {data.history.length > 0
-          ? <UptimeBar history={data.history} />
+          ? <UptimeBar history={[...data.history].slice(-5)} />
           : <p className={styles.historyEmpty}>Aguardando primeiras verificações...</p>
         }
       </div>
@@ -122,7 +122,7 @@ function MonitorCard({
             <span>HTTP</span>
             <span>Resposta</span>
           </div>
-          {[...data.history].reverse().slice(0, 10).map((r, i) => (
+          {[...data.history].reverse().slice(0, 5).map((r, i) => (
             <div key={i} className={styles.historyTableRow}>
               <span>{new Date(r.timestamp).toLocaleTimeString('pt-BR')}</span>
               <StatusBadge status={r.status} />
