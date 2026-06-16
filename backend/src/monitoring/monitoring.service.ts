@@ -1,6 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 
-const CHECKOUT_URL = 'https://checkout.bravvius.com/';
 const CHECK_INTERVAL_MS = 2 * 60 * 1000; // 2 minutes
 const HISTORY_SIZE = 30;
 
@@ -13,6 +12,12 @@ export interface CheckResult {
   responseTimeMs: number | null;
 }
 
+interface MonitorTarget {
+  name: string;
+  url: string;
+  history: CheckResult[];
+}
+
 function resolveStatus(statusCode: number | null, responseTimeMs: number | null): CheckStatus {
   if (!statusCode || statusCode >= 500) return 'DOWN';
   if (statusCode >= 400) return 'DEGRADED';
@@ -20,21 +25,30 @@ function resolveStatus(statusCode: number | null, responseTimeMs: number | null)
   return 'UP';
 }
 
+const TARGETS: Omit<MonitorTarget, 'history'>[] = [
+  { name: 'Checkout Bravvius', url: 'https://checkout.bravvius.com/' },
+  { name: 'App Bravvius', url: 'https://app.bravvius.com/' },
+];
+
 @Injectable()
 export class MonitoringService implements OnModuleInit, OnModuleDestroy {
-  private history: CheckResult[] = [];
+  private monitors: MonitorTarget[] = TARGETS.map(t => ({ ...t, history: [] }));
   private interval: NodeJS.Timeout | null = null;
 
   onModuleInit() {
-    this.runCheck();
-    this.interval = setInterval(() => this.runCheck(), CHECK_INTERVAL_MS);
+    this.runAllChecks();
+    this.interval = setInterval(() => this.runAllChecks(), CHECK_INTERVAL_MS);
   }
 
   onModuleDestroy() {
     if (this.interval) clearInterval(this.interval);
   }
 
-  async runCheck(): Promise<void> {
+  private async runAllChecks(): Promise<void> {
+    await Promise.all(this.monitors.map(m => this.runCheck(m)));
+  }
+
+  async runCheck(monitor: MonitorTarget): Promise<void> {
     const start = Date.now();
     let statusCode: number | null = null;
     let responseTimeMs: number | null = null;
@@ -43,7 +57,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
 
-      const res = await fetch(CHECKOUT_URL, {
+      const res = await fetch(monitor.url, {
         method: 'GET',
         signal: controller.signal,
         headers: { 'User-Agent': 'Tronnus-Monitor/1.0' },
@@ -63,30 +77,48 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       responseTimeMs,
     };
 
-    this.history.push(result);
-    if (this.history.length > HISTORY_SIZE) {
-      this.history.shift();
+    monitor.history.push(result);
+    if (monitor.history.length > HISTORY_SIZE) {
+      monitor.history.shift();
     }
   }
 
-  getStatus() {
-    const latest = this.history[this.history.length - 1] ?? null;
-    const upCount = this.history.filter(r => r.status === 'UP').length;
-    const uptimePercent = this.history.length > 0
-      ? (upCount / this.history.length) * 100
+  private buildStatus(monitor: MonitorTarget) {
+    const latest = monitor.history[monitor.history.length - 1] ?? null;
+    const upCount = monitor.history.filter(r => r.status === 'UP').length;
+    const uptimePercent = monitor.history.length > 0
+      ? (upCount / monitor.history.length) * 100
       : null;
 
     return {
-      url: CHECKOUT_URL,
-      name: 'Checkout Bravvius',
+      url: monitor.url,
+      name: monitor.name,
       current: latest,
       uptimePercent,
-      history: this.history.map(r => ({
+      history: monitor.history.map(r => ({
         timestamp: r.timestamp,
         status: r.status,
         responseTimeMs: r.responseTimeMs,
         statusCode: r.statusCode,
       })),
     };
+  }
+
+  getCheckoutStatus() {
+    return this.buildStatus(this.monitors[0]);
+  }
+
+  getAppStatus() {
+    return this.buildStatus(this.monitors[1]);
+  }
+
+  async triggerCheckout(): Promise<ReturnType<typeof this.getCheckoutStatus>> {
+    await this.runCheck(this.monitors[0]);
+    return this.getCheckoutStatus();
+  }
+
+  async triggerApp(): Promise<ReturnType<typeof this.getAppStatus>> {
+    await this.runCheck(this.monitors[1]);
+    return this.getAppStatus();
   }
 }

@@ -428,7 +428,79 @@
   color: var(--text-muted);
 }
 
+/* Monitors grid — two columns side by side */
+.monitorsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 1rem;
+}
+
+/* Card header right side (badge + small trigger button) */
+.cardHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.refreshBtnSm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.refreshBtnSm:hover:not(:disabled) {
+  color: var(--text-main);
+  border-color: var(--primary-color);
+}
+
+.refreshBtnSm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mini stats row inside each monitor card */
+.miniStats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.875rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.miniLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.miniValue {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
 @media (max-width: 768px) {
+  .monitorsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .miniStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .statsRow {
     grid-template-columns: repeat(2, 1fr);
   }
