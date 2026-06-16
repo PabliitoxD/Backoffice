@@ -13,18 +13,31 @@ export interface CheckResult {
   responseTimeMs: number | null;
 }
 
+type MonitorType = 'url' | 'statuspage';
+
 interface MonitorTarget {
   key: string;
   name: string;
   url: string;
+  type: MonitorType;
 }
 
+// indicator values from Statuspage.io API → our status
+const STATUSPAGE_MAP: Record<string, CheckStatus> = {
+  none: 'UP',
+  minor: 'DEGRADED',
+  major: 'DEGRADED',
+  critical: 'DOWN',
+  maintenance: 'DEGRADED',
+};
+
 const TARGETS: MonitorTarget[] = [
-  { key: 'checkout', name: 'Checkout Bravvius', url: 'https://checkout.bravvius.com/' },
-  { key: 'app',      name: 'App Bravvius',      url: 'https://app.bravvius.com/' },
+  { key: 'checkout', name: 'Checkout Bravvius', url: 'https://checkout.bravvius.com/',               type: 'url'        },
+  { key: 'app',      name: 'App Bravvius',      url: 'https://app.bravvius.com/',                    type: 'url'        },
+  { key: 'pagarme',  name: 'Pagar.me',          url: 'https://status.pagar.me/api/v2/summary.json', type: 'statuspage' },
 ];
 
-function resolveStatus(statusCode: number | null, responseTimeMs: number | null): CheckStatus {
+function resolveUrlStatus(statusCode: number | null, responseTimeMs: number | null): CheckStatus {
   if (!statusCode || statusCode >= 500) return 'DOWN';
   if (statusCode >= 400) return 'DEGRADED';
   if (responseTimeMs && responseTimeMs > 3000) return 'DEGRADED';
@@ -52,6 +65,14 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   }
 
   async runCheck(target: MonitorTarget): Promise<void> {
+    const result = target.type === 'statuspage'
+      ? await this.checkStatuspage(target)
+      : await this.checkUrl(target);
+
+    await this.prisma.monitoringCheck.create({ data: { service: target.key, ...result } });
+  }
+
+  private async checkUrl(target: MonitorTarget) {
     const start = Date.now();
     let statusCode: number | null = null;
     let responseTimeMs: number | null = null;
@@ -59,13 +80,11 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 10000);
-
       const res = await fetch(target.url, {
         method: 'GET',
         signal: controller.signal,
         headers: { 'User-Agent': 'Tronnus-Monitor/1.0' },
       });
-
       clearTimeout(timeout);
       statusCode = res.status;
       responseTimeMs = Date.now() - start;
@@ -73,27 +92,48 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
       responseTimeMs = Date.now() - start;
     }
 
-    await this.prisma.monitoringCheck.create({
-      data: {
-        service: target.key,
-        status: resolveStatus(statusCode, responseTimeMs),
-        statusCode,
-        responseTimeMs,
-      },
-    });
+    return { status: resolveUrlStatus(statusCode, responseTimeMs), statusCode, responseTimeMs };
+  }
+
+  private async checkStatuspage(target: MonitorTarget) {
+    const start = Date.now();
+    let statusCode: number | null = null;
+    let responseTimeMs: number | null = null;
+    let status: CheckStatus = 'DOWN';
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(target.url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Tronnus-Monitor/1.0' },
+      });
+      clearTimeout(timeout);
+      statusCode = res.status;
+      responseTimeMs = Date.now() - start;
+
+      if (res.ok) {
+        const json = await res.json() as { status?: { indicator?: string } };
+        const indicator = json?.status?.indicator ?? 'critical';
+        status = STATUSPAGE_MAP[indicator] ?? 'DOWN';
+      }
+    } catch {
+      responseTimeMs = Date.now() - start;
+    }
+
+    return { status, statusCode, responseTimeMs };
   }
 
   private async purgeOldChecks(): Promise<void> {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - RETENTION_DAYS);
-    await this.prisma.monitoringCheck.deleteMany({
-      where: { checkedAt: { lt: cutoff } },
-    });
+    await this.prisma.monitoringCheck.deleteMany({ where: { checkedAt: { lt: cutoff } } });
   }
 
-  private async buildStatus(key: string, name: string, url: string) {
+  private async buildStatus(target: MonitorTarget) {
     const checks = await this.prisma.monitoringCheck.findMany({
-      where: { service: key },
+      where: { service: target.key },
       orderBy: { checkedAt: 'asc' },
     });
 
@@ -102,16 +142,16 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     const uptimePercent = checks.length > 0 ? (upCount / checks.length) * 100 : null;
 
     return {
-      url,
-      name,
-      current: latest
-        ? {
-            timestamp: latest.checkedAt,
-            status: latest.status as CheckStatus,
-            statusCode: latest.statusCode,
-            responseTimeMs: latest.responseTimeMs,
-          }
-        : null,
+      key: target.key,
+      url: target.url,
+      name: target.name,
+      type: target.type,
+      current: latest ? {
+        timestamp: latest.checkedAt,
+        status: latest.status as CheckStatus,
+        statusCode: latest.statusCode,
+        responseTimeMs: latest.responseTimeMs,
+      } : null,
       uptimePercent,
       history: checks.map(r => ({
         timestamp: r.checkedAt,
@@ -122,22 +162,21 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  getCheckoutStatus() {
-    return this.buildStatus('checkout', TARGETS[0].name, TARGETS[0].url);
+  getStatus(key: string) {
+    const target = TARGETS.find(t => t.key === key);
+    if (!target) throw new Error(`Monitor '${key}' not found`);
+    return this.buildStatus(target);
   }
 
-  getAppStatus() {
-    return this.buildStatus('app', TARGETS[1].name, TARGETS[1].url);
+  async triggerCheck(key: string) {
+    const target = TARGETS.find(t => t.key === key);
+    if (!target) throw new Error(`Monitor '${key}' not found`);
+    await this.runCheck(target);
+    return this.buildStatus(target);
   }
 
-  async triggerCheckout() {
-    await this.runCheck(TARGETS[0]);
-    return this.getCheckoutStatus();
-  }
-
-  async triggerApp() {
-    await this.runCheck(TARGETS[1]);
-    return this.getAppStatus();
+  listTargets() {
+    return TARGETS.map(t => ({ key: t.key, name: t.name, type: t.type }));
   }
 
   // Notes
@@ -149,9 +188,7 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   }
 
   async addNote(service: string, content: string, author: string) {
-    return this.prisma.monitoringNote.create({
-      data: { service, content, author },
-    });
+    return this.prisma.monitoringNote.create({ data: { service, content, author } });
   }
 
   async deleteNote(id: string) {
