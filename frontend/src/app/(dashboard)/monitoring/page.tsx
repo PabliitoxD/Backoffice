@@ -21,6 +21,14 @@ interface ServiceMonitor {
   history: CheckResult[];
 }
 
+interface MonitoringNote {
+  id: string;
+  service: string;
+  content: string;
+  author: string;
+  createdAt: string;
+}
+
 function StatusBadge({ status }: { status: CheckStatus }) {
   const label = status === 'UP' ? 'Operacional' : status === 'DEGRADED' ? 'Degradado' : 'Fora do ar';
   return (
@@ -45,12 +53,109 @@ function UptimeBar({ history }: { history: CheckResult[] }) {
   );
 }
 
+function NotesSection({ serviceKey }: { serviceKey: string }) {
+  const [notes, setNotes] = useState<MonitoringNote[]>([]);
+  const [content, setContent] = useState('');
+  const [author, setAuthor] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadNotes = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${API_URL}/monitoring/${serviceKey}/notes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) setNotes(await res.json());
+  }, [serviceKey]);
+
+  useEffect(() => { loadNotes(); }, [loadNotes]);
+
+  const submit = async () => {
+    if (!content.trim() || !author.trim()) return;
+    setSubmitting(true);
+    const token = localStorage.getItem('token');
+    await fetch(`${API_URL}/monitoring/${serviceKey}/notes`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: content.trim(), author: author.trim() }),
+    });
+    setContent('');
+    await loadNotes();
+    setSubmitting(false);
+  };
+
+  const remove = async (id: string) => {
+    const token = localStorage.getItem('token');
+    await fetch(`${API_URL}/monitoring/notes/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setNotes(prev => prev.filter(n => n.id !== id));
+  };
+
+  return (
+    <div className={styles.notesSection}>
+      <h4 className={styles.notesTitle}>Notas da equipe</h4>
+
+      <div className={styles.notesList}>
+        {notes.length === 0 && (
+          <p className={styles.notesEmpty}>Nenhuma nota registrada.</p>
+        )}
+        {notes.map(note => (
+          <div key={note.id} className={styles.noteItem}>
+            <div className={styles.noteHeader}>
+              <span className={styles.noteAuthor}>{note.author}</span>
+              <span className={styles.noteDate}>
+                {new Date(note.createdAt).toLocaleString('pt-BR')}
+              </span>
+              <button
+                className={styles.noteDelete}
+                onClick={() => remove(note.id)}
+                title="Remover nota"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p className={styles.noteContent}>{note.content}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.noteForm}>
+        <input
+          className={styles.noteInput}
+          placeholder="Seu nome"
+          value={author}
+          onChange={e => setAuthor(e.target.value)}
+        />
+        <textarea
+          className={styles.noteTextarea}
+          placeholder="Descreva o ocorrido, ação tomada ou observação..."
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          rows={2}
+        />
+        <button
+          className={styles.noteSubmit}
+          onClick={submit}
+          disabled={submitting || !content.trim() || !author.trim()}
+        >
+          {submitting ? 'Salvando...' : 'Adicionar nota'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MonitorCard({
   data,
+  serviceKey,
   onTrigger,
   refreshing,
 }: {
   data: ServiceMonitor;
+  serviceKey: string;
   onTrigger: () => void;
   refreshing: boolean;
 }) {
@@ -132,6 +237,8 @@ function MonitorCard({
           ))}
         </div>
       )}
+
+      <NotesSection serviceKey={serviceKey} />
     </div>
   );
 }
@@ -269,6 +376,7 @@ export default function MonitoringPage() {
         {checkout ? (
           <MonitorCard
             data={checkout}
+            serviceKey="checkout"
             onTrigger={() => fetchMonitor('checkout', true, setCheckout, setRefreshingCheckout)}
             refreshing={refreshingCheckout}
           />
@@ -285,6 +393,7 @@ export default function MonitoringPage() {
         {app ? (
           <MonitorCard
             data={app}
+            serviceKey="app"
             onTrigger={() => fetchMonitor('app', true, setApp, setRefreshingApp)}
             refreshing={refreshingApp}
           />
