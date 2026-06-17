@@ -28,6 +28,8 @@ interface MonitoringNote {
   service: string;
   content: string;
   author: string;
+  periodStart: string | null;
+  periodEnd: string | null;
   createdAt: string;
 }
 
@@ -59,6 +61,8 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
   const [notes, setNotes] = useState<MonitoringNote[]>([]);
   const [content, setContent] = useState('');
   const [author, setAuthor] = useState('');
+  const [periodStart, setPeriodStart] = useState('');
+  const [periodEnd, setPeriodEnd] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const loadNotes = useCallback(async () => {
@@ -78,9 +82,16 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
     await fetch(`${API_URL}/monitoring/${serviceKey}/notes`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: content.trim(), author: author.trim() }),
+      body: JSON.stringify({
+        content: content.trim(),
+        author: author.trim(),
+        periodStart: periodStart || undefined,
+        periodEnd: periodEnd || undefined,
+      }),
     });
     setContent('');
+    setPeriodStart('');
+    setPeriodEnd('');
     await loadNotes();
     setSubmitting(false);
   };
@@ -110,12 +121,27 @@ function NotesSection({ serviceKey }: { serviceKey: string }) {
                 </svg>
               </button>
             </div>
+            {(note.periodStart || note.periodEnd) && (
+              <p className={styles.notePeriod}>
+                Período: {note.periodStart ? new Date(note.periodStart).toLocaleDateString('pt-BR') : '?'}
+                {' — '}
+                {note.periodEnd ? new Date(note.periodEnd).toLocaleDateString('pt-BR') : 'em aberto'}
+              </p>
+            )}
             <p className={styles.noteContent}>{note.content}</p>
           </div>
         ))}
       </div>
       <div className={styles.noteForm}>
         <input className={styles.noteInput} placeholder="Seu nome" value={author} onChange={e => setAuthor(e.target.value)} />
+        <div className={styles.notePeriodRow}>
+          <label className={styles.notePeriodLabel}>Período do ocorrido (opcional)</label>
+          <div className={styles.notePeriodInputs}>
+            <input className={styles.noteInput} type="date" value={periodStart} onChange={e => setPeriodStart(e.target.value)} title="Início do período" />
+            <span className={styles.notePeriodSep}>até</span>
+            <input className={styles.noteInput} type="date" value={periodEnd} onChange={e => setPeriodEnd(e.target.value)} title="Fim do período" />
+          </div>
+        </div>
         <textarea className={styles.noteTextarea} placeholder="Descreva o ocorrido, ação tomada ou observação..." value={content} onChange={e => setContent(e.target.value)} rows={2} />
         <button className={styles.noteSubmit} onClick={submit} disabled={submitting || !content.trim() || !author.trim()}>
           {submitting ? 'Salvando...' : 'Adicionar nota'}
@@ -226,8 +252,6 @@ function MonitorCard({
 }
 
 const PENDING_INTEGRATIONS = [
-  { name: 'Sicoob PIX', description: 'Processamento de pagamentos via Pix — Sicoob' },
-  { name: 'Sicoob Boleto', description: 'Emissão e consulta de boletos — Sicoob' },
   { name: 'Webhook Delivery', description: 'Entrega de eventos para clientes' },
   { name: 'Antifraude', description: 'Análise de risco em transações' },
   { name: 'Notificações', description: 'Envio de SMS e e-mail' },

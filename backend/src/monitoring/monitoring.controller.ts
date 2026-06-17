@@ -38,9 +38,9 @@ export class MonitoringController {
   @ApiOperation({ summary: 'Adiciona uma nota da equipe' })
   addNote(
     @Param('service') service: string,
-    @Body() body: { content: string; author: string },
+    @Body() body: { content: string; author: string; periodStart?: string; periodEnd?: string },
   ) {
-    return this.monitoringService.addNote(service, body.content, body.author);
+    return this.monitoringService.addNote(service, body.content, body.author, body.periodStart, body.periodEnd);
   }
 
   @Delete('notes/:id')

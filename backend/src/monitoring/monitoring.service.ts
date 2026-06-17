@@ -13,7 +13,7 @@ export interface CheckResult {
   responseTimeMs: number | null;
 }
 
-type MonitorType = 'url' | 'statuspage';
+type MonitorType = 'url' | 'statuspage' | 'api-probe';
 
 interface MonitorTarget {
   key: string;
@@ -32,13 +32,25 @@ const STATUSPAGE_MAP: Record<string, CheckStatus> = {
 };
 
 const TARGETS: MonitorTarget[] = [
-  { key: 'checkout', name: 'Checkout Bravvius', url: 'https://checkout.bravvius.com/',               type: 'url'        },
-  { key: 'app',      name: 'App Bravvius',      url: 'https://app.bravvius.com/',                    type: 'url'        },
-  { key: 'pagarme',  name: 'Pagar.me',          url: 'https://status.pagar.me/api/v2/summary.json', type: 'statuspage' },
+  { key: 'checkout',     name: 'Checkout Bravvius', url: 'https://checkout.bravvius.com/',               type: 'url'        },
+  { key: 'app',          name: 'App Bravvius',      url: 'https://app.bravvius.com/',                    type: 'url'        },
+  { key: 'pagarme',      name: 'Pagar.me',          url: 'https://status.pagar.me/api/v2/summary.json', type: 'statuspage' },
+  { key: 'sicoob-pix',   name: 'Sicoob PIX',        url: 'https://api.sicoob.com.br/pix/api/v2/',       type: 'api-probe'  },
+  { key: 'sicoob-boleto',name: 'Sicoob Boleto',     url: 'https://api.sicoob.com.br/cobranca-bancaria/v3/boletos', type: 'api-probe' },
 ];
 
 function resolveUrlStatus(statusCode: number | null, responseTimeMs: number | null): CheckStatus {
   if (!statusCode || statusCode >= 500) return 'DOWN';
+  if (statusCode >= 400) return 'DEGRADED';
+  if (responseTimeMs && responseTimeMs > 3000) return 'DEGRADED';
+  return 'UP';
+}
+
+// 401/403 = serviço respondendo normalmente (sem auth) → UP
+function resolveApiProbeStatus(statusCode: number | null, responseTimeMs: number | null): CheckStatus {
+  if (!statusCode) return 'DOWN';
+  if (statusCode >= 500) return 'DOWN';
+  if (statusCode === 401 || statusCode === 403) return 'UP';
   if (statusCode >= 400) return 'DEGRADED';
   if (responseTimeMs && responseTimeMs > 3000) return 'DEGRADED';
   return 'UP';
@@ -67,7 +79,9 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
   async runCheck(target: MonitorTarget): Promise<void> {
     const result = target.type === 'statuspage'
       ? await this.checkStatuspage(target)
-      : await this.checkUrl(target);
+      : target.type === 'api-probe'
+        ? await this.checkApiProbe(target)
+        : await this.checkUrl(target);
 
     await this.prisma.monitoringCheck.create({ data: { service: target.key, ...result } });
   }
@@ -93,6 +107,29 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     }
 
     return { status: resolveUrlStatus(statusCode, responseTimeMs), statusCode, responseTimeMs };
+  }
+
+  private async checkApiProbe(target: MonitorTarget) {
+    const start = Date.now();
+    let statusCode: number | null = null;
+    let responseTimeMs: number | null = null;
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      const res = await fetch(target.url, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Tronnus-Monitor/1.0' },
+      });
+      clearTimeout(timeout);
+      statusCode = res.status;
+      responseTimeMs = Date.now() - start;
+    } catch {
+      responseTimeMs = Date.now() - start;
+    }
+
+    return { status: resolveApiProbeStatus(statusCode, responseTimeMs), statusCode, responseTimeMs };
   }
 
   private async checkStatuspage(target: MonitorTarget) {
@@ -187,8 +224,16 @@ export class MonitoringService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async addNote(service: string, content: string, author: string) {
-    return this.prisma.monitoringNote.create({ data: { service, content, author } });
+  async addNote(service: string, content: string, author: string, periodStart?: string, periodEnd?: string) {
+    return this.prisma.monitoringNote.create({
+      data: {
+        service,
+        content,
+        author,
+        periodStart: periodStart ? new Date(periodStart) : null,
+        periodEnd: periodEnd ? new Date(periodEnd) : null,
+      },
+    });
   }
 
   async deleteNote(id: string) {
