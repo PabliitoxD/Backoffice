@@ -79,7 +79,7 @@ export class WithdrawalsService {
     console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
     console.log(`Destinatário: financeiro@plataforma.com`);
     console.log(`\nSaques aprovados e aguardando repasse:`);
-    withdrawals.forEach(w => {
+    withdrawals.forEach((w: any) => {
       const payout = w.amount - w.fee;
       console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
       console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);

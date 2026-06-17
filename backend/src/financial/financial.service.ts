@@ -52,7 +52,7 @@ export class FinancialService {
     });
 
     // Remapear transações para o formato unificado do extrato
-    const mappedTransactions = transactions.map((t) => {
+    const mappedTransactions = transactions.map((t: any) => {
       // Impacto no Saldo: 
       // WAITING/APPROVED/COMPLETED = Adiciona saldo (crédito)
       // CHARGEBACK/REFUNDED/REVERSED/CLAIMED = Retira saldo (débito)
@@ -77,7 +77,7 @@ export class FinancialService {
     });
 
     // Remapear saques para o formato unificado do extrato
-    const mappedWithdrawals = withdrawals.map((w) => {
+    const mappedWithdrawals = withdrawals.map((w: any) => {
       // Saques (aprovados ou concluídos) descontam saldo
       const isDebit = ['APPROVED', 'COMPLETED', 'PENDING'].includes(w.status);
       
