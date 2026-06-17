@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import styles from './clients.module.css';
 import { ClientDetailModal } from '@/components/clients/ClientDetailModal';
@@ -16,19 +16,7 @@ const MOCK_CLIENTS = [
 export default function ClientsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [selectedClient, setSelectedClient] = useState<typeof MOCK_CLIENTS[0] | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdownId(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const filtered = MOCK_CLIENTS.filter(c => {
     const term = search.toLowerCase().trim();
@@ -42,10 +30,6 @@ export default function ClientsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  function openDetail(client: typeof MOCK_CLIENTS[0]) {
-    setOpenDropdownId(null);
-    setSelectedClient(client);
-  }
 
   return (
     <div className={styles.usersContainer}>
@@ -143,22 +127,12 @@ export default function ClientsPage() {
                   </td>
                   <td className={styles.textMuted}>{client.date}</td>
                   <td className={styles.actionsCell}>
-                    <div className={styles.dropdownContainer} ref={openDropdownId === client.id ? dropdownRef : null}>
-                      <button
-                        className={styles.btnActionDots}
-                        onClick={() => setOpenDropdownId(openDropdownId === client.id ? null : client.id)}
-                        title="Ações"
-                      >
-                        ⋮
-                      </button>
-                      {openDropdownId === client.id && (
-                        <div className={styles.dropdownMenu}>
-                          <button className={styles.dropdownItem} onClick={() => openDetail(client)}>
-                            👁️ Ver Detalhes
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                    <button
+                      className={styles.btnVerDetalhe}
+                      onClick={() => setSelectedClient(client)}
+                    >
+                      Ver Detalhes
+                    </button>
                   </td>
                 </tr>
               ))}
