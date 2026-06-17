@@ -233,3 +233,39 @@
   margin-top: 0.25rem;
   font-weight: 500;
 }
+
+/* CNPJ search in toolbar */
+.cnpjSearchWrapper {
+  flex: 1;
+}
+
+/* MCC display */
+.mccWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mccLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Checkbox / PEP */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}

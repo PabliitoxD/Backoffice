@@ -8,15 +8,25 @@ datasource db {
 }
 
 model Producer {
-  id        String   @id @default(uuid())
-  name      String
-  document  String   @unique
-  email     String   @unique
-  phone     String?
-  pixKey    String?
-  status    String   @default("ACTIVE")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(uuid())
+  name            String
+  document        String   @unique
+  email           String   @unique
+  phone           String?
+  pixKey          String?
+  status          String   @default("ACTIVE")
+  // Dados bancários
+  bankName        String?
+  bankAgency      String?
+  bankAccount     String?
+  bankAccountType String?
+  // Classificação fiscal
+  cnae            String?
+  mcc             String?
+  // Conformidade
+  isPep           Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   products     Product[]
   transactions Transaction[]
