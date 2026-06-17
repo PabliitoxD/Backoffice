@@ -1,44 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class WithdrawalsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
 
-  async create(data: { amount: number; producerId: string }) {
+  async create(data: any) {
     return this.prisma.withdrawal.create({
       data: {
         amount: data.amount,
-        producerId: data.producerId,
-        fee: 5.00, // Fixed fee for now until Plans are integrated
         status: 'PENDING',
+        producerId: data.producerId,
+        pixKey: data.pixKey,
+        fee: data.fee || 0,
       },
     });
   }
 
-  async findAll(query: { producerId?: string; status?: string; startDate?: string; endDate?: string; search?: string } = {}) {
+  async findAll(filters: {
+    producerId?: string;
+    status?: string;
+    startDate?: string;
+    endDate?: string;
+    search?: string;
+  }) {
+    const { status, producerId, startDate, endDate, search } = filters;
     const where: any = {};
-    
-    if (query.producerId && query.producerId !== 'ALL') where.producerId = query.producerId;
-    if (query.status && query.status !== 'ALL') where.status = query.status;
 
-    // date filters
-    if (query.startDate && query.endDate) {
-      where.createdAt = {
-        gte: new Date(query.startDate),
-        lte: new Date(query.endDate),
-      };
-    } else if (query.startDate) {
-      where.createdAt = { gte: new Date(query.startDate) };
-    } else if (query.endDate) {
-      where.createdAt = { lte: new Date(query.endDate) };
+    if (status && status !== 'ALL') {
+      where.status = status;
     }
 
-    // search filter
-    if (query.search) {
+    if (producerId) {
+      where.producerId = producerId;
+    }
+
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    if (search) {
       where.OR = [
-        { id: { contains: query.search, mode: 'insensitive' } },
-        { producer: { name: { contains: query.search, mode: 'insensitive' } } }
+        { id: { contains: search, mode: 'insensitive' } },
+        { producer: { name: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
@@ -46,17 +56,30 @@ export class WithdrawalsService {
       where,
       include: {
         producer: {
-          select: { name: true, email: true, document: true, pixKey: true }
-        }
+          select: {
+            name: true,
+            email: true,
+            document: true,
+            pixKey: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   async updateStatus(id: string, status: string, observation?: string) {
+    const data: any = { status, observation };
+    
+    if (status === 'APPROVED') {
+      data.approvedAt = new Date();
+    } else if (status === 'COMPLETED') {
+      data.completedAt = new Date();
+    }
+
     return this.prisma.withdrawal.update({
       where: { id },
-      data: { status, observation },
+      data,
     });
   }
 
@@ -67,7 +90,7 @@ export class WithdrawalsService {
         status: 'APPROVED',
       },
       include: {
-        producer: { select: { name: true, document: true } }
+        producer: { select: { name: true, document: true, pixKey: true } }
       }
     });
 
@@ -75,31 +98,33 @@ export class WithdrawalsService {
       return { success: false, message: 'Nenhum saque válido para notificação.' };
     }
 
-    console.log(`\n\n=== [MOCK] E-MAIL DE NOTIFICAÇÃO AO FINANCEIRO ===`);
-    console.log(`Assunto: Repasse PIX Autorizado (${withdrawals.length} solicitações)`);
-    console.log(`Destinatário: financeiro@plataforma.com`);
-    console.log(`\nSaques aprovados e aguardando repasse:`);
-    withdrawals.forEach((w: any) => {
-      const payout = w.amount - w.fee;
-      console.log(`- ${w.producer.name} (Doc: ${w.producer.document})`);
-      console.log(`  Chave PIX: ${w.pixKey || 'Não informada'}`);
-      console.log(`  Valor a transferir: R$ ${payout.toFixed(2)}`);
-      console.log(`  ID Saque: ${w.id}\n`);
-    });
-    console.log(`====================================================\n\n`);
+    try {
+      // Envia o e-mail real usando o MailService
+      await this.mailService.sendWithdrawalNotification(withdrawals);
 
-    // Registra a auditoria
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'FINANCE_NOTIFICATION_SENT',
-        entity: 'Withdrawal',
-        details: { count: withdrawals.length, ids: data.withdrawalIds }
-      }
-    });
+      // Registra a auditoria
+      await this.prisma.auditLog.create({
+        data: {
+          action: 'FINANCE_NOTIFICATION_SENT',
+          entity: 'Withdrawal',
+          details: { 
+            count: withdrawals.length, 
+            ids: data.withdrawalIds, 
+            recipients: ['tania.souza@superfin.com.br', 'pablo.werner@superfin.com.br'] 
+          }
+        }
+      });
 
-    return { 
-      success: true, 
-      message: 'Notificação enviada com sucesso!' 
-    };
+      return { 
+        success: true, 
+        message: 'Notificação enviada com sucesso aos responsáveis!' 
+      };
+    } catch (error) {
+      console.error('[WithdrawalsService] Erro ao enviar e-mail:', error);
+      return { 
+        success: false, 
+        message: 'Erro técnico ao disparar e-mail. Verifique os logs do servidor.' 
+      };
+    }
   }
 }

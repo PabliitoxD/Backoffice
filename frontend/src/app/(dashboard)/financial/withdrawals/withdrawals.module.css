@@ -1,0 +1,25 @@
+/* Withdrawals page — composes shared financial styles */
+
+.container    { composes: container    from '../financial.module.css'; }
+.header       { composes: header       from '../financial.module.css'; }
+.titleWrapper { composes: titleWrapper from '../financial.module.css'; }
+.tableCard    { composes: tableCard    from '../financial.module.css'; }
+.tableWrapper { composes: tableWrapper from '../financial.module.css'; }
+.table        { composes: table        from '../financial.module.css'; }
+.emptyState   { composes: emptyState   from '../financial.module.css'; }
+.textMuted    { composes: textMuted    from '../financial.module.css'; }
+.fontWeightMedium { composes: fontWeightMedium from '../financial.module.css'; }
+.badge        { composes: badge        from '../financial.module.css'; }
+.badgeCredit  { composes: badgeCredit  from '../financial.module.css'; }
+.badgeDebit   { composes: badgeDebit   from '../financial.module.css'; }
+.badgeInfo    { composes: badgeInfo    from '../financial.module.css'; }
+.badgeWarning { composes: badgeWarning from '../financial.module.css'; }
+.btnAction    { composes: btnAction    from '../financial.module.css'; }
+.btnSuccess   { composes: btnSuccess   from '../financial.module.css'; }
+.btnDangerOutlined { composes: btnDangerOutlined from '../financial.module.css'; }
+
+/* Page-specific badge variant */
+.badgeSecondary {
+  background-color: rgba(100, 116, 139, 0.12);
+  color: #64748b;
+}

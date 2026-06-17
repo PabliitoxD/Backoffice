@@ -1,0 +1,43 @@
+/* Receivables page — composes shared financial styles */
+
+.container    { composes: container    from '../financial.module.css'; }
+.header       { composes: header       from '../financial.module.css'; }
+.titleWrapper { composes: titleWrapper from '../financial.module.css'; }
+.tableCard    { composes: tableCard    from '../financial.module.css'; }
+.tableWrapper { composes: tableWrapper from '../financial.module.css'; }
+.table        { composes: table        from '../financial.module.css'; }
+.emptyState   { composes: emptyState   from '../financial.module.css'; }
+.textMuted    { composes: textMuted    from '../financial.module.css'; }
+.fontWeightMedium { composes: fontWeightMedium from '../financial.module.css'; }
+.badge        { composes: badge        from '../financial.module.css'; }
+.badgeCredit  { composes: badgeCredit  from '../financial.module.css'; }
+.btnAction    { composes: btnAction    from '../financial.module.css'; }
+.btnSuccess   { composes: btnSuccess   from '../financial.module.css'; }
+
+.searchInput {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--background);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--primary-color);
+}
+
+.filterSelect {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--background);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+}

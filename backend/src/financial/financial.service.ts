@@ -7,6 +7,7 @@ export class FinancialService {
 
   async getGlobalStatement(startDate?: string, endDate?: string, search?: string) {
     const whereClause: any = {};
+
     if (startDate && endDate) {
       whereClause.createdAt = {
         gte: new Date(startDate),
@@ -18,53 +19,52 @@ export class FinancialService {
       whereClause.createdAt = { lte: new Date(endDate) };
     }
 
-    const transactionWhere = { ...whereClause };
-    const withdrawalWhere = { ...whereClause };
+    // We fetch all records in the date range to calculate an accurate running balance
+    // even if a search filter is applied later.
+    const transactionWhereAll = { 
+      ...whereClause,
+      status: { in: ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'] }
+    };
+    const withdrawalWhereAll = { 
+      ...whereClause,
+      status: { in: ['COMPLETED'] }
+    };
 
-    if (search) {
-      transactionWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { producer: { name: { contains: search, mode: 'insensitive' } } },
-        { customer: { name: { contains: search, mode: 'insensitive' } } }
-      ];
-      withdrawalWhere.OR = [
-        { id: { contains: search, mode: 'insensitive' } },
-        { producer: { name: { contains: search, mode: 'insensitive' } } }
-      ];
-    }
-
-    // Busca todas as transações (ordenadas pelas mais recentes)
     const transactions = await this.prisma.transaction.findMany({
-      where: transactionWhere,
+      where: transactionWhereAll,
       include: {
         producer: { select: { name: true } },
+        customer: true,
+        product: true,
+        history: { orderBy: { createdAt: 'asc' } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
 
-    // Busca todos os saques
     const withdrawals = await this.prisma.withdrawal.findMany({
-      where: withdrawalWhere,
+      where: withdrawalWhereAll,
       include: {
         producer: { select: { name: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
 
-    // Remapear transações para o formato unificado do extrato
-    const mappedTransactions = transactions.map((t: any) => {
-      // Impacto no Saldo: 
-      // WAITING/APPROVED/COMPLETED = Adiciona saldo (crédito)
-      // CHARGEBACK/REFUNDED/REVERSED/CLAIMED = Retira saldo (débito)
-      const isCredit = ['WAITING', 'APPROVED', 'COMPLETED'].includes(t.status);
+    const mappedTransactions = transactions.map((t) => {
+      const isCredit = ['APPROVED', 'COMPLETED'].includes(t.status);
       const isDebit = ['CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'].includes(t.status);
       
       let impact = 0;
       if (isCredit) impact = t.amount;
       if (isDebit) impact = -t.amount;
 
+      let installments = '';
+      if (t.method === 'Cartão de Crédito' && (t as any).installments) {
+        installments = `${(t as any).installments}x`;
+      }
+
       return {
         id: `tx-${t.id}`,
+        originalId: t.id,
         type: 'TRANSACTION',
         description: `Venda (#${t.id.slice(0, 8)})`,
         producerName: t.producer.name,
@@ -73,35 +73,345 @@ export class FinancialService {
         impact, 
         status: t.status,
         date: t.createdAt,
+        method: t.method || '',
+        installments,
+        cardBrand: t.cardBrand || '',
+        customer: t.customer,
+        product: t.product,
+        history: t.history,
       };
     });
 
-    // Remapear saques para o formato unificado do extrato
-    const mappedWithdrawals = withdrawals.map((w: any) => {
-      // Saques (aprovados ou concluídos) descontam saldo
-      const isDebit = ['APPROVED', 'COMPLETED', 'PENDING'].includes(w.status);
-      
-      let impact = 0;
-      if (isDebit) impact = -w.amount; // Deduz o valor total solicitado (valor líquido + tarifa)
+    const mappedWithdrawals = withdrawals.map((w) => {
+      const impact = -w.amount;
 
       return {
         id: `wt-${w.id}`,
         type: 'WITHDRAWAL',
-        description: `Saque Solicitado`,
+        description: `Saque Realizado`,
         producerName: w.producer.name,
         amount: w.amount,
-        fee: w.fee, // Tarifa do saque
+        fee: w.fee,
         impact,
         status: w.status,
         date: w.createdAt,
+        method: 'TRANSFER',
+        installments: '',
+        cardBrand: '',
       };
     });
 
-    // Unir tudo numa única timeline ordenada de forma decrescente
-    const statement = [...mappedTransactions, ...mappedWithdrawals].sort(
-      (a, b) => b.date.getTime() - a.date.getTime(),
+    const combined = [...mappedTransactions, ...mappedWithdrawals].sort(
+      (a, b) => a.date.getTime() - b.date.getTime(),
     );
 
-    return statement;
+    let initialBalance = 0;
+    if (startDate) {
+      const start = new Date(startDate);
+      
+      const prevTransactions = await this.prisma.transaction.groupBy({
+        by: ['status'],
+        where: {
+          createdAt: { lt: start },
+          status: { in: ['APPROVED', 'COMPLETED', 'CHARGEBACK', 'REFUNDED', 'REVERSED', 'CLAIMED'] }
+        },
+        _sum: { amount: true }
+      });
+
+      const prevWithdrawals = await this.prisma.withdrawal.aggregate({
+        where: {
+          createdAt: { lt: start },
+          status: 'COMPLETED'
+        },
+        _sum: { amount: true }
+      });
+
+      for (const group of prevTransactions) {
+        if (['APPROVED', 'COMPLETED'].includes(group.status)) {
+          initialBalance += group._sum.amount || 0;
+        } else {
+          initialBalance -= group._sum.amount || 0;
+        }
+      }
+      initialBalance -= prevWithdrawals._sum.amount || 0;
+    }
+
+    let currentBalance = initialBalance;
+    const itemsWithBalance = combined.map((item) => {
+      currentBalance += item.impact;
+      return {
+        ...item,
+        runningBalance: currentBalance,
+      };
+    });
+    
+    // Now apply search filter in memory if provided
+    let filteredItems = itemsWithBalance;
+    if (search) {
+      const s = search.toLowerCase();
+      filteredItems = itemsWithBalance.filter((item: any) => 
+        item.originalId?.toLowerCase().includes(s) ||
+        item.producerName.toLowerCase().includes(s) ||
+        (item.customer?.name && item.customer.name.toLowerCase().includes(s)) ||
+        (item.customer?.email && item.customer.email.toLowerCase().includes(s))
+      );
+    }
+
+    const finalBalance = itemsWithBalance.length > 0 
+      ? itemsWithBalance[itemsWithBalance.length - 1].runningBalance 
+      : initialBalance;
+
+    return {
+      items: filteredItems.sort((a, b) => b.date.getTime() - a.date.getTime()),
+      initialBalance,
+      finalBalance
+    };
+  }
+
+  async getDashboardSummary(startDate?: string, endDate?: string) {
+    const periodWhere: any = {};
+    const currentStart = startDate ? new Date(startDate) : new Date();
+    const currentEnd = endDate ? new Date(endDate) : new Date();
+
+    if (startDate || endDate) {
+      periodWhere.createdAt = {};
+      if (startDate) {
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0); // Forçar início do dia
+        periodWhere.createdAt.gte = start;
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999); // Forçar fim do dia
+        periodWhere.createdAt.lte = end;
+      }
+    }
+
+    // Calcular período anterior para comparativo
+    const duration = currentEnd.getTime() - currentStart.getTime();
+    const prevStart = new Date(currentStart.getTime() - duration - 1000);
+    const prevEnd = new Date(currentEnd.getTime() - duration - 1000);
+    const prevPeriodWhere = {
+      createdAt: { gte: prevStart, lte: prevEnd }
+    };
+
+    const getStats = async (where: any) => {
+      const tx = await this.prisma.transaction.aggregate({
+        where: { ...where, status: { in: ['APPROVED', 'COMPLETED'] } },
+        _sum: { amount: true, fee: true },
+        _count: true,
+      });
+      const wd = await this.prisma.withdrawal.aggregate({
+        where: { ...where, status: 'COMPLETED' },
+        _sum: { fee: true }
+      });
+      return {
+        tpv: tx._sum.amount || 0,
+        revenue: (tx._sum.fee || 0) + (wd._sum.fee || 0),
+        count: tx._count || 0
+      };
+    };
+
+    const currentStats = await getStats(periodWhere);
+    const prevStats = await getStats(prevPeriodWhere);
+
+    const calcTrend = (curr: number, prev: number) => {
+      if (prev === 0) return curr > 0 ? 100 : 0;
+      return ((curr - prev) / prev) * 100;
+    };
+
+    // Chargebacks (Período Atual)
+    const chargebackAgg = await this.prisma.transaction.aggregate({
+      where: { ...periodWhere, status: 'CHARGEBACK' },
+      _sum: { amount: true },
+      _count: true
+    });
+
+    // Saques (Período Atual)
+    const processedWithdrawalsAgg = await this.prisma.withdrawal.aggregate({
+      where: { ...periodWhere, status: 'COMPLETED' },
+      _sum: { amount: true },
+      _count: true
+    });
+
+    // Breakdown por método de pagamento (TPV e contagem)
+    const methodGroups = await this.prisma.transaction.groupBy({
+      by: ['method'],
+      where: { ...periodWhere, status: { in: ['APPROVED', 'COMPLETED'] } },
+      _sum: { amount: true },
+      _count: true,
+    });
+
+    const classifyMethod = (m: string | null): 'pix' | 'card' | 'boleto' | 'other' => {
+      if (!m) return 'other';
+      const lm = m.toLowerCase();
+      if (lm.includes('pix')) return 'pix';
+      if (lm.includes('cart') || lm.includes('card') || lm.includes('crédito') || lm.includes('débito')) return 'card';
+      if (lm.includes('boleto')) return 'boleto';
+      return 'other';
+    };
+
+    const tpvByMethod = { pix: 0, card: 0, boleto: 0 };
+    const txCountByMethod = { pix: 0, card: 0, boleto: 0 };
+    for (const g of methodGroups) {
+      const key = classifyMethod(g.method);
+      if (key === 'other') continue;
+      tpvByMethod[key] += g._sum.amount || 0;
+      txCountByMethod[key] += g._count || 0;
+    }
+
+    // Conversão de cartão: aprovadas / total de cartão × 100
+    const cardTotalCount = await this.prisma.transaction.count({
+      where: { ...periodWhere, method: { contains: 'art', mode: 'insensitive' } },
+    });
+    const cardApprovedCount = await this.prisma.transaction.count({
+      where: { ...periodWhere, method: { contains: 'art', mode: 'insensitive' }, status: { in: ['APPROVED', 'COMPLETED'] } },
+    });
+    const cardConversionRate = cardTotalCount > 0 ? (cardApprovedCount * 100) / cardTotalCount : 0;
+
+    // TOP 5 TPV — sempre comparativo mês atual vs mês anterior (independente do filtro)
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    const topTpvCurrentRaw = await this.prisma.transaction.groupBy({
+      by: ['producerId'],
+      where: { createdAt: { gte: currentMonthStart, lte: now }, status: { in: ['APPROVED', 'COMPLETED'] } },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 5,
+    });
+
+    const topTpvPrevMap = new Map<string, number>();
+    if (topTpvCurrentRaw.length > 0) {
+      const ids = topTpvCurrentRaw.map(r => r.producerId);
+      const prevRaw = await this.prisma.transaction.groupBy({
+        by: ['producerId'],
+        where: { producerId: { in: ids }, createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: { in: ['APPROVED', 'COMPLETED'] } },
+        _sum: { amount: true },
+      });
+      for (const p of prevRaw) topTpvPrevMap.set(p.producerId, p._sum.amount || 0);
+    }
+
+    const topTpvMonthly = await Promise.all(
+      topTpvCurrentRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({ where: { id: item.producerId }, select: { name: true } });
+        const currentValue = item._sum.amount || 0;
+        const prevValue = topTpvPrevMap.get(item.producerId) || 0;
+        const trend = prevValue === 0 ? (currentValue > 0 ? 100 : 0) : ((currentValue - prevValue) / prevValue) * 100;
+        return { name: producer?.name || 'Vendedor', currentValue, prevValue, trend };
+      })
+    );
+
+    // TOP 5 Receita — últimos 30 dias (fee gerada por producer)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const topRevenueRaw = await this.prisma.transaction.groupBy({
+      by: ['producerId'],
+      where: { createdAt: { gte: thirtyDaysAgo }, status: { in: ['APPROVED', 'COMPLETED'] } },
+      _sum: { fee: true },
+      orderBy: { _sum: { fee: 'desc' } },
+      take: 5,
+    });
+
+    const topRevenue = await Promise.all(
+      topRevenueRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({ where: { id: item.producerId }, select: { name: true } });
+        return { name: producer?.name || 'Vendedor', value: item._sum.fee || 0 };
+      })
+    );
+
+    return {
+      revenue: currentStats.revenue,
+      revenueTrend: calcTrend(currentStats.revenue, prevStats.revenue),
+      tpv: currentStats.tpv,
+      tpvTrend: calcTrend(currentStats.tpv, prevStats.tpv),
+      transactionsCount: currentStats.count,
+      transactionsTrend: calcTrend(currentStats.count, prevStats.count),
+      chargebackCount: chargebackAgg._count || 0,
+      chargebackVolume: chargebackAgg._sum.amount || 0,
+      withdrawalsCompletedVolume: processedWithdrawalsAgg._sum.amount || 0,
+      withdrawalsCompletedCount: processedWithdrawalsAgg._count || 0,
+      tpvByMethod,
+      txCountByMethod,
+      cardConversionRate,
+      topTpvMonthly,
+      topRevenue,
+      totalCustomers: await this.prisma.customer.count(),
+    };
+  }
+
+  async getNotifications() {
+    const notifications: any[] = [];
+    const now = new Date();
+
+    // 1. New Chargebacks (last 24h)
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const newChargebacks = await this.prisma.transaction.findMany({
+      where: {
+        status: 'CHARGEBACK',
+        createdAt: { gte: last24h }
+      },
+      select: { id: true, amount: true }
+    });
+
+    newChargebacks.forEach(cb => {
+      notifications.push({
+        id: `cb-${cb.id}`,
+        type: 'CHARGEBACK',
+        title: 'Novo Chargeback Recebido',
+        message: `Venda #${cb.id.slice(0, 8)} de R$ ${cb.amount.toFixed(2)} sofreu chargeback.`,
+        date: now,
+        priority: 'HIGH'
+      });
+    });
+
+    // 2. Chargeback Defense Deadlines
+    // Assume 7 days from transaction createdAt for defense
+    const threeDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000); // 5 days passed = 2 left
+    const fourDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000); // 6 days passed = 1 left
+
+    const approachingDeadlines = await this.prisma.transaction.findMany({
+      where: {
+        status: 'CHARGEBACK',
+        createdAt: { lte: threeDaysAgo, gte: fourDaysAgo },
+        chargebackDefenses: {
+          none: { status: 'SENT' } // No defense sent yet
+        }
+      },
+      select: { id: true, createdAt: true }
+    });
+
+    approachingDeadlines.forEach(cb => {
+      const daysPassed = Math.floor((now.getTime() - cb.createdAt.getTime()) / (24 * 60 * 60 * 1000));
+      const daysLeft = 7 - daysPassed;
+      notifications.push({
+        id: `dead-${cb.id}`,
+        type: 'DEADLINE',
+        title: 'Prazo de Defesa Expirando',
+        message: `Faltam ${daysLeft} dia(s) para a defesa do chargeback #${cb.id.slice(0, 8)}.`,
+        date: now,
+        priority: 'CRITICAL'
+      });
+    });
+
+    // 3. New Withdrawals (PENDING)
+    const pendingWithdrawals = await this.prisma.withdrawal.findMany({
+      where: { status: 'PENDING' },
+      select: { id: true, amount: true }
+    });
+
+    pendingWithdrawals.forEach(wd => {
+      notifications.push({
+        id: `wd-${wd.id}`,
+        type: 'WITHDRAWAL',
+        title: 'Novo Pedido de Saque',
+        message: `Saque solicitado no valor de R$ ${wd.amount.toFixed(2)}.`,
+        date: now,
+        priority: 'MEDIUM'
+      });
+    });
+
+    return notifications.sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 }
