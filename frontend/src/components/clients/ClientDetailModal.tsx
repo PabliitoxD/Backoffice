@@ -38,7 +38,9 @@ const getStatusBadge = (status: string) => {
 // Extended mock data keyed by client id
 const MOCK_DETAIL: Record<number, any> = {
   1: {
-    fullName: 'João Silva', cpf: '123.456.789-00', birthDate: '1985-06-15', isPep: false,
+    fullName: 'João Silva', cpf: '123.456.789-00', birthDate: '1985-06-15',
+    isPep: true,
+    pepName: 'João Silva', pepCpf: '123.456.789-00', pepBirthDate: '1985-06-15',
     responsibleName: 'João Silva', responsibleEmail: 'joao.silva@email.com', responsiblePhone: '(11) 98765-4321',
     cnpj: '12.345.678/0001-90', companyName: 'Acme Corp Finance', tradingName: 'Acme Corp',
     cnae: '4711302', mcc: '5411', mccLabel: 'Supermercados e Mercearias',
@@ -52,7 +54,8 @@ const MOCK_DETAIL: Record<number, any> = {
 
 function getDetail(client: ClientBasic) {
   return MOCK_DETAIL[client.id] ?? {
-    fullName: client.name, cpf: '—', birthDate: '', isPep: false,
+    fullName: client.name, cpf: '—', birthDate: '',
+    isPep: false, pepName: '', pepCpf: '', pepBirthDate: '',
     responsibleName: client.name, responsibleEmail: client.email, responsiblePhone: '—',
     cnpj: client.document, companyName: client.company, tradingName: client.company,
     cnae: '—', mcc: '—', mccLabel: '',
@@ -62,7 +65,7 @@ function getDetail(client: ClientBasic) {
   };
 }
 
-// ── Sub-tabs ──────────────────────────────────────────────
+// ── DetalhesTab ───────────────────────────────────────────
 
 function DetalhesTab({ detail }: { detail: any }) {
   return (
@@ -87,10 +90,12 @@ function DetalhesTab({ detail }: { detail: any }) {
             <span className={styles.infoLabel}>CNAE</span>
             <p className={styles.infoValue}>{detail.cnae || '—'}</p>
           </div>
-          <div className={`${styles.infoGroup} ${styles.infoCardFull}`}>
+          <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>MCC — Código de Categoria</span>
             <p className={styles.infoValue}>
-              {detail.mcc ? <><strong>{detail.mcc}</strong>{detail.mccLabel ? ` — ${detail.mccLabel}` : ''}</> : '—'}
+              {detail.mcc
+                ? <><strong>{detail.mcc}</strong>{detail.mccLabel ? ` — ${detail.mccLabel}` : ''}</>
+                : '—'}
             </p>
           </div>
         </div>
@@ -114,14 +119,38 @@ function DetalhesTab({ detail }: { detail: any }) {
               <p className={styles.infoValue}>{new Date(detail.birthDate).toLocaleDateString('pt-BR')}</p>
             </div>
           )}
-          <div className={`${styles.infoGroup} ${styles.infoCardFull}`}>
-            <span className={styles.infoLabel}>PEP</span>
+          {/* PEP */}
+          <div className={styles.infoGroupFull}>
+            <span className={styles.infoLabel}>Pessoa Exposta Politicamente (PEP)</span>
             <p className={styles.infoValue}>
               {detail.isPep
-                ? <span className={styles.pepBadge}>Sim — Pessoa Exposta Politicamente</span>
+                ? <span className={styles.pepBadge}>Sim — PEP</span>
                 : <span className={styles.textMuted}>Não declarado</span>}
             </p>
           </div>
+          {detail.isPep && (detail.pepName || detail.pepCpf || detail.pepBirthDate) && (
+            <div className={styles.pepBlock}>
+              <p className={styles.pepBlockTitle}>Dados da Pessoa Exposta</p>
+              {detail.pepName && (
+                <div className={styles.infoGroup}>
+                  <span className={styles.infoLabel}>Nome Completo</span>
+                  <p className={styles.infoValue}>{detail.pepName}</p>
+                </div>
+              )}
+              {detail.pepCpf && (
+                <div className={styles.infoGroup}>
+                  <span className={styles.infoLabel}>CPF</span>
+                  <p className={styles.infoValue} style={{ fontFamily: 'monospace' }}>{detail.pepCpf}</p>
+                </div>
+              )}
+              {detail.pepBirthDate && (
+                <div className={styles.infoGroup}>
+                  <span className={styles.infoLabel}>Nascimento</span>
+                  <p className={styles.infoValue}>{new Date(detail.pepBirthDate).toLocaleDateString('pt-BR')}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,7 +166,7 @@ function DetalhesTab({ detail }: { detail: any }) {
             <span className={styles.infoLabel}>Telefone</span>
             <p className={styles.infoValue}>{detail.responsiblePhone}</p>
           </div>
-          <div className={`${styles.infoGroup} ${styles.infoCardFull}`}>
+          <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>E-mail</span>
             <p className={styles.infoValue}>{detail.responsibleEmail}</p>
           </div>
@@ -148,7 +177,7 @@ function DetalhesTab({ detail }: { detail: any }) {
       <div className={styles.infoCard}>
         <div className={styles.infoCardHeader}>🏦 Dados Bancários</div>
         <div className={styles.infoCardBody}>
-          <div className={`${styles.infoGroup} ${styles.infoCardFull}`}>
+          <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>Chave PIX</span>
             <p className={styles.infoValue}>{detail.pixKey || '—'}</p>
           </div>
@@ -159,7 +188,9 @@ function DetalhesTab({ detail }: { detail: any }) {
           <div className={styles.infoGroup}>
             <span className={styles.infoLabel}>Tipo de Conta</span>
             <p className={styles.infoValue}>
-              {detail.bankAccountType === 'CC' ? 'Conta Corrente' : detail.bankAccountType === 'CP' ? 'Conta Poupança' : '—'}
+              {detail.bankAccountType === 'CC' ? 'Conta Corrente'
+                : detail.bankAccountType === 'CP' ? 'Conta Poupança'
+                : '—'}
             </p>
           </div>
           <div className={styles.infoGroup}>
@@ -173,11 +204,11 @@ function DetalhesTab({ detail }: { detail: any }) {
         </div>
       </div>
 
-      {/* Endereço */}
+      {/* Endereço — ocupa as 2 colunas */}
       <div className={`${styles.infoCard} ${styles.infoCardFull}`}>
         <div className={styles.infoCardHeader}>📍 Localização</div>
         <div className={styles.infoCardBody}>
-          <div className={`${styles.infoGroup} ${styles.infoCardFull}`}>
+          <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>Endereço</span>
             <p className={styles.infoValue}>
               {detail.street}, {detail.number}{detail.complement ? ` — ${detail.complement}` : ''}
@@ -201,34 +232,40 @@ function DetalhesTab({ detail }: { detail: any }) {
   );
 }
 
+// ── EditarTab ─────────────────────────────────────────────
+
 function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
   const [form, setForm] = useState({
-    companyName: detail.companyName ?? '',
-    tradingName: detail.tradingName ?? '',
-    cnpj: detail.cnpj ?? '',
-    cnae: detail.cnae ?? '',
-    mcc: detail.mcc ?? '',
-    fullName: detail.fullName ?? '',
-    cpf: detail.cpf ?? '',
-    responsiblePhone: detail.responsiblePhone ?? '',
-    responsibleEmail: detail.responsibleEmail ?? '',
-    pixKey: detail.pixKey ?? '',
-    bankName: detail.bankName ?? '',
-    bankAgency: detail.bankAgency ?? '',
-    bankAccount: detail.bankAccount ?? '',
-    bankAccountType: detail.bankAccountType ?? '',
-    isPep: detail.isPep ?? false,
-    street: detail.street ?? '',
-    number: detail.number ?? '',
-    complement: detail.complement ?? '',
-    neighborhood: detail.neighborhood ?? '',
-    city: detail.city ?? '',
-    state: detail.state ?? '',
-    zipCode: detail.zipCode ?? '',
+    companyName:       detail.companyName       ?? '',
+    tradingName:       detail.tradingName       ?? '',
+    cnpj:              detail.cnpj              ?? '',
+    cnae:              detail.cnae              ?? '',
+    mcc:               detail.mcc               ?? '',
+    fullName:          detail.fullName          ?? '',
+    cpf:               detail.cpf               ?? '',
+    responsiblePhone:  detail.responsiblePhone  ?? '',
+    responsibleEmail:  detail.responsibleEmail  ?? '',
+    pixKey:            detail.pixKey            ?? '',
+    bankName:          detail.bankName          ?? '',
+    bankAgency:        detail.bankAgency        ?? '',
+    bankAccount:       detail.bankAccount       ?? '',
+    bankAccountType:   detail.bankAccountType   ?? '',
+    isPep:             detail.isPep             ?? false,
+    pepName:           detail.pepName           ?? '',
+    pepCpf:            detail.pepCpf            ?? '',
+    pepBirthDate:      detail.pepBirthDate      ?? '',
+    street:            detail.street            ?? '',
+    number:            detail.number            ?? '',
+    complement:        detail.complement        ?? '',
+    neighborhood:      detail.neighborhood      ?? '',
+    city:              detail.city              ?? '',
+    state:             detail.state             ?? '',
+    zipCode:           detail.zipCode           ?? '',
   });
 
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(f => ({ ...f, [k]: e.target.value }));
+  const set = (k: string) =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm(f => ({ ...f, [k]: e.target.value }));
 
   return (
     <form className={styles.editForm} onSubmit={e => e.preventDefault()}>
@@ -279,16 +316,36 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
             <label>E-mail</label>
             <input value={form.responsibleEmail} onChange={set('responsibleEmail')} />
           </div>
-          <div className={`${styles.formGroup} ${styles.editGridFull}`} style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+
+          {/* PEP checkbox */}
+          <div className={styles.pepCheckRow}>
             <input
               type="checkbox"
               id="isPep"
               checked={form.isPep}
               onChange={e => setForm(f => ({ ...f, isPep: e.target.checked }))}
-              style={{ width: 16, height: 16 }}
             />
-            <label htmlFor="isPep" style={{ marginBottom: 0 }}>Pessoa Exposta Politicamente (PEP)</label>
+            <label htmlFor="isPep">Pessoa Exposta Politicamente (PEP)</label>
           </div>
+
+          {/* PEP sub-fields — visíveis apenas quando PEP está marcado */}
+          {form.isPep && (
+            <div className={styles.pepSubFields}>
+              <p className={styles.pepSubLabel}>Dados da Pessoa Exposta</p>
+              <div className={styles.formGroup}>
+                <label>Nome Completo</label>
+                <input value={form.pepName} onChange={set('pepName')} placeholder="Nome da pessoa exposta" />
+              </div>
+              <div className={styles.formGroup}>
+                <label>CPF</label>
+                <input value={form.pepCpf} onChange={set('pepCpf')} placeholder="000.000.000-00" style={{ fontFamily: 'monospace' }} />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Nascimento</label>
+                <input type="date" value={form.pepBirthDate} onChange={set('pepBirthDate')} />
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -296,9 +353,11 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
       <div className={styles.editSection}>
         <p className={styles.editSectionTitle}>Dados Bancários</p>
         <div className={styles.editGrid}>
-          <div className={`${styles.formGroup} ${styles.editGridFull}`}>
-            <label>Chave PIX</label>
-            <input value={form.pixKey} onChange={set('pixKey')} />
+          <div className={styles.editGridFull}>
+            <div className={styles.formGroup}>
+              <label>Chave PIX</label>
+              <input value={form.pixKey} onChange={set('pixKey')} />
+            </div>
           </div>
           <div className={styles.formGroup}>
             <label>Banco</label>
@@ -323,7 +382,7 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
         </div>
       </div>
 
-      {/* Endereço */}
+      {/* Localização */}
       <div className={styles.editSection}>
         <p className={styles.editSectionTitle}>Localização</p>
         <div className={styles.editGrid}>
@@ -366,6 +425,8 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
   );
 }
 
+// ── ExtratoTab ────────────────────────────────────────────
+
 function ExtratoTab({ clientId }: { clientId: number }) {
   const [statement, setStatement] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -401,7 +462,6 @@ function ExtratoTab({ clientId }: { clientId: number }) {
 
   return (
     <div>
-      {/* Consolidated */}
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
           <p className={styles.statTitle}>Total Aprovado</p>
@@ -417,7 +477,6 @@ function ExtratoTab({ clientId }: { clientId: number }) {
         </div>
       </div>
 
-      {/* Table */}
       <div className={styles.tableWrapper}>
         {loading ? (
           <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
@@ -484,7 +543,6 @@ function ExtratoTab({ clientId }: { clientId: number }) {
         )}
       </div>
 
-      {/* Pagination */}
       {!loading && (
         <div className={styles.pagination}>
           <span className={styles.paginationText}>
@@ -493,11 +551,7 @@ function ExtratoTab({ clientId }: { clientId: number }) {
               : `${(page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, statement.length)} de ${statement.length} movimentações`}
           </span>
           <div className={styles.paginationControls}>
-            <button
-              className={styles.btnPage}
-              disabled={page === 1}
-              onClick={() => setPage(p => p - 1)}
-            >
+            <button className={styles.btnPage} disabled={page === 1} onClick={() => setPage(p => p - 1)}>
               Anterior
             </button>
             {Array.from({ length: totalPages }, (_, i) => (
@@ -509,11 +563,7 @@ function ExtratoTab({ clientId }: { clientId: number }) {
                 {i + 1}
               </button>
             ))}
-            <button
-              className={styles.btnPage}
-              disabled={page === totalPages}
-              onClick={() => setPage(p => p + 1)}
-            >
+            <button className={styles.btnPage} disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
               Próxima
             </button>
           </div>
@@ -523,14 +573,16 @@ function ExtratoTab({ clientId }: { clientId: number }) {
   );
 }
 
+// ── PlanoTab ──────────────────────────────────────────────
+
 function PlanoTab({ plan }: { plan: any }) {
   const items = [
-    { label: 'Plano Atual', value: plan.name, sub: 'Contrato vigente' },
-    { label: 'Taxa PIX', value: plan.pixRate, sub: 'Por transação aprovada' },
-    { label: 'Taxa Cartão', value: plan.cardRate, sub: 'Crédito e débito' },
-    { label: 'Tarifa Boleto', value: plan.boletoFee, sub: 'Por boleto gerado' },
-    { label: 'Taxa de Saque', value: plan.withdrawFee, sub: 'Por saque processado' },
-    { label: 'Limite Mensal', value: plan.monthlyLimit, sub: 'Volume máximo de TPV' },
+    { label: 'Plano Atual',    value: plan.name,         sub: 'Contrato vigente' },
+    { label: 'Taxa PIX',       value: plan.pixRate,       sub: 'Por transação aprovada' },
+    { label: 'Taxa Cartão',    value: plan.cardRate,      sub: 'Crédito e débito' },
+    { label: 'Tarifa Boleto',  value: plan.boletoFee,     sub: 'Por boleto gerado' },
+    { label: 'Taxa de Saque',  value: plan.withdrawFee,   sub: 'Por saque processado' },
+    { label: 'Limite Mensal',  value: plan.monthlyLimit,  sub: 'Volume máximo de TPV' },
   ];
 
   return (
@@ -580,14 +632,13 @@ export function ClientDetailModal({
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={e => e.stopPropagation()}>
-        {/* Header */}
         <div className={styles.header}>
           <div>
             <div className={styles.titleRow}>
               <h2 className={styles.title}>{detail.companyName}</h2>
               <span className={`${styles.badge} ${
-                client.status === 'Ativo' ? styles.badgeActive :
-                client.status === 'Pendente' ? styles.badgePending :
+                client.status === 'Ativo'    ? styles.badgeActive   :
+                client.status === 'Pendente' ? styles.badgePending  :
                 styles.badgeInactive
               }`}>
                 {client.status}
@@ -601,7 +652,6 @@ export function ClientDetailModal({
           <button className={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
-        {/* Tabs */}
         <div className={styles.tabBar}>
           {TABS.map(t => (
             <button
@@ -614,7 +664,6 @@ export function ClientDetailModal({
           ))}
         </div>
 
-        {/* Body */}
         <div className={styles.body}>
           {tab === 'detalhes' && <DetalhesTab detail={detail} />}
           {tab === 'editar'   && <EditarTab detail={detail} onClose={onClose} />}

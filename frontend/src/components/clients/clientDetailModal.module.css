@@ -1,4 +1,4 @@
-/* Overlay */
+/* ── Overlay ── */
 .overlay {
   position: fixed;
   inset: 0;
@@ -11,7 +11,7 @@
   padding: 1rem;
 }
 
-/* Modal shell */
+/* ── Modal shell ── */
 .modal {
   background: var(--surface);
   border: 1px solid var(--border-color);
@@ -30,7 +30,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Header */
+/* ── Header ── */
 .header {
   display: flex;
   align-items: flex-start;
@@ -72,9 +72,9 @@
   letter-spacing: 0.05em;
 }
 
-.badgeActive   { background: rgba(16,185,129,.12); color: #10b981; }
-.badgePending  { background: rgba(245,158,11,.12); color: #f59e0b; }
-.badgeInactive { background: rgba(100,116,139,.12); color: #64748b; }
+.badgeActive   { background: rgba(16, 185, 129, .12); color: #10b981; }
+.badgePending  { background: rgba(245, 158, 11, .12);  color: #f59e0b; }
+.badgeInactive { background: rgba(100, 116, 139, .12); color: #64748b; }
 
 .pepBadge {
   display: inline-flex;
@@ -83,7 +83,7 @@
   border-radius: 9999px;
   font-size: 0.72rem;
   font-weight: 700;
-  background: rgba(239,68,68,.12);
+  background: rgba(239, 68, 68, .12);
   color: #ef4444;
   letter-spacing: 0.04em;
 }
@@ -102,12 +102,11 @@
 }
 .closeBtn:hover { color: #ef4444; }
 
-/* Tab bar */
+/* ── Tab bar ── */
 .tabBar {
   display: flex;
   padding: 0 1.75rem;
   border-bottom: 1px solid var(--border-color);
-  gap: 0;
   flex-shrink: 0;
   overflow-x: auto;
 }
@@ -131,7 +130,7 @@
   font-weight: 600;
 }
 
-/* Body — scrollable */
+/* ── Body (scrollable) ── */
 .body {
   overflow-y: auto;
   flex: 1;
@@ -142,7 +141,8 @@
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
+  gap: 1rem;
+  align-items: start; /* cards não esticam para preencher linha */
 }
 
 .infoCard {
@@ -152,54 +152,82 @@
   overflow: hidden;
 }
 
+/* card que ocupa as 2 colunas */
+.infoCardFull { grid-column: 1 / -1; }
+
 .infoCardHeader {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.9rem 1.25rem;
+  padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(248,250,252,.5);
-  font-size: 0.875rem;
-  font-weight: 600;
+  background: rgba(248, 250, 252, .5);
+  font-size: 0.82rem;
+  font-weight: 700;
   color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 @media (prefers-color-scheme: dark) {
-  .infoCardHeader { background: rgba(30,41,59,.4); }
+  .infoCardHeader { background: rgba(30, 41, 59, .4); }
 }
 
 .infoCardBody {
-  padding: 1rem 1.25rem;
+  padding: 1rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 0.875rem;
+  align-items: start;
 }
+
+/* span across both columns inside a card body */
+.infoGroupFull { grid-column: 1 / -1; }
 
 .infoGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 
-.infoGroupFull { grid-column: 1 / -1; }
-
 .infoLabel {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .infoValue {
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   color: var(--text-main);
   font-weight: 500;
   word-break: break-word;
   margin: 0;
 }
 
-.infoCardFull { grid-column: 1 / -1; }
+/* ── PEP block inside Detalhes ── */
+.pepBlock {
+  grid-column: 1 / -1;
+  background: rgba(239, 68, 68, .05);
+  border: 1px solid rgba(239, 68, 68, .2);
+  border-radius: var(--radius-md);
+  padding: 0.875rem 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.875rem;
+  align-items: start;
+}
+
+.pepBlockTitle {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #ef4444;
+  margin: 0 0 0.25rem;
+}
 
 /* ── Edit form tab ── */
 .editForm {
@@ -215,7 +243,7 @@
 }
 
 .editSectionTitle {
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -229,6 +257,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem 1rem;
+  align-items: start;
 }
 
 .editGridFull { grid-column: 1 / -1; }
@@ -260,9 +289,61 @@
 .formGroup input:focus,
 .formGroup select:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(24,88,131,.1);
+  box-shadow: 0 0 0 3px rgba(24, 88, 131, .1);
 }
 
+/* PEP checkbox row */
+.pepCheckRow {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.pepCheckRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.pepCheckRow label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* PEP sub-fields box inside edit form */
+.pepSubFields {
+  grid-column: 1 / -1;
+  background: rgba(239, 68, 68, .05);
+  border: 1px solid rgba(239, 68, 68, .2);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.pepSubLabel {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #ef4444;
+  margin: 0;
+}
+
+/* Edit actions */
 .editActions {
   display: flex;
   justify-content: flex-end;
@@ -293,7 +374,7 @@
   cursor: pointer;
   transition: all .2s;
 }
-.btnCancel:hover { background: rgba(100,116,139,.08); }
+.btnCancel:hover { background: rgba(100, 116, 139, .08); }
 
 /* ── Extrato tab ── */
 .statsRow {
@@ -311,8 +392,8 @@
 }
 
 .statTitle {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: .05em;
@@ -320,7 +401,7 @@
 }
 
 .statValue {
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-main);
   margin: 0;
@@ -339,28 +420,28 @@
 
 .table th,
 .table td {
-  padding: 0.75rem 0.875rem;
+  padding: 0.7rem 0.875rem;
   border-bottom: 1px solid var(--border-color);
   text-align: left;
+  vertical-align: middle;
 }
 
 .table th {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .05em;
   color: var(--text-muted);
-  background: rgba(248,250,252,.5);
+  background: rgba(248, 250, 252, .5);
 }
 
 @media (prefers-color-scheme: dark) {
-  .table th { background: rgba(30,41,59,.4); }
+  .table th { background: rgba(30, 41, 59, .4); }
 }
 
-.table tbody tr:hover { background: rgba(248,250,252,.4); }
-
+.table tbody tr:hover { background: rgba(248, 250, 252, .4); }
 @media (prefers-color-scheme: dark) {
-  .table tbody tr:hover { background: rgba(255,255,255,.03); }
+  .table tbody tr:hover { background: rgba(255, 255, 255, .03); }
 }
 
 .textMuted { color: var(--text-muted); }
@@ -371,13 +452,13 @@
   display: inline-flex;
   padding: 0.2rem 0.55rem;
   border-radius: 9999px;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 600;
 }
-.statusApproved { background: rgba(16,185,129,.12); color: #10b981; }
-.statusWaiting  { background: rgba(245,158,11,.12);  color: #f59e0b; }
-.statusRefused  { background: rgba(239,68,68,.12);   color: #ef4444; }
-.statusReversed { background: rgba(100,116,139,.12); color: #64748b; }
+.statusApproved { background: rgba(16, 185, 129, .12); color: #10b981; }
+.statusWaiting  { background: rgba(245, 158, 11, .12);  color: #f59e0b; }
+.statusRefused  { background: rgba(239, 68, 68, .12);   color: #ef4444; }
+.statusReversed { background: rgba(100, 116, 139, .12); color: #64748b; }
 
 .pagination {
   display: flex;
@@ -413,43 +494,52 @@
 /* ── Plano tab ── */
 .planoGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
+  align-items: start;
 }
 
 .planoCard {
   background: var(--background);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1.25rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
 }
 
 .planoCardLabel {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: .05em;
+  letter-spacing: .06em;
   color: var(--text-muted);
-  font-weight: 600;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
 }
 
 .planoCardValue {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary-color);
+  line-height: 1.2;
 }
 
-.planoCardSub { font-size: 0.8rem; color: var(--text-muted); }
+.planoCardSub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
 
 .planoFull { grid-column: 1 / -1; }
 
-/* Responsive */
+/* ── Responsive ── */
 @media (max-width: 640px) {
   .infoGrid,
+  .planoGrid { grid-template-columns: 1fr; }
+
+  .infoCardBody,
   .editGrid,
   .statsRow,
-  .planoGrid,
-  .infoCardBody { grid-template-columns: 1fr; }
+  .pepSubFields,
+  .pepBlock { grid-template-columns: 1fr; }
 }
