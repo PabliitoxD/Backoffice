@@ -234,41 +234,90 @@ export class FinancialService {
       _count: true
     });
 
-    // TOP 5 TPV
-    const topTpvRaw = await this.prisma.transaction.groupBy({
-      by: ['producerId'],
+    // Breakdown por método de pagamento (TPV e contagem)
+    const methodGroups = await this.prisma.transaction.groupBy({
+      by: ['method'],
       where: { ...periodWhere, status: { in: ['APPROVED', 'COMPLETED'] } },
       _sum: { amount: true },
-      orderBy: { _sum: { amount: 'desc' } },
-      take: 5
+      _count: true,
     });
 
-    const topTpv = await Promise.all(
-      topTpvRaw.map(async (item) => {
-        const producer = await this.prisma.producer.findUnique({
-          where: { id: item.producerId },
-          select: { name: true }
-        });
-        return { name: producer?.name || 'Vendedor', value: item._sum.amount || 0 }
+    const classifyMethod = (m: string | null): 'pix' | 'card' | 'boleto' | 'other' => {
+      if (!m) return 'other';
+      const lm = m.toLowerCase();
+      if (lm.includes('pix')) return 'pix';
+      if (lm.includes('cart') || lm.includes('card') || lm.includes('crédito') || lm.includes('débito')) return 'card';
+      if (lm.includes('boleto')) return 'boleto';
+      return 'other';
+    };
+
+    const tpvByMethod = { pix: 0, card: 0, boleto: 0 };
+    const txCountByMethod = { pix: 0, card: 0, boleto: 0 };
+    for (const g of methodGroups) {
+      const key = classifyMethod(g.method);
+      if (key === 'other') continue;
+      tpvByMethod[key] += g._sum.amount || 0;
+      txCountByMethod[key] += g._count || 0;
+    }
+
+    // Conversão de cartão: aprovadas / total de cartão × 100
+    const cardTotalCount = await this.prisma.transaction.count({
+      where: { ...periodWhere, method: { contains: 'art', mode: 'insensitive' } },
+    });
+    const cardApprovedCount = await this.prisma.transaction.count({
+      where: { ...periodWhere, method: { contains: 'art', mode: 'insensitive' }, status: { in: ['APPROVED', 'COMPLETED'] } },
+    });
+    const cardConversionRate = cardTotalCount > 0 ? (cardApprovedCount * 100) / cardTotalCount : 0;
+
+    // TOP 5 TPV — sempre comparativo mês atual vs mês anterior (independente do filtro)
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+
+    const topTpvCurrentRaw = await this.prisma.transaction.groupBy({
+      by: ['producerId'],
+      where: { createdAt: { gte: currentMonthStart, lte: now }, status: { in: ['APPROVED', 'COMPLETED'] } },
+      _sum: { amount: true },
+      orderBy: { _sum: { amount: 'desc' } },
+      take: 5,
+    });
+
+    const topTpvPrevMap = new Map<string, number>();
+    if (topTpvCurrentRaw.length > 0) {
+      const ids = topTpvCurrentRaw.map(r => r.producerId);
+      const prevRaw = await this.prisma.transaction.groupBy({
+        by: ['producerId'],
+        where: { producerId: { in: ids }, createdAt: { gte: prevMonthStart, lte: prevMonthEnd }, status: { in: ['APPROVED', 'COMPLETED'] } },
+        _sum: { amount: true },
+      });
+      for (const p of prevRaw) topTpvPrevMap.set(p.producerId, p._sum.amount || 0);
+    }
+
+    const topTpvMonthly = await Promise.all(
+      topTpvCurrentRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({ where: { id: item.producerId }, select: { name: true } });
+        const currentValue = item._sum.amount || 0;
+        const prevValue = topTpvPrevMap.get(item.producerId) || 0;
+        const trend = prevValue === 0 ? (currentValue > 0 ? 100 : 0) : ((currentValue - prevValue) / prevValue) * 100;
+        return { name: producer?.name || 'Vendedor', currentValue, prevValue, trend };
       })
     );
 
-    // TOP 5 Saques
-    const topWithdrawalsRaw = await this.prisma.withdrawal.groupBy({
+    // TOP 5 Receita — últimos 30 dias (fee gerada por producer)
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const topRevenueRaw = await this.prisma.transaction.groupBy({
       by: ['producerId'],
-      where: { ...periodWhere, status: 'COMPLETED' },
-      _sum: { amount: true },
-      orderBy: { _sum: { amount: 'desc' } },
-      take: 5
+      where: { createdAt: { gte: thirtyDaysAgo }, status: { in: ['APPROVED', 'COMPLETED'] } },
+      _sum: { fee: true },
+      orderBy: { _sum: { fee: 'desc' } },
+      take: 5,
     });
 
-    const topWithdrawals = await Promise.all(
-      topWithdrawalsRaw.map(async (item) => {
-        const producer = await this.prisma.producer.findUnique({
-          where: { id: item.producerId },
-          select: { name: true }
-        });
-        return { name: producer?.name || 'Vendedor', value: item._sum.amount || 0 }
+    const topRevenue = await Promise.all(
+      topRevenueRaw.map(async (item) => {
+        const producer = await this.prisma.producer.findUnique({ where: { id: item.producerId }, select: { name: true } });
+        return { name: producer?.name || 'Vendedor', value: item._sum.fee || 0 };
       })
     );
 
@@ -283,8 +332,11 @@ export class FinancialService {
       chargebackVolume: chargebackAgg._sum.amount || 0,
       withdrawalsCompletedVolume: processedWithdrawalsAgg._sum.amount || 0,
       withdrawalsCompletedCount: processedWithdrawalsAgg._count || 0,
-      topTpv,
-      topWithdrawals,
+      tpvByMethod,
+      txCountByMethod,
+      cardConversionRate,
+      topTpvMonthly,
+      topRevenue,
       totalCustomers: await this.prisma.customer.count(),
     };
   }
