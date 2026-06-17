@@ -43,10 +43,13 @@ function StatusBadge({ status }: { status: CheckStatus }) {
   );
 }
 
+const UPTIME_BAR_LIMIT = 90;
+
 function UptimeBar({ history }: { history: CheckResult[] }) {
+  const visible = history.slice(-UPTIME_BAR_LIMIT);
   return (
     <div className={styles.uptimeBar}>
-      {history.map((r, i) => (
+      {visible.map((r, i) => (
         <span
           key={i}
           className={`${styles.uptimeBlock} ${styles[`block${r.status}`]}`}
