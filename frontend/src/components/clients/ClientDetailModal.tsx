@@ -72,7 +72,7 @@ function DetalhesTab({ detail }: { detail: any }) {
     <div className={styles.infoGrid}>
       {/* Empresa */}
       <div className={styles.infoCard}>
-        <div className={styles.infoCardHeader}>🏢 Dados Empresariais</div>
+        <div className={styles.infoCardHeader}>Dados Empresariais</div>
         <div className={styles.infoCardBody}>
           <div className={styles.infoGroup}>
             <span className={styles.infoLabel}>Razão Social</span>
@@ -103,7 +103,7 @@ function DetalhesTab({ detail }: { detail: any }) {
 
       {/* Titular */}
       <div className={styles.infoCard}>
-        <div className={styles.infoCardHeader}>👤 Dados do Titular</div>
+        <div className={styles.infoCardHeader}>Dados do Titular</div>
         <div className={styles.infoCardBody}>
           <div className={styles.infoGroup}>
             <span className={styles.infoLabel}>Nome Completo</span>
@@ -156,7 +156,7 @@ function DetalhesTab({ detail }: { detail: any }) {
 
       {/* Contato */}
       <div className={styles.infoCard}>
-        <div className={styles.infoCardHeader}>📞 Contato Responsável</div>
+        <div className={styles.infoCardHeader}>Contato Responsável</div>
         <div className={styles.infoCardBody}>
           <div className={styles.infoGroup}>
             <span className={styles.infoLabel}>Nome</span>
@@ -175,7 +175,7 @@ function DetalhesTab({ detail }: { detail: any }) {
 
       {/* Bancário */}
       <div className={styles.infoCard}>
-        <div className={styles.infoCardHeader}>🏦 Dados Bancários</div>
+        <div className={styles.infoCardHeader}>Dados Bancários</div>
         <div className={styles.infoCardBody}>
           <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>Chave PIX</span>
@@ -206,7 +206,7 @@ function DetalhesTab({ detail }: { detail: any }) {
 
       {/* Endereço — ocupa as 2 colunas */}
       <div className={`${styles.infoCard} ${styles.infoCardFull}`}>
-        <div className={styles.infoCardHeader}>📍 Localização</div>
+        <div className={styles.infoCardHeader}>Localização</div>
         <div className={styles.infoCardBody}>
           <div className={styles.infoGroupFull}>
             <span className={styles.infoLabel}>Endereço</span>
@@ -576,24 +576,44 @@ function ExtratoTab({ clientId }: { clientId: number }) {
 // ── PlanoTab ──────────────────────────────────────────────
 
 function PlanoTab({ plan }: { plan: any }) {
-  const items = [
-    { label: 'Plano Atual',    value: plan.name,         sub: 'Contrato vigente' },
-    { label: 'Taxa PIX',       value: plan.pixRate,       sub: 'Por transação aprovada' },
-    { label: 'Taxa Cartão',    value: plan.cardRate,      sub: 'Crédito e débito' },
-    { label: 'Tarifa Boleto',  value: plan.boletoFee,     sub: 'Por boleto gerado' },
-    { label: 'Taxa de Saque',  value: plan.withdrawFee,   sub: 'Por saque processado' },
-    { label: 'Limite Mensal',  value: plan.monthlyLimit,  sub: 'Volume máximo de TPV' },
-  ];
-
   return (
-    <div className={styles.planoGrid}>
-      {items.map(item => (
-        <div key={item.label} className={styles.planoCard}>
-          <span className={styles.planoCardLabel}>{item.label}</span>
-          <span className={styles.planoCardValue}>{item.value}</span>
-          <span className={styles.planoCardSub}>{item.sub}</span>
+    <div className={styles.infoGrid}>
+      {/* Identificação do Plano */}
+      <div className={`${styles.infoCard} ${styles.infoCardFull}`}>
+        <div className={styles.infoCardHeader}>Plano Operacional</div>
+        <div className={styles.infoCardBody} style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Plano Atual</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.name}</p>
+            <span className={styles.infoSub}>Contrato vigente</span>
+          </div>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Taxa PIX</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.pixRate}</p>
+            <span className={styles.infoSub}>Por transação aprovada</span>
+          </div>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Taxa Cartão</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.cardRate}</p>
+            <span className={styles.infoSub}>Crédito e débito</span>
+          </div>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Tarifa Boleto</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.boletoFee}</p>
+            <span className={styles.infoSub}>Por boleto gerado</span>
+          </div>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Taxa de Saque</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.withdrawFee}</p>
+            <span className={styles.infoSub}>Por saque processado</span>
+          </div>
+          <div className={styles.infoGroup}>
+            <span className={styles.infoLabel}>Limite Mensal</span>
+            <p className={`${styles.infoValue} ${styles.planoHighlight}`}>{plan.monthlyLimit}</p>
+            <span className={styles.infoSub}>Volume máximo de TPV</span>
+          </div>
         </div>
-      ))}
+      </div>
     </div>
   );
 }

@@ -221,9 +221,15 @@
 .metricsRow {
   display: flex;
   gap: 1.5rem;
-  padding: 0.75rem 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem;
+  background: rgba(248, 250, 252, 0.4);
+  border-radius: var(--radius-md);
+}
+
+@media (prefers-color-scheme: dark) {
+  .metricsRow {
+    background: rgba(255, 255, 255, 0.03);
+  }
 }
 
 .metric {
@@ -258,14 +264,16 @@
 .uptimeBar {
   display: flex;
   gap: 2px;
-  min-height: 20px;
+  height: 24px;
+  overflow: hidden;
+  width: 100%;
 }
 
 .uptimeBlock {
   flex: 1;
-  min-width: 8px;
-  height: 20px;
-  border-radius: 3px;
+  min-width: 0;
+  height: 24px;
+  border-radius: 2px;
 }
 
 .blockUP { background: #61CE70; opacity: 0.7; }
@@ -628,9 +636,16 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
-  padding: 0.875rem 0;
-  border-top: 1px solid var(--border-color);
-  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 0;
+  background: rgba(248, 250, 252, 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .miniStats {
+    background: rgba(255, 255, 255, 0.03);
+  }
 }
 
 .miniLabel {

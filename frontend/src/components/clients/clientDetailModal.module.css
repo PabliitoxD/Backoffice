@@ -206,6 +206,19 @@
   margin: 0;
 }
 
+.infoSub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* Plano value — larger, colored */
+.planoHighlight {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
 /* ── PEP block inside Detalhes ── */
 .pepBlock {
   grid-column: 1 / -1;
@@ -491,46 +504,6 @@
   border-color: var(--primary-color);
 }
 
-/* ── Plano tab ── */
-.planoGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.planoCard {
-  background: var(--background);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 1.25rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.planoCardLabel {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--text-muted);
-  font-weight: 700;
-  margin-bottom: 0.2rem;
-}
-
-.planoCardValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-color);
-  line-height: 1.2;
-}
-
-.planoCardSub {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.planoFull { grid-column: 1 / -1; }
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
