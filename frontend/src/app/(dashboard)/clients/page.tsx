@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './clients.module.css';
-import { ClientModal } from '@/components/clients/ClientModal';
 
 const MOCK_CLIENTS = [
   { id: 1, name: 'João Silva',     email: 'joao.silva@email.com', company: 'Acme Corp',     document: '12.345.678/0001-90', status: 'Ativo',    date: '12 Mar 2026' },
@@ -190,11 +189,6 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      <ClientModal
-        client={selectedClient}
-        isOpen={selectedClient !== null}
-        onClose={() => setSelectedClient(null)}
-      />
     </div>
   );
 }
