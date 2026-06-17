@@ -3,29 +3,21 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './clients.module.css';
+import { ClientDetailModal } from '@/components/clients/ClientDetailModal';
 
 const MOCK_CLIENTS = [
-  { id: 1, name: 'João Silva',     email: 'joao.silva@email.com', company: 'Acme Corp',     document: '12.345.678/0001-90', status: 'Ativo',    date: '12 Mar 2026' },
-  { id: 2, name: 'Maria Oliveira', email: 'maria.ol@email.com',   company: 'Tech Solutions', document: '98.765.432/0001-10', status: 'Pendente', date: '12 Mar 2026' },
-  { id: 3, name: 'Carlos Souza',   email: 'csouza@email.com',     company: 'Global Finance', document: '11.222.333/0001-44', status: 'Ativo',    date: '11 Mar 2026' },
-  { id: 4, name: 'Ana Pereira',    email: 'anap@email.com',       company: 'Retail Hub',     document: '55.666.777/0001-88', status: 'Inativo',  date: '10 Mar 2026' },
-  { id: 5, name: 'Roberto Firmino',email: 'betofirm@email.com',   company: 'Logistics Pro',  document: '33.444.555/0001-22', status: 'Ativo',    date: '09 Mar 2026' },
+  { id: 1, name: 'João Silva',      email: 'joao.silva@email.com', company: 'Acme Corp',      document: '12.345.678/0001-90', status: 'Ativo',    date: '12 Mar 2026' },
+  { id: 2, name: 'Maria Oliveira',  email: 'maria.ol@email.com',   company: 'Tech Solutions',  document: '98.765.432/0001-10', status: 'Pendente', date: '12 Mar 2026' },
+  { id: 3, name: 'Carlos Souza',    email: 'csouza@email.com',     company: 'Global Finance',  document: '11.222.333/0001-44', status: 'Ativo',    date: '11 Mar 2026' },
+  { id: 4, name: 'Ana Pereira',     email: 'anap@email.com',       company: 'Retail Hub',      document: '55.666.777/0001-88', status: 'Inativo',  date: '10 Mar 2026' },
+  { id: 5, name: 'Roberto Firmino', email: 'betofirm@email.com',   company: 'Logistics Pro',   document: '33.444.555/0001-22', status: 'Ativo',    date: '09 Mar 2026' },
 ];
-
-function formatCNPJ(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 14);
-  return digits
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/\.(\d{3})(\d)/, '.$1/$2')
-    .replace(/(\d{4})(\d)/, '$1-$2');
-}
 
 export default function ClientsPage() {
   const [search, setSearch] = useState('');
-  const [cnpjSearch, setCnpjSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [selectedClient, setSelectedClient] = useState<typeof MOCK_CLIENTS[0] | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,21 +30,22 @@ export default function ClientsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCnpjSearch(formatCNPJ(e.target.value));
-  };
-
   const filtered = MOCK_CLIENTS.filter(c => {
-    const term = search.toLowerCase();
-    const cnpjDigits = cnpjSearch.replace(/\D/g, '');
+    const term = search.toLowerCase().trim();
     const matchesSearch = !term ||
       c.name.toLowerCase().includes(term) ||
       c.email.toLowerCase().includes(term) ||
-      c.company.toLowerCase().includes(term);
-    const matchesCnpj = !cnpjDigits || c.document.replace(/\D/g, '').includes(cnpjDigits);
+      c.company.toLowerCase().includes(term) ||
+      c.document.replace(/\D/g, '').includes(term.replace(/\D/g, '')) ||
+      c.document.toLowerCase().includes(term);
     const matchesStatus = !statusFilter || c.status === statusFilter;
-    return matchesSearch && matchesCnpj && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
+
+  function openDetail(client: typeof MOCK_CLIENTS[0]) {
+    setOpenDropdownId(null);
+    setSelectedClient(client);
+  }
 
   return (
     <div className={styles.usersContainer}>
@@ -97,21 +90,11 @@ export default function ClientsPage() {
         <div className={styles.tableToolbar}>
           <input
             type="text"
-            placeholder="Buscar por nome, empresa ou email..."
+            placeholder="Buscar por nome, empresa, e-mail ou CNPJ..."
             className={styles.searchInput}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <div className={styles.cnpjSearchWrapper}>
-            <input
-              type="text"
-              placeholder="Buscar por CNPJ..."
-              className={styles.searchInput}
-              value={cnpjSearch}
-              onChange={handleCnpjChange}
-              maxLength={18}
-            />
-          </div>
           <div className={styles.filters}>
             <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
               <option value="">Todos os Status</option>
@@ -161,14 +144,18 @@ export default function ClientsPage() {
                   <td className={styles.textMuted}>{client.date}</td>
                   <td className={styles.actionsCell}>
                     <div className={styles.dropdownContainer} ref={openDropdownId === client.id ? dropdownRef : null}>
-                      <button className={styles.btnActionDots} onClick={() => setOpenDropdownId(openDropdownId === client.id ? null : client.id)} title="Ações">
+                      <button
+                        className={styles.btnActionDots}
+                        onClick={() => setOpenDropdownId(openDropdownId === client.id ? null : client.id)}
+                        title="Ações"
+                      >
                         ⋮
                       </button>
                       {openDropdownId === client.id && (
                         <div className={styles.dropdownMenu}>
-                          <Link href={`/clients/${client.id}`} className={styles.dropdownItem}>👁️ Ver Detalhes</Link>
-                          <Link href={`/clients/${client.id}/edit`} className={styles.dropdownItem}>✏️ Editar</Link>
-                          <Link href={`/clients/${client.id}/extrato`} className={styles.dropdownItem}>📄 Ver Extrato</Link>
+                          <button className={styles.dropdownItem} onClick={() => openDetail(client)}>
+                            👁️ Ver Detalhes
+                          </button>
                         </div>
                       )}
                     </div>
@@ -189,6 +176,7 @@ export default function ClientsPage() {
         </div>
       </div>
 
+      <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} />
     </div>
   );
 }
