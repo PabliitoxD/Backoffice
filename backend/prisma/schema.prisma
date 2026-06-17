@@ -162,11 +162,13 @@ model MonitoringCheck {
 }
 
 model MonitoringNote {
-  id        String   @id @default(uuid())
-  service   String   // 'checkout' | 'app'
-  content   String
-  author    String
-  createdAt DateTime @default(now())
+  id          String    @id @default(uuid())
+  service     String
+  content     String
+  author      String
+  periodStart DateTime?
+  periodEnd   DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([service, createdAt])
 }

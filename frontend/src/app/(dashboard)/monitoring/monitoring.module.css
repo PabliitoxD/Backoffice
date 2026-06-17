@@ -258,10 +258,12 @@
 .uptimeBar {
   display: flex;
   gap: 2px;
+  min-height: 20px;
 }
 
 .uptimeBlock {
   flex: 1;
+  min-width: 8px;
   height: 20px;
   border-radius: 3px;
 }
@@ -498,6 +500,36 @@
 
 .noteDelete:hover {
   color: #EF4444;
+}
+
+.notePeriod {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+  font-style: italic;
+}
+
+.notePeriodRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.notePeriodLabel {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.notePeriodInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notePeriodSep {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .noteContent {
