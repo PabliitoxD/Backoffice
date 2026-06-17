@@ -503,3 +503,8 @@
 .btnSubmit:hover {
   background-color: #3b52d9;
 }
+
+/* CNPJ search field in toolbar */
+.cnpjSearchWrapper {
+  flex: 0 0 220px;
+}
