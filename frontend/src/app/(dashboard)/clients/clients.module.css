@@ -518,7 +518,3 @@
   background-color: var(--primary-hover);
 }
 
-/* CNPJ search field in toolbar */
-.cnpjSearchWrapper {
-  flex: 0 0 220px;
-}
