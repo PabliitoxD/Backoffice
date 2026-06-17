@@ -145,7 +145,7 @@
 
 .secondaryGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 1.25rem;
 }
 
@@ -248,6 +248,8 @@
 }
 
 .valueDanger { color: var(--danger-color); }
+.valueGreen  { color: #22C55E; }
+.valueYellow { color: #F59E0B; }
 
 .kpiMeta {
   font-size: 0.8rem;
@@ -389,6 +391,104 @@
 
 .rankBarTeal { background: var(--secondary-color); }
 
+/* ── Method breakdown (TPV / Transações) ───────────────── */
+.methodTabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.methodTab {
+  flex: 1;
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.methodTab:hover {
+  color: var(--text-main);
+}
+
+.methodTabActive {
+  background: transparent;
+}
+
+.methodDetail {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.methodValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.methodPct {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.methodBar {
+  display: flex;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border-color);
+  margin-top: 0.5rem;
+  gap: 1px;
+}
+
+.methodBarSegment {
+  height: 100%;
+  transition: width 0.4s ease, opacity 0.2s;
+  border-radius: 2px;
+}
+
+/* ── Ranking com comparativo ───────────────────────────── */
+.rankValueGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.rankTrend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rankTrendUp   { color: #22C55E; }
+.rankTrendDown { color: #EF4444; }
+
+.rankPrevRow {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.rankPrevLabel {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+}
+
+.rankPrevValue {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .rankingSkeletonRow {
   height: 52px;
   border-radius: var(--radius-md);
@@ -403,6 +503,12 @@
 }
 
 /* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1400px) {
+  .secondaryGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .secondaryGrid {
     grid-template-columns: repeat(2, 1fr);
