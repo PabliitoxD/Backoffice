@@ -12,6 +12,7 @@ const MOCK_CLIENT = {
   cpf: '123.456.789-00',
   birthDate: '1985-06-15',
   isPep: false,
+  pepPersons: [] as { nome: string; cpf: string }[],
   responsibleName: 'João Silva',
   responsibleEmail: 'joao.silva@email.com',
   responsiblePhone: '(11) 98765-4321',
@@ -168,9 +169,73 @@ export default function EditClientPage() {
                 <div className={`${styles.field} ${styles.fullWidth}`}>
                   <label className={styles.checkboxLabel}>
                     <input type="checkbox" name="isPep" checked={formData.isPep} onChange={handleChange} className={styles.checkbox} />
-                    <span>PEP — Pessoa Exposta Politicamente</span>
+                    <span>
+                      PEP — Pessoa Exposta Politicamente{' '}
+                      <small style={{ fontWeight: 400, fontSize: '0.82em', opacity: 0.7 }}>
+                        (cargo público, mandato ou função de relevância nos últimos 5 anos)
+                      </small>
+                    </span>
                   </label>
                 </div>
+                {formData.isPep && (
+                  <div className={`${styles.field} ${styles.fullWidth}`}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                      <label style={{ textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', color: '#ef4444' }}>
+                        Pessoas Expostas Politicamente
+                      </label>
+                      <button
+                        type="button"
+                        className={styles.btnAddPep}
+                        onClick={() => setFormData(f => ({ ...f, pepPersons: [...f.pepPersons, { nome: '', cpf: '' }] }))}
+                      >
+                        + Adicionar Pessoa
+                      </button>
+                    </div>
+                    {formData.pepPersons.map((p, i) => (
+                      <div key={i} className={styles.pepPersonEntry}>
+                        <div className={styles.field}>
+                          <label>Nome Completo *</label>
+                          <input
+                            type="text"
+                            value={p.nome}
+                            onChange={e => setFormData(f => {
+                              const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, nome: e.target.value } : x);
+                              return { ...f, pepPersons: updated };
+                            })}
+                            placeholder="Nome da pessoa exposta"
+                            required
+                          />
+                        </div>
+                        <div className={styles.field}>
+                          <label>CPF *</label>
+                          <input
+                            type="text"
+                            value={p.cpf}
+                            onChange={e => setFormData(f => {
+                              const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, cpf: e.target.value } : x);
+                              return { ...f, pepPersons: updated };
+                            })}
+                            placeholder="000.000.000-00"
+                            style={{ fontFamily: 'monospace' }}
+                            required
+                          />
+                        </div>
+                        {formData.pepPersons.length > 1 && (
+                          <button
+                            type="button"
+                            className={styles.btnRemovePep}
+                            onClick={() => setFormData(f => ({ ...f, pepPersons: f.pepPersons.filter((_, idx) => idx !== i) }))}
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {formData.pepPersons.length === 0 && (
+                      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Nenhuma pessoa adicionada. Clique em &quot;+ Adicionar Pessoa&quot; para incluir.</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

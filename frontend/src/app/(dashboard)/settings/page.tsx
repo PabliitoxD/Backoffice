@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import styles from './settings.module.css';
 import { API_URL } from '@/lib/api';
+import { CNAE_MCC_TABLE, MccEntry } from '@/lib/cnae-mcc';
 
 interface Profile {
   id: string;
@@ -44,7 +45,7 @@ const AVAILABLE_PERMISSIONS = [
 ];
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'usuario' | 'perfil' | 'perfis' | 'logs'>('usuario');
+  const [activeTab, setActiveTab] = useState<'usuario' | 'perfil' | 'perfis' | 'logs' | 'mcc'>('usuario');
   const [users, setUsers] = useState<User[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -73,6 +74,90 @@ export default function SettingsPage() {
 
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  // MCC/ABECS tab state
+  type MccTableRow = { cnae: string } & MccEntry;
+  const [mccTable, setMccTable] = useState<MccTableRow[]>(() =>
+    Object.entries(CNAE_MCC_TABLE).map(([cnae, entry]) => ({ cnae, ...entry }))
+  );
+  const [mccSearch, setMccSearch] = useState('');
+  const [mccSectorFilter, setMccSectorFilter] = useState('');
+  const [mccEditRow, setMccEditRow] = useState<MccTableRow | null>(null);
+  const [mccEditForm, setMccEditForm] = useState<MccTableRow>({ cnae: '', mcc: '', label: '', sector: '' });
+  const [mccNewRow, setMccNewRow] = useState(false);
+  const [mccImportText, setMccImportText] = useState('');
+  const [mccImportModal, setMccImportModal] = useState(false);
+  const [mccImportError, setMccImportError] = useState('');
+
+  const mccSectors = [...new Set(mccTable.map(r => r.sector))].sort();
+
+  const mccFiltered = mccTable.filter(row => {
+    const q = mccSearch.toLowerCase();
+    const matchSearch = !q ||
+      row.cnae.includes(q) ||
+      row.mcc.includes(q) ||
+      row.label.toLowerCase().includes(q) ||
+      row.sector.toLowerCase().includes(q);
+    const matchSector = !mccSectorFilter || row.sector === mccSectorFilter;
+    return matchSearch && matchSector;
+  });
+
+  const handleMccEdit = (row: MccTableRow) => {
+    setMccEditRow(row);
+    setMccEditForm({ ...row });
+    setMccNewRow(false);
+  };
+
+  const handleMccSave = () => {
+    if (!mccEditForm.cnae || !mccEditForm.mcc || !mccEditForm.label || !mccEditForm.sector) return;
+    if (mccNewRow) {
+      setMccTable(prev => [...prev.filter(r => r.cnae !== mccEditForm.cnae), mccEditForm]);
+    } else {
+      setMccTable(prev => prev.map(r => r.cnae === mccEditRow!.cnae ? mccEditForm : r));
+    }
+    setMccEditRow(null);
+    setMccNewRow(false);
+  };
+
+  const handleMccDelete = (cnae: string) => {
+    setMccTable(prev => prev.filter(r => r.cnae !== cnae));
+  };
+
+  const handleMccAddNew = () => {
+    setMccEditForm({ cnae: '', mcc: '', label: '', sector: '' });
+    setMccEditRow({ cnae: '__new__', mcc: '', label: '', sector: '' });
+    setMccNewRow(true);
+  };
+
+  const handleMccExport = () => {
+    const obj: Record<string, MccEntry> = {};
+    mccTable.forEach(r => { obj[r.cnae] = { mcc: r.mcc, label: r.label, sector: r.sector }; });
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cnae-mcc-abecs.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleMccImport = () => {
+    setMccImportError('');
+    try {
+      const parsed = JSON.parse(mccImportText);
+      if (typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('Formato inválido. Esperado um objeto JSON.');
+      const rows: MccTableRow[] = Object.entries(parsed).map(([cnae, val]: [string, unknown]) => {
+        const v = val as Record<string, string>;
+        if (!v.mcc || !v.label || !v.sector) throw new Error(`Entrada inválida para CNAE ${cnae}: campos mcc, label e sector são obrigatórios.`);
+        return { cnae, mcc: v.mcc, label: v.label, sector: v.sector };
+      });
+      setMccTable(rows);
+      setMccImportModal(false);
+      setMccImportText('');
+    } catch (e: unknown) {
+      setMccImportError(e instanceof Error ? e.message : 'Erro ao importar JSON.');
+    }
+  };
 
   // Profile data (current user)
   const [userProfile, setUserProfile] = useState({
@@ -467,6 +552,169 @@ export default function SettingsPage() {
       );
     }
 
+    if (activeTab === 'mcc') {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.tableCard}>
+            <div className={styles.tableToolbar}>
+              <div>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Tabela MCC / ABECS</h2>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  {mccTable.length} entradas · Baseado na tabela ABECS / ISO 18245
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button className={styles.btnAdd} style={{ backgroundColor: 'var(--text-muted)' }} onClick={() => setMccImportModal(true)}>
+                  Importar JSON
+                </button>
+                <button className={styles.btnAdd} style={{ backgroundColor: 'var(--text-muted)' }} onClick={handleMccExport}>
+                  Exportar JSON
+                </button>
+                <button className={styles.btnAdd} onClick={handleMccAddNew}>
+                  <span>+</span> Nova Entrada
+                </button>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '0.75rem', padding: '0 1.25rem 1rem', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                placeholder="Buscar por CNAE, MCC, descrição ou setor..."
+                value={mccSearch}
+                onChange={e => setMccSearch(e.target.value)}
+                style={{ flex: 1, minWidth: 200, padding: '0.45rem 0.75rem', fontSize: '0.85rem', border: '1px solid var(--border-color)', borderRadius: 6, background: 'var(--bg-input)', color: 'var(--text-main)' }}
+              />
+              <select
+                value={mccSectorFilter}
+                onChange={e => setMccSectorFilter(e.target.value)}
+                style={{ padding: '0.45rem 0.75rem', fontSize: '0.85rem', border: '1px solid var(--border-color)', borderRadius: 6, background: 'var(--bg-input)', color: 'var(--text-main)' }}
+              >
+                <option value="">Todos os setores</option>
+                {mccSectors.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>CNAE</th>
+                    <th>MCC</th>
+                    <th>Descrição</th>
+                    <th>Setor</th>
+                    <th className={styles.actionsCell}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mccFiltered.length === 0 && (
+                    <tr><td colSpan={5} style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>Nenhuma entrada encontrada.</td></tr>
+                  )}
+                  {mccFiltered.map(row => (
+                    <tr key={row.cnae}>
+                      <td><span style={{ fontFamily: 'monospace', fontWeight: 600 }}>{row.cnae}</span></td>
+                      <td><span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)' }}>{row.mcc}</span></td>
+                      <td>{row.label}</td>
+                      <td><span className={styles.statusBadge}>{row.sector}</span></td>
+                      <td className={styles.actionsCell}>
+                        <button className={styles.btnActionDots} onClick={() => handleMccEdit(row)} title="Editar">✏️</button>
+                        <button className={styles.btnActionDots} onClick={() => handleMccDelete(row.cnae)} title="Remover" style={{ color: 'var(--danger)' }}>🗑</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Edit / New Row Modal */}
+          {mccEditRow && (
+            <div className={styles.modalOverlay} onClick={() => setMccEditRow(null)}>
+              <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHeader}>
+                  <h3>{mccNewRow ? 'Nova Entrada MCC' : 'Editar Entrada MCC'}</h3>
+                  <button onClick={() => setMccEditRow(null)}>✕</button>
+                </div>
+                <div className={styles.modalBody}>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>CNAE (4 dígitos)</label>
+                    <input className={styles.input} value={mccEditForm.cnae} maxLength={7}
+                      onChange={e => setMccEditForm(p => ({ ...p, cnae: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="Ex: 4711" />
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Informe os primeiros 4 dígitos do CNAE fiscal.</small>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>MCC (código ABECS)</label>
+                    <input className={styles.input} value={mccEditForm.mcc} maxLength={4}
+                      onChange={e => setMccEditForm(p => ({ ...p, mcc: e.target.value.replace(/\D/g, '') }))}
+                      placeholder="Ex: 5411" />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Descrição</label>
+                    <input className={styles.input} value={mccEditForm.label}
+                      onChange={e => setMccEditForm(p => ({ ...p, label: e.target.value }))}
+                      placeholder="Ex: Supermercados e Hipermercados" />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>Setor</label>
+                    <input className={styles.input} list="mcc-sectors" value={mccEditForm.sector}
+                      onChange={e => setMccEditForm(p => ({ ...p, sector: e.target.value }))}
+                      placeholder="Ex: Varejo Alimentar" />
+                    <datalist id="mcc-sectors">
+                      {mccSectors.map(s => <option key={s} value={s} />)}
+                    </datalist>
+                  </div>
+                </div>
+                <div className={styles.modalFooter}>
+                  <button className={styles.btnCancel} onClick={() => setMccEditRow(null)}>Cancelar</button>
+                  <button className={styles.btnSave} onClick={handleMccSave}
+                    disabled={!mccEditForm.cnae || !mccEditForm.mcc || !mccEditForm.label || !mccEditForm.sector}>
+                    Salvar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Import JSON Modal */}
+          {mccImportModal && (
+            <div className={styles.modalOverlay} onClick={() => setMccImportModal(false)}>
+              <div className={styles.modalContent} style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+                <div className={styles.modalHeader}>
+                  <h3>Importar Tabela MCC (JSON)</h3>
+                  <button onClick={() => setMccImportModal(false)}>✕</button>
+                </div>
+                <div className={styles.modalBody}>
+                  <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                    Cole abaixo o JSON no formato ABECS. A tabela atual será <strong>substituída</strong> pela importada.
+                    Use "Exportar JSON" para obter o formato correto.
+                  </p>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', fontFamily: 'monospace' }}>
+                    Formato esperado:<br />
+                    {'{ "4711": { "mcc": "5411", "label": "Supermercados", "sector": "Varejo" }, ... }'}
+                  </p>
+                  <textarea
+                    value={mccImportText}
+                    onChange={e => setMccImportText(e.target.value)}
+                    rows={10}
+                    style={{ width: '100%', fontFamily: 'monospace', fontSize: '0.78rem', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 6, background: 'var(--bg-input)', color: 'var(--text-main)', resize: 'vertical' }}
+                    placeholder='{"4711": {"mcc": "5411", "label": "Supermercados", "sector": "Varejo Alimentar"}}'
+                  />
+                  {mccImportError && <p style={{ color: 'var(--danger)', fontSize: '0.82rem', marginTop: '0.5rem' }}>{mccImportError}</p>}
+                </div>
+                <div className={styles.modalFooter}>
+                  <button className={styles.btnCancel} onClick={() => setMccImportModal(false)}>Cancelar</button>
+                  <button className={styles.btnSave} onClick={handleMccImport} disabled={!mccImportText.trim()}>
+                    Importar e Substituir
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
     if (activeTab === 'perfil') {
       return (
         <div className={styles.tabContent}>
@@ -493,6 +741,7 @@ export default function SettingsPage() {
         <button className={`${styles.tab} ${activeTab === 'usuario' ? styles.tabActive : ''}`} onClick={() => setActiveTab('usuario')}>Usuário</button>
         <button className={`${styles.tab} ${activeTab === 'perfis' ? styles.tabActive : ''}`} onClick={() => setActiveTab('perfis')}>Perfis</button>
         <button className={`${styles.tab} ${activeTab === 'logs' ? styles.tabActive : ''}`} onClick={() => setActiveTab('logs')}>Logs</button>
+        <button className={`${styles.tab} ${activeTab === 'mcc' ? styles.tabActive : ''}`} onClick={() => setActiveTab('mcc')}>MCC / ABECS</button>
         <button className={`${styles.tab} ${activeTab === 'perfil' ? styles.tabActive : ''}`} onClick={() => setActiveTab('perfil')}>Perfil</button>
       </div>
 
