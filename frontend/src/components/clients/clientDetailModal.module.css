@@ -226,10 +226,9 @@
   border: 1px solid rgba(239, 68, 68, .2);
   border-radius: var(--radius-md);
   padding: 0.875rem 1rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 0.875rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .pepBlockTitle {
@@ -385,13 +384,18 @@
 
 /* PEP persons row inside Detalhes tab */
 .pepPersonRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
   padding: 0.5rem 0;
   border-bottom: 1px solid rgba(239, 68, 68, .1);
 }
 .pepPersonRow:last-child { border-bottom: none; }
+
+.pepPersonRow .infoGroup {
+  flex: 1;
+  min-width: 0;
+}
 
 .pepSubLabel {
   grid-column: 1 / -1;
