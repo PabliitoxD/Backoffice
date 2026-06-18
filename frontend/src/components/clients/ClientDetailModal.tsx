@@ -40,7 +40,7 @@ const MOCK_DETAIL: Record<number, any> = {
   1: {
     fullName: 'João Silva', cpf: '123.456.789-00', birthDate: '1985-06-15',
     isPep: true,
-    pepName: 'João Silva', pepCpf: '123.456.789-00', pepBirthDate: '1985-06-15',
+    pepPersons: [{ nome: 'João Silva', cpf: '123.456.789-00' }],
     responsibleName: 'João Silva', responsibleEmail: 'joao.silva@email.com', responsiblePhone: '(11) 98765-4321',
     cnpj: '12.345.678/0001-90', companyName: 'Acme Corp Finance', tradingName: 'Acme Corp',
     cnae: '4711302', mcc: '5411', mccLabel: 'Supermercados e Mercearias',
@@ -55,7 +55,7 @@ const MOCK_DETAIL: Record<number, any> = {
 function getDetail(client: ClientBasic) {
   return MOCK_DETAIL[client.id] ?? {
     fullName: client.name, cpf: '—', birthDate: '',
-    isPep: false, pepName: '', pepCpf: '', pepBirthDate: '',
+    isPep: false, pepPersons: [],
     responsibleName: client.name, responsibleEmail: client.email, responsiblePhone: '—',
     cnpj: client.document, companyName: client.company, tradingName: client.company,
     cnae: '—', mcc: '—', mccLabel: '',
@@ -121,34 +121,33 @@ function DetalhesTab({ detail }: { detail: any }) {
           )}
           {/* PEP */}
           <div className={styles.infoGroupFull}>
-            <span className={styles.infoLabel}>Pessoa Exposta Politicamente (PEP)</span>
+            <span className={styles.infoLabel}>
+              PEP — Pessoa Exposta Politicamente{' '}
+              <small style={{ fontWeight: 400, fontSize: '0.85em', opacity: 0.7 }}>
+                (cargo público, mandato ou função de relevância nos últimos 5 anos)
+              </small>
+            </span>
             <p className={styles.infoValue}>
               {detail.isPep
                 ? <span className={styles.pepBadge}>Sim — PEP</span>
                 : <span className={styles.textMuted}>Não declarado</span>}
             </p>
           </div>
-          {detail.isPep && (detail.pepName || detail.pepCpf || detail.pepBirthDate) && (
+          {detail.isPep && Array.isArray(detail.pepPersons) && detail.pepPersons.length > 0 && (
             <div className={styles.pepBlock}>
-              <p className={styles.pepBlockTitle}>Dados da Pessoa Exposta</p>
-              {detail.pepName && (
-                <div className={styles.infoGroup}>
-                  <span className={styles.infoLabel}>Nome Completo</span>
-                  <p className={styles.infoValue}>{detail.pepName}</p>
+              <p className={styles.pepBlockTitle}>Pessoas Expostas Politicamente</p>
+              {detail.pepPersons.map((p: { nome: string; cpf: string }, i: number) => (
+                <div key={i} className={styles.pepPersonRow}>
+                  <div className={styles.infoGroup}>
+                    <span className={styles.infoLabel}>Nome Completo</span>
+                    <p className={styles.infoValue}>{p.nome}</p>
+                  </div>
+                  <div className={styles.infoGroup}>
+                    <span className={styles.infoLabel}>CPF</span>
+                    <p className={styles.infoValue} style={{ fontFamily: 'monospace' }}>{p.cpf}</p>
+                  </div>
                 </div>
-              )}
-              {detail.pepCpf && (
-                <div className={styles.infoGroup}>
-                  <span className={styles.infoLabel}>CPF</span>
-                  <p className={styles.infoValue} style={{ fontFamily: 'monospace' }}>{detail.pepCpf}</p>
-                </div>
-              )}
-              {detail.pepBirthDate && (
-                <div className={styles.infoGroup}>
-                  <span className={styles.infoLabel}>Nascimento</span>
-                  <p className={styles.infoValue}>{new Date(detail.pepBirthDate).toLocaleDateString('pt-BR')}</p>
-                </div>
-              )}
+              ))}
             </div>
           )}
         </div>
@@ -251,9 +250,7 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
     bankAccount:       detail.bankAccount       ?? '',
     bankAccountType:   detail.bankAccountType   ?? '',
     isPep:             detail.isPep             ?? false,
-    pepName:           detail.pepName           ?? '',
-    pepCpf:            detail.pepCpf            ?? '',
-    pepBirthDate:      detail.pepBirthDate      ?? '',
+    pepPersons:        (detail.pepPersons as { nome: string; cpf: string }[] | undefined) ?? [],
     street:            detail.street            ?? '',
     number:            detail.number            ?? '',
     complement:        detail.complement        ?? '',
@@ -325,25 +322,68 @@ function EditarTab({ detail, onClose }: { detail: any; onClose: () => void }) {
               checked={form.isPep}
               onChange={e => setForm(f => ({ ...f, isPep: e.target.checked }))}
             />
-            <label htmlFor="isPep">Pessoa Exposta Politicamente (PEP)</label>
+            <label htmlFor="isPep">
+              PEP — Pessoa Exposta Politicamente{' '}
+              <small style={{ fontWeight: 400, fontSize: '0.85em', opacity: 0.7 }}>
+                (cargo público, mandato ou função de relevância nos últimos 5 anos)
+              </small>
+            </label>
           </div>
 
           {/* PEP sub-fields — visíveis apenas quando PEP está marcado */}
           {form.isPep && (
             <div className={styles.pepSubFields}>
-              <p className={styles.pepSubLabel}>Dados da Pessoa Exposta</p>
-              <div className={styles.formGroup}>
-                <label>Nome Completo</label>
-                <input value={form.pepName} onChange={set('pepName')} placeholder="Nome da pessoa exposta" />
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                <p className={styles.pepSubLabel} style={{ margin: 0 }}>Pessoas Expostas Politicamente</p>
+                <button
+                  type="button"
+                  className={styles.btnAddPep}
+                  onClick={() => setForm(f => ({ ...f, pepPersons: [...f.pepPersons, { nome: '', cpf: '' }] }))}
+                >
+                  + Adicionar Pessoa
+                </button>
               </div>
-              <div className={styles.formGroup}>
-                <label>CPF</label>
-                <input value={form.pepCpf} onChange={set('pepCpf')} placeholder="000.000.000-00" style={{ fontFamily: 'monospace' }} />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Nascimento</label>
-                <input type="date" value={form.pepBirthDate} onChange={set('pepBirthDate')} />
-              </div>
+              {form.pepPersons.map((p, i) => (
+                <div key={i} className={styles.pepPersonEntry}>
+                  <div className={styles.formGroup}>
+                    <label>Nome Completo *</label>
+                    <input
+                      value={p.nome}
+                      onChange={e => setForm(f => {
+                        const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, nome: e.target.value } : x);
+                        return { ...f, pepPersons: updated };
+                      })}
+                      placeholder="Nome da pessoa exposta"
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>CPF *</label>
+                    <input
+                      value={p.cpf}
+                      onChange={e => setForm(f => {
+                        const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, cpf: e.target.value } : x);
+                        return { ...f, pepPersons: updated };
+                      })}
+                      placeholder="000.000.000-00"
+                      style={{ fontFamily: 'monospace' }}
+                      required
+                    />
+                  </div>
+                  {form.pepPersons.length > 1 && (
+                    <button
+                      type="button"
+                      className={styles.btnRemovePep}
+                      onClick={() => setForm(f => ({ ...f, pepPersons: f.pepPersons.filter((_, idx) => idx !== i) }))}
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+              ))}
+              {form.pepPersons.length === 0 && (
+                <p className={styles.pepSubLabel} style={{ opacity: 0.6 }}>Nenhuma pessoa adicionada ainda.</p>
+              )}
             </div>
           )}
         </div>

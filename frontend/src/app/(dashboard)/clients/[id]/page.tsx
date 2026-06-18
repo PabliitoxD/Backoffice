@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, use } from 'react';
 import Link from 'next/link';
 import styles from './clientDetails.module.css';
 
@@ -8,6 +11,7 @@ const MOCK_CLIENT = {
   cpf: '123.456.789-00',
   birthDate: '1985-06-15',
   isPep: false,
+  pepPersons: [] as { nome: string; cpf: string }[],
   responsibleName: 'João Silva',
   responsibleEmail: 'joao.silva@email.com',
   responsiblePhone: '(11) 98765-4321',
@@ -32,9 +36,67 @@ const MOCK_CLIENT = {
   date: '12 Mar 2026',
 };
 
-export default async function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const client = MOCK_CLIENT;
+type StatusAction = 'APPROVED' | 'SUSPENDED' | 'REJECTED';
+
+const ACTION_CONFIG: Record<StatusAction, { label: string; title: string; description: string; placeholder: string; btnClass: string }> = {
+  APPROVED: {
+    label: '✓ Aprovar',
+    title: 'Aprovar Cadastro',
+    description: 'Ao aprovar, o cliente será habilitado para operar na plataforma. Adicione um comentário para registrar a justificativa.',
+    placeholder: 'Ex: Documentação verificada e aprovada conforme política de cadastro.',
+    btnClass: 'btnApprove',
+  },
+  SUSPENDED: {
+    label: '⏸ Suspender',
+    title: 'Suspender Cliente',
+    description: 'O cliente será temporariamente impedido de realizar operações. Informe o motivo da suspensão.',
+    placeholder: 'Ex: Inconsistências identificadas no extrato. Aguardando esclarecimentos.',
+    btnClass: 'btnSuspend',
+  },
+  REJECTED: {
+    label: '✕ Reprovar',
+    title: 'Reprovar Cadastro',
+    description: 'O cadastro será reprovado e o cliente será notificado. Informe o motivo da reprovação.',
+    placeholder: 'Ex: Documentação incompleta. CNPJ inativo na Receita Federal.',
+    btnClass: 'btnReject',
+  },
+};
+
+export default function ClientDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const [client, setClient] = useState(MOCK_CLIENT);
+  const [actionModal, setActionModal] = useState<{ action: StatusAction; comment: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const openAction = (action: StatusAction) => setActionModal({ action, comment: '' });
+  const closeAction = () => { if (!actionLoading) setActionModal(null); };
+
+  const handleAction = async () => {
+    if (!actionModal || !actionModal.comment.trim()) return;
+    setActionLoading(true);
+    try {
+      // TODO: replace with real API call
+      // await fetch(`/api/clients/${id}/status`, {
+      //   method: 'PATCH',
+      //   body: JSON.stringify({ status: actionModal.action, comment: actionModal.comment }),
+      // });
+      await new Promise(r => setTimeout(r, 600)); // mock delay
+      const statusLabel: Record<StatusAction, string> = { APPROVED: 'Aprovado', SUSPENDED: 'Suspenso', REJECTED: 'Reprovado' };
+      setClient(c => ({ ...c, status: statusLabel[actionModal.action] }));
+      setActionModal(null);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const cfg = actionModal ? ACTION_CONFIG[actionModal.action] : null;
+
+  const statusClass: Record<string, string> = {
+    Pendente: styles.statusPending,
+    Aprovado: styles.statusApproved,
+    Suspenso: styles.statusSuspended,
+    Reprovado: styles.statusRejected,
+  };
 
   return (
     <div className={styles.detailsContainer}>
@@ -42,16 +104,22 @@ export default async function ClientDetailsPage({ params }: { params: Promise<{ 
         <div>
           <div className={styles.titleWrapper}>
             <h1 className="title">{client.companyName}</h1>
-            <span className={`${styles.statusBadge} ${styles.statusPending}`}>{client.status}</span>
-            {client.isPep && (
-              <span className={styles.pepBadge}>PEP</span>
-            )}
+            <span className={`${styles.statusBadge} ${statusClass[client.status] ?? styles.statusPending}`}>{client.status}</span>
+            {client.isPep && <span className={styles.pepBadge}>PEP</span>}
           </div>
           <p className="subtitle">ID do Cliente: #{id} • Cadastrado em {client.date}</p>
         </div>
         <div className={styles.headerActions}>
           <Link href="/clients" className={styles.btnBack}>← Voltar</Link>
-          <button className={styles.btnApprove}>✓ Aprovar Cadastro</button>
+          {client.status !== 'Aprovado' && (
+            <button className={styles.btnApprove} onClick={() => openAction('APPROVED')}>✓ Aprovar</button>
+          )}
+          {client.status !== 'Suspenso' && client.status !== 'Reprovado' && (
+            <button className={styles.btnSuspend} onClick={() => openAction('SUSPENDED')}>⏸ Suspender</button>
+          )}
+          {client.status !== 'Reprovado' && (
+            <button className={styles.btnReject} onClick={() => openAction('REJECTED')}>✕ Reprovar</button>
+          )}
         </div>
       </div>
 
@@ -106,18 +174,29 @@ export default async function ClientDetailsPage({ params }: { params: Promise<{ 
               <label>CPF</label>
               <p style={{ fontFamily: 'monospace' }}>{client.cpf}</p>
             </div>
-            <div className={styles.infoGroup}>
-              <label>Data de Nascimento</label>
-              <p>{new Date(client.birthDate).toLocaleDateString('pt-BR')}</p>
-            </div>
             <div className={`${styles.infoGroup} ${styles.fullWidth}`}>
-              <label>Pessoa Exposta Politicamente (PEP)</label>
+              <label>
+                PEP — Pessoa Exposta Politicamente{' '}
+                <small style={{ fontWeight: 400, fontSize: '0.75em', color: 'var(--text-muted)' }}>
+                  (cargo público, mandato ou função de relevância nos últimos 5 anos)
+                </small>
+              </label>
               <p>
                 {client.isPep
                   ? <span className={styles.pepBadge}>Sim — PEP</span>
                   : <span className={styles.pepNoBadge}>Não declarado</span>
                 }
               </p>
+              {client.isPep && client.pepPersons.length > 0 && (
+                <div className={styles.pepPersonsList}>
+                  {client.pepPersons.map((p, i) => (
+                    <div key={i} className={styles.pepPersonItem}>
+                      <span>{p.nome}</span>
+                      <span style={{ fontFamily: 'monospace', color: 'var(--text-muted)', fontSize: '0.85rem' }}>{p.cpf}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -201,6 +280,48 @@ export default async function ClientDetailsPage({ params }: { params: Promise<{ 
         </div>
 
       </div>
+
+      {/* Status Action Modal */}
+      {actionModal && cfg && (
+        <div className={styles.modalOverlay} onClick={closeAction}>
+          <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>{cfg.title}</h3>
+              <button className={styles.modalClose} onClick={closeAction} disabled={actionLoading}>✕</button>
+            </div>
+            <div className={styles.modalBody}>
+              <p className={styles.modalDescription}>{cfg.description}</p>
+              <label className={styles.modalLabel}>
+                Comentário <span style={{ color: 'var(--danger)' }}>*</span>
+              </label>
+              <textarea
+                className={styles.modalTextarea}
+                rows={4}
+                placeholder={cfg.placeholder}
+                value={actionModal.comment}
+                onChange={e => setActionModal(a => a ? { ...a, comment: e.target.value } : a)}
+                disabled={actionLoading}
+                autoFocus
+              />
+              {actionModal.comment.trim().length === 0 && (
+                <p className={styles.modalHint}>O comentário é obrigatório para registrar a ação.</p>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnModalCancel} onClick={closeAction} disabled={actionLoading}>
+                Cancelar
+              </button>
+              <button
+                className={styles[cfg.btnClass as keyof typeof styles]}
+                onClick={handleAction}
+                disabled={actionLoading || !actionModal.comment.trim()}
+              >
+                {actionLoading ? 'Salvando...' : cfg.title}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

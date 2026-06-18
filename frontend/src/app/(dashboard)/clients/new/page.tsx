@@ -4,43 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './newClient.module.css';
-
-// CNAE (first 4 digits) → MCC mapping
-const CNAE_MCC: Record<string, { mcc: string; label: string }> = {
-  '4711': { mcc: '5411', label: 'Supermercados e Mercearias' },
-  '4712': { mcc: '5411', label: 'Supermercados e Mercearias' },
-  '4731': { mcc: '5541', label: 'Postos de Combustível' },
-  '5611': { mcc: '5812', label: 'Restaurantes e Bares' },
-  '5612': { mcc: '5812', label: 'Restaurantes e Bares' },
-  '5620': { mcc: '5812', label: 'Alimentação' },
-  '5912': { mcc: '5912', label: 'Farmácias e Drogarias' },
-  '8011': { mcc: '8099', label: 'Serviços de Saúde' },
-  '8021': { mcc: '8049', label: 'Odontologia' },
-  '8511': { mcc: '8049', label: 'Serviços de Psicologia' },
-  '4751': { mcc: '5732', label: 'Eletrônicos e Eletrodomésticos' },
-  '4752': { mcc: '5732', label: 'Eletrônicos e Eletrodomésticos' },
-  '5211': { mcc: '5251', label: 'Materiais de Construção' },
-  '5310': { mcc: '5311', label: 'Grandes Lojas (Magazines)' },
-  '5321': { mcc: '5331', label: 'Lojas de Variedades' },
-  '6422': { mcc: '6012', label: 'Bancos e Instituições Financeiras' },
-  '6431': { mcc: '6012', label: 'Bancos e Instituições Financeiras' },
-  '6491': { mcc: '6099', label: 'Serviços Financeiros' },
-  '4921': { mcc: '4121', label: 'Táxi e Transporte' },
-  '4923': { mcc: '4131', label: 'Transporte Coletivo' },
-  '7810': { mcc: '7521', label: 'Estacionamentos' },
-  '7720': { mcc: '7538', label: 'Oficinas e Serviços Automotivos' },
-  '4781': { mcc: '5521', label: 'Concessionárias de Veículos' },
-  '8531': { mcc: '8299', label: 'Educação e Ensino' },
-  '8599': { mcc: '8299', label: 'Educação e Ensino' },
-  '9491': { mcc: '8661', label: 'Organizações Religiosas' },
-  '4930': { mcc: '4900', label: 'Utilidades (Água/Energia)' },
-  '3510': { mcc: '4900', label: 'Geração de Energia' },
-};
-
-function resolveMcc(cnae: string): { mcc: string; label: string } | null {
-  const prefix = String(cnae).replace(/\D/g, '').slice(0, 4);
-  return CNAE_MCC[prefix] ?? null;
-}
+import { resolveMcc } from '@/lib/cnae-mcc';
 
 interface ClientFormData {
   status: string;
@@ -48,6 +12,7 @@ interface ClientFormData {
   cpf: string;
   birthDate: string;
   isPep: boolean;
+  pepPersons: { nome: string; cpf: string }[];
   responsibleName: string;
   responsibleEmail: string;
   responsiblePhone: string;
@@ -83,6 +48,7 @@ export default function NewClientPage() {
     cpf: '',
     birthDate: '',
     isPep: false,
+    pepPersons: [] as { nome: string; cpf: string }[],
     responsibleName: '',
     responsibleEmail: '',
     responsiblePhone: '',
@@ -278,12 +244,73 @@ export default function NewClientPage() {
                   onChange={handleChange}
                   className={styles.checkbox}
                 />
-                <span>PEP — Pessoa Exposta Politicamente</span>
-                <span className={styles.fieldHint} style={{ marginLeft: '0.5rem' }}>
-                  (cargo público, mandato ou função de relevância nos últimos 5 anos)
+                <span>
+                  PEP — Pessoa Exposta Politicamente{' '}
+                  <small style={{ fontWeight: 400, fontSize: '0.82em', opacity: 0.7 }}>
+                    (cargo público, mandato ou função de relevância nos últimos 5 anos)
+                  </small>
                 </span>
               </label>
             </div>
+            {formData.isPep && (
+              <div className={`${styles.field} ${styles.fullWidth}`}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <label style={{ textTransform: 'uppercase', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.05em', color: '#ef4444' }}>
+                    Pessoas Expostas Politicamente
+                  </label>
+                  <button
+                    type="button"
+                    className={styles.btnAddPep}
+                    onClick={() => setFormData(f => ({ ...f, pepPersons: [...f.pepPersons, { nome: '', cpf: '' }] }))}
+                  >
+                    + Adicionar Pessoa
+                  </button>
+                </div>
+                {formData.pepPersons.map((p, i) => (
+                  <div key={i} className={styles.pepPersonEntry}>
+                    <div className={styles.field}>
+                      <label>Nome Completo *</label>
+                      <input
+                        type="text"
+                        value={p.nome}
+                        onChange={e => setFormData(f => {
+                          const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, nome: e.target.value } : x);
+                          return { ...f, pepPersons: updated };
+                        })}
+                        placeholder="Nome da pessoa exposta"
+                        required
+                      />
+                    </div>
+                    <div className={styles.field}>
+                      <label>CPF *</label>
+                      <input
+                        type="text"
+                        value={p.cpf}
+                        onChange={e => setFormData(f => {
+                          const updated = f.pepPersons.map((x, idx) => idx === i ? { ...x, cpf: e.target.value } : x);
+                          return { ...f, pepPersons: updated };
+                        })}
+                        placeholder="000.000.000-00"
+                        style={{ fontFamily: 'monospace' }}
+                        required
+                      />
+                    </div>
+                    {formData.pepPersons.length > 1 && (
+                      <button
+                        type="button"
+                        className={styles.btnRemovePep}
+                        onClick={() => setFormData(f => ({ ...f, pepPersons: f.pepPersons.filter((_, idx) => idx !== i) }))}
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {formData.pepPersons.length === 0 && (
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: 0 }}>Nenhuma pessoa adicionada. Clique em &quot;+ Adicionar Pessoa&quot; para incluir.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
