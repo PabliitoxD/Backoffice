@@ -43,7 +43,7 @@ export default function WithdrawalsPage() {
 
   const exportCSV = () => {
     const rows = [
-      ['Data', 'ID', 'Produtor', 'Valor Bruto (R$)', 'Tarifa (R$)', 'Repasse Líquido (R$)', 'Status'],
+      ['Data', 'ID', 'Cliente', 'Valor Bruto (R$)', 'Tarifa (R$)', 'Repasse Líquido (R$)', 'Status'],
       ...withdrawals.map((item) => {
         const fee = item.fee ?? 5.0;
         return [
@@ -216,7 +216,7 @@ export default function WithdrawalsPage() {
               type="text" 
               value={searchQuery} 
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Pesquisar por ID ou Produtor..."
+              placeholder="Pesquisar por ID ou Cliente..."
               style={{ padding: '0.65rem', borderRadius: '6px', border: '1px solid var(--border-color)', outline: 'none', background: 'var(--bg-card)', color: 'var(--text-main)', fontSize: '0.9rem', flex: 1, minWidth: '200px' }} 
             />
 
@@ -282,7 +282,7 @@ export default function WithdrawalsPage() {
                   />
                 </th>
                 <th>Data</th>
-                <th>Produtor</th>
+                <th>Cliente</th>
                 <th>Valor Bruto</th>
                 <th>Tarifa</th>
                 <th>Repasse Líquido</th>
@@ -381,7 +381,7 @@ export default function WithdrawalsPage() {
             </h3>
             
             <div style={{ padding: '1rem', backgroundColor: 'var(--background)', borderRadius: '6px', marginBottom: '1rem', border: '1px solid var(--border-color)', marginTop: '1rem', color: 'var(--text-main)' }}>
-              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Produtor</div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Cliente</div>
               <div style={{ fontWeight: 600 }}>{modalData.producer?.name || 'N/A'}</div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Documento</div>
               <div style={{ fontWeight: 500 }}>{modalData.producer?.document || 'N/A'}</div>
@@ -520,7 +520,7 @@ export default function WithdrawalsPage() {
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                     <tbody>
                       <tr>
-                        <td style={{ padding: '4px 0', color: 'var(--text-muted)', width: '150px' }}>PRODUTOR:</td>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)', width: '150px' }}>CLIENTE:</td>
                         <td style={{ padding: '4px 0', fontWeight: 600 }}>{w.producer?.name}</td>
                       </tr>
                       <tr>
