@@ -184,6 +184,8 @@
   background: rgba(248, 250, 252, 0.4);
 }
 
+:global(.dark) .modalHeader { background: rgba(30, 41, 59, 0.6); }
+
 .modalHeader h2 {
   font-size: 1.1rem;
   color: var(--text-main);
@@ -218,6 +220,8 @@
   border-top: 1px solid var(--border-color);
   background: rgba(248, 250, 252, 0.4);
 }
+
+:global(.dark) .modalFooter { background: rgba(30, 41, 59, 0.6); }
 
 /* Form Styles */
 .formGroup {

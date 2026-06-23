@@ -287,11 +287,7 @@
   gap: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .cardHeader {
-    background-color: rgba(30, 41, 59, 0.4);
-  }
-}
+:global(.dark) .cardHeader { background-color: rgba(30, 41, 59, 0.4); }
 
 .icon {
   font-size: 1.25rem;
