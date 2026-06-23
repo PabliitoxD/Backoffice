@@ -90,6 +90,31 @@ export default function StatementPage() {
   const totalOut = filteredStatement.filter(s => s.impact < 0).reduce((acc, curr) => acc + Math.abs(curr.impact), 0);
   const filteredBalance = filteredStatement.reduce((acc, curr) => acc + curr.impact, 0);
 
+  const exportCSV = () => {
+    const rows = [
+      ['Data', 'Tipo', 'Descrição', 'Produtor/Ref', 'Status', 'Valor (R$)', 'Taxa (R$)', 'Impacto (R$)'],
+      ...statement.map((item) => [
+        new Date(item.date).toLocaleString('pt-BR'),
+        item.type === 'TRANSACTION' ? 'Venda' : 'Saque',
+        item.description,
+        item.producerName,
+        item.status,
+        item.amount.toFixed(2).replace('.', ','),
+        item.fee.toFixed(2).replace('.', ','),
+        item.impact.toFixed(2).replace('.', ','),
+      ]),
+    ];
+
+    const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `extrato_${startDate}_${endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -152,12 +177,27 @@ export default function StatementPage() {
               <option value="CHARGEBACKS">Chargebacks e Estornos (-)</option>
             </select>
 
-            <button 
-              onClick={fetchStatement} 
-              className={`${styles.btnAction} ${styles.btnSuccess}`} 
+            <button
+              onClick={fetchStatement}
+              className={`${styles.btnAction} ${styles.btnSuccess}`}
               style={{ padding: '0.65rem 1.5rem', fontWeight: 600 }}
             >
               Buscar
+            </button>
+
+            <button
+              onClick={exportCSV}
+              disabled={statement.length === 0}
+              className={styles.btnAction}
+              style={{ padding: '0.65rem 1.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: statement.length === 0 ? 0.5 : 1 }}
+              title={`Exportar todas as movimentações do período ${startDate} até ${endDate} (sem filtro de tipo)`}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar CSV
             </button>
           </div>
         </div>
