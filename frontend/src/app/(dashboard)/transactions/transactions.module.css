@@ -127,7 +127,8 @@
 .dropdownItem:hover { background-color: rgba(248, 250, 252, 0.8); }
 :global(.dark) .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); }
 .modalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
-.modalContent { background: var(--surface); border-radius: 12px; width: 90%; max-width: 700px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+.modalContent { background: #ffffff; border-radius: 12px; width: 90%; max-width: 700px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
+:global(.dark) .modalContent { background: #1E293B; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--surface); }
 :global(.dark) .modalHeader { background: rgba(30, 41, 59, 0.6); }
