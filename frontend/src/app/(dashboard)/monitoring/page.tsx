@@ -166,7 +166,7 @@ function MonitorCard({
   const isStatuspage = data.type === 'statuspage';
 
   return (
-    <div className="card">
+    <div className={`card ${styles.integrationCard}${data.current?.status ? ` ${styles[`card${data.current.status}`]}` : ''}`}>
       <div className={styles.cardHeader}>
         <div>
           <h3 className={styles.integrationName}>{data.name}</h3>
