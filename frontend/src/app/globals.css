@@ -105,3 +105,17 @@ ul, ol {
   font-size: 0.875rem;
   color: var(--text-muted);
 }
+
+/*
+ * DARK MODE — Native select dropdown fix
+ * CSS custom properties don't apply to native <option> elements in most browsers.
+ * color-scheme: dark tells the browser to render the native dropdown with dark chrome.
+ */
+.dark select {
+  color-scheme: dark;
+}
+
+.dark select option {
+  background-color: #1E293B;
+  color: #F3F3F3;
+}

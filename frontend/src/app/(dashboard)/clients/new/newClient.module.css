@@ -121,6 +121,12 @@
   transition: all 0.2s;
 }
 
+.field select option {
+  background-color: var(--surface);
+  color: var(--text-main);
+}
+
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
@@ -232,4 +238,116 @@
   font-size: 0.875rem;
   margin-top: 0.25rem;
   font-weight: 500;
+}
+
+/* CNPJ search in toolbar */
+.cnpjSearchWrapper {
+  flex: 1;
+}
+
+/* MCC display */
+.mccWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mccLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Checkbox / PEP */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+}
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.pepPersonEntry {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.75rem;
+  align-items: end;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, .04);
+  border: 1px solid rgba(239, 68, 68, .14);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+
+.btnAddPep {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, .4);
+  border-radius: var(--radius-md);
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btnAddPep:hover { background: rgba(239, 68, 68, .08); }
+
+.btnRemovePep {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+  align-self: end;
+  white-space: nowrap;
+}
+.btnRemovePep:hover { color: #ef4444; border-color: rgba(239, 68, 68, .4); }
+
+/* textarea */
+.field textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+/* optional tag */
+.optionalTag {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+/* sales channel checkboxes */
+.checkboxGroup {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
 }
