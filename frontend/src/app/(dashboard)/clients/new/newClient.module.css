@@ -121,6 +121,21 @@
   transition: all 0.2s;
 }
 
+.field select option {
+  background-color: var(--surface);
+  color: var(--text-main);
+}
+
+/* Force native dropdown colors in dark mode */
+:global(.dark) .field select {
+  color-scheme: dark;
+}
+
+:global(.dark) .field select option {
+  background-color: #1E293B;
+  color: #F8FAFC;
+}
+
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
