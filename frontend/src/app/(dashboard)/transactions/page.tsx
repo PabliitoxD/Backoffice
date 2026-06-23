@@ -33,10 +33,14 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+type DateFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
+
 export default function TransactionsPage() {
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('MONTH');
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
 
   const selectedTx = MOCK_TRANSACTIONS.find(t => t.id === selectedTxId);
 
@@ -258,6 +262,41 @@ export default function TransactionsPage() {
           <p className="subtitle" style={{ marginTop: '0.5rem' }}>
             Acompanhe o fluxo global de vendas processadas na plataforma.
           </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div className={styles.filterGroup}>
+            {([
+              { id: 'TODAY', label: 'Hoje' },
+              { id: 'WEEK',  label: 'Semana' },
+              { id: 'MONTH', label: 'Mês' },
+              { id: 'CUSTOM', label: 'Período' },
+            ] as { id: DateFilter; label: string }[]).map((f) => (
+              <button
+                key={f.id}
+                className={`${styles.filterBtn} ${dateFilter === f.id ? styles.filterBtnActive : ''}`}
+                onClick={() => setDateFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {dateFilter === 'CUSTOM' && (
+            <div className={styles.customDateGroup}>
+              <input
+                type="date"
+                value={customRange.start}
+                onChange={(e) => setCustomRange((p) => ({ ...p, start: e.target.value }))}
+                className={styles.dateInput}
+              />
+              <span style={{ color: 'var(--text-muted)' }}>→</span>
+              <input
+                type="date"
+                value={customRange.end}
+                onChange={(e) => setCustomRange((p) => ({ ...p, end: e.target.value }))}
+                className={styles.dateInput}
+              />
+            </div>
+          )}
         </div>
       </div>
 
