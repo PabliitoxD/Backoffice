@@ -1,4 +1,4 @@
-.formContainer {
+﻿.formContainer {
   background-color: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -79,10 +79,8 @@
   border: 1px solid var(--border-color);
 }
 
-@media (prefers-color-scheme: dark) {
-  .formSection {
+.formSection {
     background-color: rgba(30, 41, 59, 0.4);
-  }
 }
 
 .sectionTitle {
@@ -218,10 +216,8 @@
   text-align: center;
 }
 
-@media (prefers-color-scheme: dark) {
-  .matrixTable th {
+.matrixTable th {
     background-color: rgba(30, 41, 59, 1);
-  }
 }
 
 .rowHeader {
@@ -232,10 +228,8 @@
   width: 120px;
 }
 
-@media (prefers-color-scheme: dark) {
-  .rowHeader {
+.rowHeader {
     background-color: rgba(30, 41, 59, 0.4);
-  }
 }
 
 .matrixInputWrapper {
@@ -266,3 +260,4 @@
   outline: none;
   border-color: var(--primary-color);
 }
+

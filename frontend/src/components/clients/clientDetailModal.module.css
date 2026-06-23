@@ -1,4 +1,4 @@
-/* ── Overlay ── */
+﻿/* â”€â”€ Overlay â”€â”€ */
 .overlay {
   position: fixed;
   inset: 0;
@@ -11,7 +11,7 @@
   padding: 1rem;
 }
 
-/* ── Modal shell ── */
+/* â”€â”€ Modal shell â”€â”€ */
 .modal {
   background: var(--surface);
   border: 1px solid var(--border-color);
@@ -30,7 +30,7 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Header ── */
+/* â”€â”€ Header â”€â”€ */
 .header {
   display: flex;
   align-items: flex-start;
@@ -102,7 +102,7 @@
 }
 .closeBtn:hover { color: #ef4444; }
 
-/* ── Tab bar ── */
+/* â”€â”€ Tab bar â”€â”€ */
 .tabBar {
   display: flex;
   padding: 0 1.75rem;
@@ -130,19 +130,19 @@
   font-weight: 600;
 }
 
-/* ── Body (scrollable) ── */
+/* â”€â”€ Body (scrollable) â”€â”€ */
 .body {
   overflow-y: auto;
   flex: 1;
   padding: 1.5rem 1.75rem;
 }
 
-/* ── Info grid (Detalhes tab) ── */
+/* â”€â”€ Info grid (Detalhes tab) â”€â”€ */
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  align-items: start; /* cards não esticam para preencher linha */
+  align-items: start; /* cards nÃ£o esticam para preencher linha */
 }
 
 .infoCard {
@@ -169,8 +169,7 @@
   letter-spacing: 0.04em;
 }
 
-@media (prefers-color-scheme: dark) {
-  .infoCardHeader { background: rgba(30, 41, 59, .4); }
+.infoCardHeader { background: rgba(30, 41, 59, .4);
 }
 
 .infoCardBody {
@@ -212,14 +211,14 @@
   margin-top: 0.1rem;
 }
 
-/* Plano value — larger, colored */
+/* Plano value â€” larger, colored */
 .planoHighlight {
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-color);
 }
 
-/* ── PEP block inside Detalhes ── */
+/* â”€â”€ PEP block inside Detalhes â”€â”€ */
 .pepBlock {
   grid-column: 1 / -1;
   background: rgba(239, 68, 68, .05);
@@ -241,7 +240,7 @@
   margin: 0 0 0.25rem;
 }
 
-/* ── Edit form tab ── */
+/* â”€â”€ Edit form tab â”€â”€ */
 .editForm {
   display: flex;
   flex-direction: column;
@@ -440,7 +439,7 @@
 }
 .btnCancel:hover { background: rgba(100, 116, 139, .08); }
 
-/* ── Extrato tab ── */
+/* â”€â”€ Extrato tab â”€â”€ */
 .statsRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -499,13 +498,11 @@
   background: rgba(248, 250, 252, .5);
 }
 
-@media (prefers-color-scheme: dark) {
-  .table th { background: rgba(30, 41, 59, .4); }
+.table th { background: rgba(30, 41, 59, .4);
 }
 
 .table tbody tr:hover { background: rgba(248, 250, 252, .4); }
-@media (prefers-color-scheme: dark) {
-  .table tbody tr:hover { background: rgba(255, 255, 255, .03); }
+.table tbody tr:hover { background: rgba(255, 255, 255, .03);
 }
 
 .textMuted { color: var(--text-muted); }
@@ -556,7 +553,7 @@
 }
 
 
-/* ── Responsive ── */
+/* â”€â”€ Responsive â”€â”€ */
 @media (max-width: 640px) {
   .infoGrid,
   .planoGrid { grid-template-columns: 1fr; }
@@ -567,3 +564,4 @@
   .pepSubFields,
   .pepBlock { grid-template-columns: 1fr; }
 }
+

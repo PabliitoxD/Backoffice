@@ -1,4 +1,4 @@
-/* styles for the client creation form */
+﻿/* styles for the client creation form */
 .formContainer {
   background-color: var(--surface);
   border-radius: var(--radius-lg);
@@ -61,10 +61,8 @@
   border: 1px solid var(--border-color);
 }
 
-@media (prefers-color-scheme: dark) {
-  .formSection {
-    background-color: rgba(30, 41, 59, 0.4);
-  }
+:global(.dark) .formSection {
+  background-color: rgba(30, 41, 59, 0.4);
 }
 
 .sectionTitle {
@@ -351,3 +349,4 @@
   flex-wrap: wrap;
   padding: 0.75rem 0;
 }
+
