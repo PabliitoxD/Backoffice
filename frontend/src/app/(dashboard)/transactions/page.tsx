@@ -17,15 +17,14 @@ const MOCK_TRANSACTIONS = [
 
 const getStatusBadgeConfig = (status: string) => {
   switch(status) {
-    case 'APPROVED': return { className: styles.statusApproved, label: 'Aprovada' };
-    case 'COMPLETED': return { className: styles.statusCompleted, label: 'Finalizada' };
-    case 'WAITING': return { className: styles.statusWaiting, label: 'Aguardando Pagamento' };
-    case 'REFUSED': return { className: styles.statusRefused, label: 'Recusada (Fraude)' };
-    case 'NOT_COMPLETED': return { className: styles.statusNotCompleted, label: 'Dados Inválidos' };
-    case 'REVERSED': return { className: styles.statusReversed, label: 'Estornada' };
-    case 'CLAIMED': return { className: styles.statusClaimed, label: 'Reembolsada' };
-    case 'CHARGEBACK': return { className: styles.statusChargeback, label: 'Chargeback' };
-    default: return { className: '', label: status };
+    case 'APPROVED':      return { className: styles.statusApproved,      label: 'Aprovada' };
+    case 'WAITING':       return { className: styles.statusWaiting,        label: 'Aguardando Pagamento' };
+    case 'REFUSED':       return { className: styles.statusRefused,        label: 'Recusada' };
+    case 'NOT_COMPLETED': return { className: styles.statusNotCompleted,   label: 'Não Concluída' };
+    case 'REVERSED':      return { className: styles.statusReversed,       label: 'Estornada' };
+    case 'CHARGEBACK':    return { className: styles.statusChargeback,     label: 'Chargeback' };
+    case 'EXIT_CHECKOUT': return { className: styles.statusExitCheckout,   label: 'Abandono de Carrinho' };
+    default:              return { className: '', label: status };
   }
 };
 
@@ -295,12 +294,13 @@ export default function TransactionsPage() {
             <input type="text" placeholder="Buscar por ID, Cliente..." className={styles.filterSelect} style={{ width: '220px' }} />
             <select className={styles.filterSelect}>
               <option value="">Status: Todos</option>
-              <option value="APPROVED">Aprovadas</option>
-              <option value="COMPLETED">Finalizadas (Pós-Garantia)</option>
+              <option value="APPROVED">Aprovada</option>
               <option value="WAITING">Aguardando Pagamento</option>
-              <option value="REFUSED">Recusada (Fraude)</option>
-              <option value="NOT_COMPLETED">Dados Inválidos</option>
-              <option value="REVERSED">Estornos / Reembolsos / Chargeback</option>
+              <option value="REFUSED">Recusada</option>
+              <option value="NOT_COMPLETED">Não Concluída</option>
+              <option value="REVERSED">Estornada</option>
+              <option value="CHARGEBACK">Chargeback</option>
+              <option value="EXIT_CHECKOUT">Abandono de Carrinho</option>
             </select>
             <div className={styles.filterGroup}>
               {([
