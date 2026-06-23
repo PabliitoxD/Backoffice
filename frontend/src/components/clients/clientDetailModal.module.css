@@ -169,8 +169,7 @@
   letter-spacing: 0.04em;
 }
 
-.infoCardHeader { background: rgba(30, 41, 59, .4);
-}
+:global(.dark) .infoCardHeader { background: rgba(30, 41, 59, .4); }
 
 .infoCardBody {
   padding: 1rem;
@@ -498,12 +497,10 @@
   background: rgba(248, 250, 252, .5);
 }
 
-.table th { background: rgba(30, 41, 59, .4);
-}
+:global(.dark) .table th { background: rgba(30, 41, 59, .4); }
 
 .table tbody tr:hover { background: rgba(248, 250, 252, .4); }
-.table tbody tr:hover { background: rgba(255, 255, 255, .03);
-}
+:global(.dark) .table tbody tr:hover { background: rgba(255, 255, 255, .03); }
 
 .textMuted { color: var(--text-muted); }
 .fontMedium { font-weight: 500; }

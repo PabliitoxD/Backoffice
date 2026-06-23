@@ -121,10 +121,8 @@
   font-size: 0.75rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  .table th { background-color: rgba(30, 41, 59, 0.4); }
-  .table tbody tr:hover { background-color: rgba(30, 41, 59, 0.2); }
-}
+:global(.dark) .table th { background-color: rgba(30, 41, 59, 0.4); }
+:global(.dark) .table tbody tr:hover { background-color: rgba(30, 41, 59, 0.2); }
 
 .table tbody tr:hover { background-color: rgba(248, 250, 252, 0.4); }
 
@@ -184,14 +182,14 @@
 @keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .dropdownItem { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.6rem 0.75rem; background: transparent; border: none; text-align: left; font-size: 0.875rem; color: var(--text-main); cursor: pointer; border-radius: var(--radius-sm); text-decoration: none; transition: background-color 0.2s; box-sizing: border-box; }
 .dropdownItem:hover { background-color: rgba(248, 250, 252, 0.8); }
-@media (prefers-color-scheme: dark) { .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); } }
+:global(.dark) .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); }
 
 /* Modal */
 .modalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
 .modalContent { background: var(--surface); border-radius: 12px; width: 90%; max-width: 700px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 .modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
-@media (prefers-color-scheme: dark) { .modalHeader { background: rgba(30, 41, 59, 0.4); } }
+:global(.dark) .modalHeader { background: rgba(30, 41, 59, 0.6); }
 .modalHeader h2 { font-size: 1.1rem; color: var(--text-main); margin: 0; font-weight: 600; }
 .closeBtn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1; }
 .closeBtn:hover { color: #ef4444; }
@@ -211,7 +209,7 @@
 .detailValueBold { font-weight: 600; color: var(--text-main); }
 
 .productSection { background-color: rgba(248, 250, 252, 0.6); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-@media (prefers-color-scheme: dark) { .productSection { background-color: rgba(30, 41, 59, 0.4); } }
+:global(.dark) .productSection { background-color: rgba(30, 41, 59, 0.4); }
 .productInfo { display: flex; align-items: center; gap: 1rem; max-width: 80%; }
 .productDesc { display: flex; flex-direction: column; gap: 0.25rem; }
 .productCode { font-size: 0.8rem; color: var(--text-muted); font-family: monospace; }
@@ -233,7 +231,7 @@
 .errorBanner { background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;}
 
 .modalFooter { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
-@media (prefers-color-scheme: dark) { .modalFooter { background: rgba(30, 41, 59, 0.4); } }
+:global(.dark) .modalFooter { background: rgba(30, 41, 59, 0.6); }
 .btnCancelItem { padding: 0.625rem 1.25rem; border: none; background-color: #ef4444; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; opacity: 0.9; }
 .btnCancelItem:hover { opacity: 1; }
 .btnCloseModal { padding: 0.625rem 1.25rem; border: none; background-color: #94a3b8; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
