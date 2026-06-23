@@ -22,7 +22,15 @@ const NAV_ITEMS = [
   },
   { label: 'Saques', href: '/financial/withdrawals', icon: ArrowDownToLine },
   { label: 'Chargebacks', href: '/financial/chargebacks', icon: AlertTriangle },
-  { label: 'Monitoramento', href: '/monitoring', icon: Activity },
+  {
+    label: 'Monitoramento',
+    href: '/monitoring',
+    icon: Activity,
+    subItems: [
+      { label: 'Monitoramento', href: '/monitoring' },
+      { label: 'Ocorrências', href: '/monitoring/occurrences' },
+    ],
+  },
   { label: 'Configurações', href: '/settings', icon: Settings },
 ];
 
@@ -33,7 +41,17 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({});
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    NAV_ITEMS.forEach(item => {
+      if ('subItems' in item && item.subItems) {
+        if (item.subItems.some(sub => pathname === sub.href)) {
+          initial[item.label] = true;
+        }
+      }
+    });
+    return initial;
+  });
 
   const toggleDropdown = (label: string) => {
     setOpenDropdowns(prev => ({ ...prev, [label]: !prev[label] }));
