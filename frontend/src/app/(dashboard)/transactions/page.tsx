@@ -268,7 +268,7 @@ export default function TransactionsPage() {
           <div className={styles.titleWrapper}>
             <h1 className="title">Transações</h1>
           </div>
-          <p className="subtitle" style={{ marginTop: '0.5rem' }}>
+          <p className="subtitle">
             Acompanhe o fluxo global de vendas processadas na plataforma.
           </p>
         </div>

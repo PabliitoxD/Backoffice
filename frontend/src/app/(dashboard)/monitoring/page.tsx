@@ -343,11 +343,11 @@ export default function MonitoringPage() {
   })();
 
   return (
-    <div className={styles.page}>
+    <div className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Monitoramento de Serviços</h1>
-          <p className={styles.subtitle}>
+          <h1 className="title">Monitoramento de Serviços</h1>
+          <p className="subtitle">
             Verificação automática a cada 2 minutos · Atualizado: {lastRefresh.toLocaleTimeString('pt-BR')}
           </p>
         </div>

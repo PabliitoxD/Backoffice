@@ -733,8 +733,10 @@ export default function SettingsPage() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className="title">Configurações</h1>
-        <p className="subtitle">Gerencie usuários, perfis de acesso e audite ações do sistema.</p>
+        <div>
+          <h1 className="title">Configurações</h1>
+          <p className="subtitle">Gerencie usuários, perfis de acesso e audite ações do sistema.</p>
+        </div>
       </div>
 
       <div className={styles.tabs}>
