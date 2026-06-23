@@ -17,15 +17,14 @@ const MOCK_TRANSACTIONS = [
 
 const getStatusBadgeConfig = (status: string) => {
   switch(status) {
-    case 'APPROVED': return { className: styles.statusApproved, label: 'Aprovada' };
-    case 'COMPLETED': return { className: styles.statusCompleted, label: 'Finalizada' };
-    case 'WAITING': return { className: styles.statusWaiting, label: 'Aguardando Pagamento' };
-    case 'REFUSED': return { className: styles.statusRefused, label: 'Recusada (Fraude)' };
-    case 'NOT_COMPLETED': return { className: styles.statusNotCompleted, label: 'Dados Inválidos' };
-    case 'REVERSED': return { className: styles.statusReversed, label: 'Estornada' };
-    case 'CLAIMED': return { className: styles.statusClaimed, label: 'Reembolsada' };
-    case 'CHARGEBACK': return { className: styles.statusChargeback, label: 'Chargeback' };
-    default: return { className: '', label: status };
+    case 'APPROVED':      return { className: styles.statusApproved,      label: 'Aprovada' };
+    case 'WAITING':       return { className: styles.statusWaiting,        label: 'Aguardando Pagamento' };
+    case 'REFUSED':       return { className: styles.statusRefused,        label: 'Recusada' };
+    case 'NOT_COMPLETED': return { className: styles.statusNotCompleted,   label: 'Não Concluída' };
+    case 'REVERSED':      return { className: styles.statusReversed,       label: 'Estornada' };
+    case 'CHARGEBACK':    return { className: styles.statusChargeback,     label: 'Chargeback' };
+    case 'EXIT_CHECKOUT': return { className: styles.statusExitCheckout,   label: 'Abandono de Carrinho' };
+    default:              return { className: '', label: status };
   }
 };
 
@@ -33,12 +32,26 @@ const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
 };
 
+type DateFilter = 'TODAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
+
 export default function TransactionsPage() {
   const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('MONTH');
+  const [customRange, setCustomRange] = useState({ start: '', end: '' });
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [methodFilter, setMethodFilter] = useState('');
 
   const selectedTx = MOCK_TRANSACTIONS.find(t => t.id === selectedTxId);
+
+  const filteredTransactions = MOCK_TRANSACTIONS.filter((t) => {
+    if (searchText && !t.id.toLowerCase().includes(searchText.toLowerCase()) && !t.clientName.toLowerCase().includes(searchText.toLowerCase())) return false;
+    if (statusFilter && t.status !== statusFilter) return false;
+    if (methodFilter && t.method !== methodFilter) return false;
+    return true;
+  });
 
   const handleOpenDetail = (id: string) => {
     setSelectedTxId(id);
@@ -287,17 +300,64 @@ export default function TransactionsPage() {
       <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Registro Geral de Vendas</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <input type="text" placeholder="Buscar por ID, Cliente..." className={styles.filterSelect} style={{ width: '250px' }} />
-            <select className={styles.filterSelect}>
-              <option value="">Status da Transação: Todos</option>
-              <option value="APPROVED">Aprovadas</option>
-              <option value="COMPLETED">Finalizadas (Pós-Garantia)</option>
+          <div className={styles.toolbarFilters}>
+            <input
+              type="text"
+              placeholder="Buscar por ID, Cliente..."
+              className={styles.filterSelect}
+              style={{ width: '220px' }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="">Status: Todos</option>
+              <option value="APPROVED">Aprovada</option>
               <option value="WAITING">Aguardando Pagamento</option>
-              <option value="REFUSED">Recusada (Fraude)</option>
-              <option value="NOT_COMPLETED">Dados Inválidos</option>
-              <option value="REVERSED">Estornos / Reembolsos / Chargeback</option>
+              <option value="REFUSED">Recusada</option>
+              <option value="NOT_COMPLETED">Não Concluída</option>
+              <option value="REVERSED">Estornada</option>
+              <option value="CHARGEBACK">Chargeback</option>
+              <option value="EXIT_CHECKOUT">Abandono de Carrinho</option>
             </select>
+            <select className={styles.filterSelect} value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)}>
+              <option value="">Pagamento: Todos</option>
+              <option value="PIX">PIX</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+              <option value="Boleto">Boleto</option>
+            </select>
+            <div className={styles.filterGroup}>
+              {([
+                { id: 'TODAY',  label: 'Hoje' },
+                { id: 'WEEK',   label: 'Semana' },
+                { id: 'MONTH',  label: 'Mês' },
+                { id: 'CUSTOM', label: 'Período' },
+              ] as { id: DateFilter; label: string }[]).map((f) => (
+                <button
+                  key={f.id}
+                  className={`${styles.filterBtn} ${dateFilter === f.id ? styles.filterBtnActive : ''}`}
+                  onClick={() => setDateFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            {dateFilter === 'CUSTOM' && (
+              <div className={styles.customDateGroup}>
+                <input
+                  type="date"
+                  value={customRange.start}
+                  onChange={(e) => setCustomRange((p) => ({ ...p, start: e.target.value }))}
+                  className={styles.dateInput}
+                />
+                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                <input
+                  type="date"
+                  value={customRange.end}
+                  onChange={(e) => setCustomRange((p) => ({ ...p, end: e.target.value }))}
+                  className={styles.dateInput}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -315,7 +375,7 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_TRANSACTIONS.map((trx) => {
+              {filteredTransactions.map((trx) => {
                 const badge = getStatusBadgeConfig(trx.status);
                 return (
                   <tr key={trx.id}>
@@ -330,12 +390,11 @@ export default function TransactionsPage() {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
-                      <button 
-                        className={styles.btnActionDots} 
+                      <button
+                        className={styles.btnVerDetalhes}
                         onClick={() => handleOpenDetail(trx.id)}
-                        title="Detalhes da Venda"
                       >
-                        ⋮
+                        Ver Detalhes
                       </button>
                     </td>
                   </tr>
@@ -346,7 +405,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className={styles.pagination}>
-          <span className={styles.paginationText}>Mostrando 1 a {MOCK_TRANSACTIONS.length} de {MOCK_TRANSACTIONS.length} transações</span>
+          <span className={styles.paginationText}>Mostrando 1 a {filteredTransactions.length} de {MOCK_TRANSACTIONS.length} transações</span>
           <div className={styles.paginationControls}>
             <button className={styles.btnPage} disabled>Anterior</button>
             <button className={`${styles.btnPage} ${styles.btnPageActive}`}>1</button>

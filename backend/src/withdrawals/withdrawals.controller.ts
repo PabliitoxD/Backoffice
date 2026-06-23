@@ -16,7 +16,7 @@ export class WithdrawalsController {
   }
 
   @Post('notify-finance')
-  notifyFinance(@Body() data: { withdrawalIds: string[] }) {
+  notifyFinance(@Body() data: { withdrawalIds: string[]; customBody?: string }) {
     return this.withdrawalsService.notifyFinance(data);
   }
 

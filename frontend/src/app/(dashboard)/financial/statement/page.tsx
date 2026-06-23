@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import styles from '../financial.module.css';
+import styles from './statement.module.css';
+import modalStyles from '../../transactions/transactions.module.css';
 import { API_URL } from '@/lib/api';
 
 interface StatementItem {
@@ -15,6 +16,14 @@ interface StatementItem {
   impact: number;
   status: string;
   date: string;
+  method?: string;
+  installments?: string;
+  cardBrand?: string;
+  runningBalance?: number;
+  originalId?: string;
+  customer?: any;
+  product?: any;
+  history?: any;
 }
 
 const formatCurrency = (value: number) => {
@@ -37,11 +46,39 @@ export default function StatementPage() {
   const currentMonthRange = getMonthDateRange();
   
   const [statement, setStatement] = useState<StatementItem[]>([]);
+  const [initialBalance, setInitialBalance] = useState(0);
+  const [finalBalance, setFinalBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'ALL' | 'VENDAS' | 'WITHDRAWALS' | 'CHARGEBACKS'>('ALL');
   const [startDate, setStartDate] = useState(currentMonthRange.start);
   const [endDate, setEndDate] = useState(currentMonthRange.end);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const [selectedTxId, setSelectedTxId] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
+
+  const selectedTx = statement.find(t => t.id === selectedTxId);
+
+  const handleOpenDetail = (id: string) => {
+    setSelectedTxId(id);
+    setActiveModalTab('geral');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTxId(null);
+  };
+
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; }
+  }, [isModalOpen]);
 
   const fetchStatement = async () => {
     setLoading(true);
@@ -59,14 +96,18 @@ export default function StatementPage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setStatement(data);
+        setStatement(data.items);
+        setInitialBalance(data.initialBalance);
+        setFinalBalance(data.finalBalance);
       } else {
         console.error("Failed to fetch statement");
+        // Fallback for demo/dev
         setStatement([
-          { id: 'tx-1234', type: 'TRANSACTION', description: 'Venda (#1234)', producerName: 'Acme Corp', amount: 997.0, fee: 0, impact: 997.0, status: 'APPROVED', date: new Date().toISOString() },
-          { id: 'wt-5678', type: 'WITHDRAWAL', description: 'Saque Bancário', producerName: 'Acme Corp', amount: 500.0, fee: 5.0, impact: -505.0, status: 'COMPLETED', date: new Date(Date.now() - 86400000).toISOString() },
-          { id: 'tx-9101', type: 'TRANSACTION', description: 'Venda (#9101)', producerName: 'Tech Solutions', amount: 297.0, fee: 0, impact: -297.0, status: 'CHARGEBACK', date: new Date(Date.now() - 172800000).toISOString() },
+          { id: 'tx-1234', type: 'TRANSACTION', description: 'Venda (#1234)', producerName: 'Acme Corp', amount: 997.0, fee: 0, impact: 997.0, status: 'APPROVED', date: new Date().toISOString(), runningBalance: 997.0 },
+          { id: 'wt-5678', type: 'WITHDRAWAL', description: 'Saque Bancário', producerName: 'Acme Corp', amount: 500.0, fee: 5.0, impact: -505.0, status: 'COMPLETED', date: new Date(Date.now() - 86400000).toISOString(), runningBalance: 492.0 },
         ]);
+        setInitialBalance(0);
+        setFinalBalance(492.0);
       }
     } catch (err) {
       console.error(err);
@@ -126,16 +167,32 @@ export default function StatementPage() {
 
       <div className={styles.statsRow}>
         <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Saldo Inicial</h3>
+          <div className={styles.statValue}>
+            {formatCurrency(initialBalance)}
+          </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>Anterior a {new Date(startDate).toLocaleDateString('pt-BR')}</span>
+        </div>
+        <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Entradas</h3>
           <div className={`${styles.statValue} ${styles.statPositive}`}>
             {formatCurrency(totalIn)}
           </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>No período filtrado</span>
         </div>
         <div className={styles.statCard}>
           <h3 className={styles.statTitle}>Saídas</h3>
           <div className={`${styles.statValue} ${styles.statNegative}`}>
             {formatCurrency(totalOut)}
           </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>No período filtrado</span>
+        </div>
+        <div className={styles.statCard}>
+          <h3 className={styles.statTitle}>Saldo Final</h3>
+          <div className={`${styles.statValue} ${finalBalance >= 0 ? styles.statPositive : styles.statNegative}`}>
+            {formatCurrency(finalBalance)}
+          </div>
+          <span className={styles.textMuted} style={{ fontSize: '0.75rem' }}>Em {new Date(endDate).toLocaleDateString('pt-BR')}</span>
         </div>
       </div>
 
@@ -203,31 +260,53 @@ export default function StatementPage() {
         </div>
         
         <div className={styles.tableWrapper}>
-          <table className={styles.table}>
+
+<table className={styles.table}>
             <thead>
               <tr>
                 <th>Data</th>
                 <th>Lançamento / Histórico</th>
+                <th>Pagamento</th>
                 <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Valor</th>
+                <th style={{ textAlign: 'right' }}>Saldo Acumulado</th>
                 <th style={{ textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 <tr><td colSpan={8} className={styles.emptyState}>Carregando extrato...</td></tr>
-              ) : filteredStatement.length === 0 ? (
-                <tr><td colSpan={8} className={styles.emptyState}>Nenhuma movimentação encontrada para este filtro.</td></tr>
               ) : (
-                filteredStatement.map((item) => {
+                <>
+                  {!searchQuery && activeTab === 'ALL' && (
+                    <tr style={{ backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                      <td className={styles.textMuted} colSpan={5} style={{ textAlign: 'right', fontWeight: 600 }}>
+                        SALDO ANTERIOR AO PERÍODO
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: initialBalance >= 0 ? '#10b981' : '#ef4444' }}>
+                        {formatCurrency(initialBalance)}
+                      </td>
+                      <td></td>
+                    </tr>
+                  )}
+                  
+                  {filteredStatement.length === 0 ? (
+                    <tr><td colSpan={8} className={styles.emptyState}>Nenhuma movimentação encontrada para este filtro.</td></tr>
+                  ) : (
+                    filteredStatement.map((item) => {
                   const isPositive = item.impact > 0;
                   const isNegative = item.impact < 0;
                   const impactColor = isPositive ? '#10b981' : isNegative ? '#ef4444' : 'var(--text-muted)';
-                  const impactSign = isPositive ? '+' : '';
+                  const impactSign = isPositive ? '+' : isNegative ? '-' : '';
 
                   let typeBadgeClass = styles.badgeInfo;
                   if (item.type === 'WITHDRAWAL') typeBadgeClass = styles.badgeWarning;
                   if (item.status === 'CHARGEBACK') typeBadgeClass = styles.badgeDebit;
+
+                  let methodLabel = item.method || 'Transferência';
+                  if (item.method === 'Cartão de Crédito' && item.installments) {
+                    methodLabel = `Cartão ${item.cardBrand ? `(${item.cardBrand})` : ''} em ${item.installments}`;
+                  }
 
                   return (
                     <tr key={item.id}>
@@ -249,12 +328,20 @@ export default function StatementPage() {
                         </div>
                       </td>
                       <td>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>
+                          {methodLabel}
+                        </div>
+                      </td>
+                      <td>
                          <span style={{ fontSize: '0.85rem', padding: '0.25rem 0.75rem', borderRadius: '999px', backgroundColor: 'var(--bg-secondary)', fontWeight: 500, color: 'var(--text-muted)' }}>
                            {item.status}
                          </span>
                       </td>
                       <td style={{ textAlign: 'right', fontWeight: 600, color: impactColor }}>
                         {impactSign}{formatCurrency(Math.abs(item.impact))}
+                      </td>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: (item.runningBalance || 0) >= 0 ? '#10b981' : '#ef4444' }}>
+                         {formatCurrency(item.runningBalance || 0)}
                       </td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
@@ -263,10 +350,8 @@ export default function StatementPage() {
                           onClick={() => {
                             if (item.type === 'WITHDRAWAL') {
                               router.push('/financial/withdrawals');
-                            } else if (item.status === 'CHARGEBACK') {
-                              router.push('/financial/chargebacks');
                             } else {
-                              router.push('/transactions');
+                              handleOpenDetail(item.id);
                             }
                           }}
                         >
@@ -275,16 +360,18 @@ export default function StatementPage() {
                       </td>
                     </tr>
                   );
-                })
-              )}
-            </tbody>
+                  })
+                )}
+              </>
+            )}
+          </tbody>
             {filteredStatement.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={3} style={{ textAlign: 'right', fontWeight: 600, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                    Saldo Consolidado (Filtro Atual):
+                  <td colSpan={4} style={{ textAlign: 'right', fontWeight: 600, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                    Saldo Consolidado (Fim do Período Filtrado):
                   </td>
-                  <td style={{ textAlign: 'right', fontWeight: 700, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: filteredBalance >= 0 ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
+                  <td colSpan={2} style={{ textAlign: 'right', fontWeight: 700, padding: '1rem 1.5rem', borderTop: '2px solid var(--border-color)', color: filteredBalance >= 0 ? '#10b981' : '#ef4444', fontSize: '1.1rem' }}>
                     {filteredBalance >= 0 ? '+' : ''}{formatCurrency(filteredBalance)}
                   </td>
                   <td style={{ borderTop: '2px solid var(--border-color)' }}></td>
@@ -294,6 +381,47 @@ export default function StatementPage() {
           </table>
         </div>
       </div>
+
+      {isModalOpen && selectedTx && (
+        <div className={modalStyles.modalOverlay} onClick={closeModal}>
+          <div className={modalStyles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={modalStyles.modalHeader}>
+              <h2>Detalhes da venda #{selectedTx.originalId?.slice(0,8) || selectedTx.id}</h2>
+              <button className={modalStyles.closeBtn} onClick={closeModal}>×</button>
+            </div>
+            
+            <div className={modalStyles.modalBody}>
+              <div className={modalStyles.tabs}>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'geral' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('geral')}
+                >
+                  Geral
+                </button>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'historico' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('historico')}
+                >
+                  Histórico
+                </button>
+                <button 
+                  className={`${modalStyles.tab} ${activeModalTab === 'taxas' ? modalStyles.tabActive : ''}`}
+                  onClick={() => setActiveModalTab('taxas')}
+                >
+                  Taxas e comissões
+                </button>
+              </div>
+
+              {renderTabContent()}
+
+            </div>
+
+            <div className={modalStyles.modalFooter}>
+              <button className={modalStyles.btnCloseModal} onClick={closeModal}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
