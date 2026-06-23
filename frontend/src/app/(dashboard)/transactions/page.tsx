@@ -40,8 +40,18 @@ export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState<'geral' | 'historico' | 'taxas'>('geral');
   const [dateFilter, setDateFilter] = useState<DateFilter>('MONTH');
   const [customRange, setCustomRange] = useState({ start: '', end: '' });
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [methodFilter, setMethodFilter] = useState('');
 
   const selectedTx = MOCK_TRANSACTIONS.find(t => t.id === selectedTxId);
+
+  const filteredTransactions = MOCK_TRANSACTIONS.filter((t) => {
+    if (searchText && !t.id.toLowerCase().includes(searchText.toLowerCase()) && !t.clientName.toLowerCase().includes(searchText.toLowerCase())) return false;
+    if (statusFilter && t.status !== statusFilter) return false;
+    if (methodFilter && t.method !== methodFilter) return false;
+    return true;
+  });
 
   const handleOpenDetail = (id: string) => {
     setSelectedTxId(id);
@@ -291,8 +301,15 @@ export default function TransactionsPage() {
         <div className={styles.tableToolbar}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Registro Geral de Vendas</h2>
           <div className={styles.toolbarFilters}>
-            <input type="text" placeholder="Buscar por ID, Cliente..." className={styles.filterSelect} style={{ width: '220px' }} />
-            <select className={styles.filterSelect}>
+            <input
+              type="text"
+              placeholder="Buscar por ID, Cliente..."
+              className={styles.filterSelect}
+              style={{ width: '220px' }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="">Status: Todos</option>
               <option value="APPROVED">Aprovada</option>
               <option value="WAITING">Aguardando Pagamento</option>
@@ -301,6 +318,12 @@ export default function TransactionsPage() {
               <option value="REVERSED">Estornada</option>
               <option value="CHARGEBACK">Chargeback</option>
               <option value="EXIT_CHECKOUT">Abandono de Carrinho</option>
+            </select>
+            <select className={styles.filterSelect} value={methodFilter} onChange={(e) => setMethodFilter(e.target.value)}>
+              <option value="">Pagamento: Todos</option>
+              <option value="PIX">PIX</option>
+              <option value="Cartão de Crédito">Cartão de Crédito</option>
+              <option value="Boleto">Boleto</option>
             </select>
             <div className={styles.filterGroup}>
               {([
@@ -352,7 +375,7 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_TRANSACTIONS.map((trx) => {
+              {filteredTransactions.map((trx) => {
                 const badge = getStatusBadgeConfig(trx.status);
                 return (
                   <tr key={trx.id}>
@@ -382,7 +405,7 @@ export default function TransactionsPage() {
         </div>
 
         <div className={styles.pagination}>
-          <span className={styles.paginationText}>Mostrando 1 a {MOCK_TRANSACTIONS.length} de {MOCK_TRANSACTIONS.length} transações</span>
+          <span className={styles.paginationText}>Mostrando 1 a {filteredTransactions.length} de {MOCK_TRANSACTIONS.length} transações</span>
           <div className={styles.paginationControls}>
             <button className={styles.btnPage} disabled>Anterior</button>
             <button className={`${styles.btnPage} ${styles.btnPageActive}`}>1</button>
