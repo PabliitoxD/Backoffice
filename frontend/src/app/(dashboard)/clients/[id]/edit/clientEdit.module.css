@@ -112,10 +112,8 @@
   border: 1px solid var(--border-color);
 }
 
-@media (prefers-color-scheme: dark) {
-  .formSection {
-    background-color: rgba(30, 41, 59, 0.4);
-  }
+:global(.dark) .formSection {
+  background-color: rgba(30, 41, 59, 0.4);
 }
 
 .sectionTitle {
@@ -236,10 +234,8 @@
   text-transform: uppercase;
 }
 
-@media (prefers-color-scheme: dark) {
-  .planTable th {
-    background-color: rgba(30, 41, 59, 1);
-  }
+:global(.dark) .planTable th {
+  background-color: rgba(30, 41, 59, 1);
 }
 
 .planTable tbody tr {
@@ -250,20 +246,16 @@
   background-color: rgba(248, 250, 252, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  .planTable tbody tr:hover {
-    background-color: rgba(30, 41, 59, 0.2);
-  }
+:global(.dark) .planTable tbody tr:hover {
+  background-color: rgba(30, 41, 59, 0.2);
 }
 
 .rowSelected {
   background-color: rgba(67, 97, 238, 0.05) !important;
 }
 
-@media (prefers-color-scheme: dark) {
-  .rowSelected {
-    background-color: rgba(67, 97, 238, 0.15) !important;
-  }
+:global(.dark) .rowSelected {
+  background-color: rgba(67, 97, 238, 0.15) !important;
 }
 
 .planName {

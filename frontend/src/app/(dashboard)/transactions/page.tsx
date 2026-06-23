@@ -263,41 +263,6 @@ export default function TransactionsPage() {
             Acompanhe o fluxo global de vendas processadas na plataforma.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <div className={styles.filterGroup}>
-            {([
-              { id: 'TODAY', label: 'Hoje' },
-              { id: 'WEEK',  label: 'Semana' },
-              { id: 'MONTH', label: 'Mês' },
-              { id: 'CUSTOM', label: 'Período' },
-            ] as { id: DateFilter; label: string }[]).map((f) => (
-              <button
-                key={f.id}
-                className={`${styles.filterBtn} ${dateFilter === f.id ? styles.filterBtnActive : ''}`}
-                onClick={() => setDateFilter(f.id)}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-          {dateFilter === 'CUSTOM' && (
-            <div className={styles.customDateGroup}>
-              <input
-                type="date"
-                value={customRange.start}
-                onChange={(e) => setCustomRange((p) => ({ ...p, start: e.target.value }))}
-                className={styles.dateInput}
-              />
-              <span style={{ color: 'var(--text-muted)' }}>→</span>
-              <input
-                type="date"
-                value={customRange.end}
-                onChange={(e) => setCustomRange((p) => ({ ...p, end: e.target.value }))}
-                className={styles.dateInput}
-              />
-            </div>
-          )}
-        </div>
       </div>
 
       <div className={styles.statsRow}>
@@ -326,10 +291,10 @@ export default function TransactionsPage() {
       <div className={styles.tableCard}>
         <div className={styles.tableToolbar}>
           <h2 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Registro Geral de Vendas</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <input type="text" placeholder="Buscar por ID, Cliente..." className={styles.filterSelect} style={{ width: '250px' }} />
+          <div className={styles.toolbarFilters}>
+            <input type="text" placeholder="Buscar por ID, Cliente..." className={styles.filterSelect} style={{ width: '220px' }} />
             <select className={styles.filterSelect}>
-              <option value="">Status da Transação: Todos</option>
+              <option value="">Status: Todos</option>
               <option value="APPROVED">Aprovadas</option>
               <option value="COMPLETED">Finalizadas (Pós-Garantia)</option>
               <option value="WAITING">Aguardando Pagamento</option>
@@ -337,6 +302,39 @@ export default function TransactionsPage() {
               <option value="NOT_COMPLETED">Dados Inválidos</option>
               <option value="REVERSED">Estornos / Reembolsos / Chargeback</option>
             </select>
+            <div className={styles.filterGroup}>
+              {([
+                { id: 'TODAY',  label: 'Hoje' },
+                { id: 'WEEK',   label: 'Semana' },
+                { id: 'MONTH',  label: 'Mês' },
+                { id: 'CUSTOM', label: 'Período' },
+              ] as { id: DateFilter; label: string }[]).map((f) => (
+                <button
+                  key={f.id}
+                  className={`${styles.filterBtn} ${dateFilter === f.id ? styles.filterBtnActive : ''}`}
+                  onClick={() => setDateFilter(f.id)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            {dateFilter === 'CUSTOM' && (
+              <div className={styles.customDateGroup}>
+                <input
+                  type="date"
+                  value={customRange.start}
+                  onChange={(e) => setCustomRange((p) => ({ ...p, start: e.target.value }))}
+                  className={styles.dateInput}
+                />
+                <span style={{ color: 'var(--text-muted)' }}>→</span>
+                <input
+                  type="date"
+                  value={customRange.end}
+                  onChange={(e) => setCustomRange((p) => ({ ...p, end: e.target.value }))}
+                  className={styles.dateInput}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -369,12 +367,11 @@ export default function TransactionsPage() {
                       </span>
                     </td>
                     <td className={styles.actionsCell}>
-                      <button 
-                        className={styles.btnActionDots} 
+                      <button
+                        className={styles.btnVerDetalhes}
                         onClick={() => handleOpenDetail(trx.id)}
-                        title="Detalhes da Venda"
                       >
-                        ⋮
+                        Ver Detalhes
                       </button>
                     </td>
                   </tr>

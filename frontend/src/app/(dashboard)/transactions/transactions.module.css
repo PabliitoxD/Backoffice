@@ -1,4 +1,4 @@
-.container { display: flex; flex-direction: column; gap: 2rem; }
+﻿.container { display: flex; flex-direction: column; gap: 2rem; }
 .header { display: flex; justify-content: space-between; align-items: flex-start; }
 .titleWrapper { display: flex; align-items: center; gap: 1rem; }
 .btnBack { background: transparent; border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: var(--radius-md); color: var(--text-main); text-decoration: none; font-weight: 500; transition: all 0.2s; font-size: 0.875rem; }
@@ -10,10 +10,37 @@
 .statPositive { color: #10b981; }
 .statNegative { color: #ef4444; }
 .tableCard { background-color: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
-.tableToolbar { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 1rem; }
+.tableToolbar { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 1rem; flex-wrap: wrap; }
 .filterSelect { padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--surface); color: var(--text-main); outline: none; }
 
-/* ── Date filter ── */
+/* â”€â”€ Toolbar filters row â”€â”€ */
+.toolbarFilters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* â”€â”€ Ver Detalhes button â”€â”€ */
+.btnVerDetalhes {
+  padding: 0.35rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btnVerDetalhes:hover {
+  background: rgba(116, 152, 177, 0.1);
+  border-color: var(--primary-color);
+}
+
+/* â”€â”€ Date filter â”€â”€ */
 .filterGroup {
   display: flex;
   background: var(--surface);
@@ -70,7 +97,7 @@
 .table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
 .table th, .table td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; }
 .table th { background-color: rgba(248, 250, 252, 0.4); font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
-@media (prefers-color-scheme: dark) { .table th { background-color: rgba(30, 41, 59, 0.4); } .table tbody tr:hover { background-color: rgba(30, 41, 59, 0.2); } }
+:global(.dark) .table th { background-color: rgba(30, 41, 59, 0.6); } :global(.dark) .table tbody tr:hover { background-color: rgba(30, 41, 59, 0.3); }
 .table tbody tr:hover { background-color: rgba(248, 250, 252, 0.4); }
 .fontWeightMedium { font-weight: 500; color: var(--text-main); }
 .textMuted { color: var(--text-muted); }
@@ -98,12 +125,12 @@
 @keyframes dropdownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 .dropdownItem { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.6rem 0.75rem; background: transparent; border: none; text-align: left; font-size: 0.875rem; color: var(--text-main); cursor: pointer; border-radius: var(--radius-sm); text-decoration: none; transition: background-color 0.2s; box-sizing: border-box; }
 .dropdownItem:hover { background-color: rgba(248, 250, 252, 0.8); }
-@media (prefers-color-scheme: dark) { .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); } }
+:global(.dark) .dropdownItem:hover { background-color: rgba(30, 41, 59, 1); }
 .modalOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
 .modalContent { background: var(--surface); border-radius: 12px; width: 90%; max-width: 700px; padding: 0; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: slideUp 0.3s ease-out; display: flex; flex-direction: column; overflow: hidden; max-height: 90vh; }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
-@media (prefers-color-scheme: dark) { .modalHeader { background: rgba(30, 41, 59, 0.4); } }
+.modalHeader { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color); background: var(--surface); }
+:global(.dark) .modalHeader { background: rgba(30, 41, 59, 0.6); }
 .modalHeader h2 { font-size: 1.1rem; color: var(--text-main); margin: 0; font-weight: 600; }
 .closeBtn { background: none; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1; }
 .closeBtn:hover { color: #ef4444; }
@@ -117,7 +144,7 @@
 .detailValue { color: #3b82f6; font-weight: 500; overflow-wrap: anywhere; } 
 .detailValueBold { font-weight: 600; color: var(--text-main); }
 .productSection { background-color: rgba(248, 250, 252, 0.6); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-@media (prefers-color-scheme: dark) { .productSection { background-color: rgba(30, 41, 59, 0.4); } }
+:global(.dark) .productSection { background-color: rgba(30, 41, 59, 0.5); }
 .productInfo { display: flex; align-items: center; gap: 1rem; max-width: 80%; }
 .productDesc { display: flex; flex-direction: column; gap: 0.25rem; }
 .productCode { font-size: 0.8rem; color: var(--text-muted); font-family: monospace; }
@@ -128,8 +155,8 @@
 .divider { height: 1px; background-color: var(--border-color); width: 100%; margin: 0.5rem 0; }
 .warningBanner { background-color: #fde047; color: #854d0e; padding: 1rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;}
 .errorBanner { background-color: #fee2e2; color: #991b1b; padding: 1rem; border-radius: var(--radius-md); font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;}
-.modalFooter { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); background: rgba(248, 250, 252, 0.4); }
-@media (prefers-color-scheme: dark) { .modalFooter { background: rgba(30, 41, 59, 0.4); } }
+.modalFooter { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-top: 1px solid var(--border-color); background: var(--surface); }
+:global(.dark) .modalFooter { background: rgba(30, 41, 59, 0.6); }
 .btnCancelItem { padding: 0.625rem 1.25rem; border: none; background-color: #ef4444; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; opacity: 0.9; }
 .btnCancelItem:hover { opacity: 1; }
 .btnCloseModal { padding: 0.625rem 1.25rem; border: none; background-color: #94a3b8; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
@@ -142,3 +169,4 @@
 .tableHeaderLight { background-color: transparent !important; color: var(--text-muted) !important; text-transform: none !important; font-size: 0.85rem !important; border-bottom: 2px solid var(--border-color) !important; }
 .btnViewSmall { background-color: #2cb5c6; color: white; border: none; padding: 0.35rem 1rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
 .btnViewSmall:hover { opacity: 0.9; }
+
