@@ -308,3 +308,40 @@
   white-space: nowrap;
 }
 .btnRemovePep:hover { color: #ef4444; border-color: rgba(239, 68, 68, .4); }
+
+/* textarea */
+.field textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.field textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+/* optional tag */
+.optionalTag {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: 0.3rem;
+}
+
+/* sales channel checkboxes */
+.checkboxGroup {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+}
