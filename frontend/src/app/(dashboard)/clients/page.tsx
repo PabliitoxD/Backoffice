@@ -32,7 +32,7 @@ export default function ClientsPage() {
 
 
   return (
-    <div className={styles.usersContainer}>
+    <div className={styles.container}>
       <div className={styles.header}>
         <div>
           <h1 className="title">Gerenciamento de Clientes</h1>
