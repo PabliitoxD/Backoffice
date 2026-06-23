@@ -141,6 +141,11 @@
   transition: border-color 0.2s;
 }
 
+:global(.dark) .integrationCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .cardDEGRADED {
   border-color: rgba(245, 158, 11, 0.35) !important;
 }
