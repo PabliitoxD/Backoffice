@@ -38,7 +38,7 @@
 .dark {
   /* Dark mode — Tronnus brand palette */
   --background: #0A0A0A;
-  --surface: rgba(255, 255, 255, 0.04);
+  --surface: #1E293B;
   --border-color: rgba(255, 255, 255, 0.08);
   --header-bg: rgba(10, 10, 10, 0.80);
   --text-main: #F3F3F3;
