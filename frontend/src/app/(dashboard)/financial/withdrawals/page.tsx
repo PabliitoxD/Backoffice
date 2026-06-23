@@ -41,6 +41,35 @@ export default function WithdrawalsPage() {
     }
   };
 
+  const exportCSV = () => {
+    const rows = [
+      ['Data', 'ID', 'Produtor', 'Valor Bruto (R$)', 'Tarifa (R$)', 'Repasse Líquido (R$)', 'Status'],
+      ...withdrawals.map((item) => {
+        const fee = item.fee ?? 5.0;
+        return [
+          new Date(item.createdAt).toLocaleString('pt-BR'),
+          item.id,
+          item.producer?.name || '',
+          item.amount.toFixed(2).replace('.', ','),
+          fee.toFixed(2).replace('.', ','),
+          (item.amount - fee).toFixed(2).replace('.', ','),
+          statusMap[item.status] || item.status,
+        ];
+      }),
+    ];
+
+    const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const from = startDate || 'inicio';
+    const to = endDate || 'fim';
+    link.download = `recebiveis_${from}_${to}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const fetchWithdrawals = async () => {
     setLoading(true);
     try {
@@ -203,12 +232,27 @@ export default function WithdrawalsPage() {
               <option value="REFUSED">Recusado</option>
             </select>
 
-            <button 
-              onClick={fetchWithdrawals} 
-              className={`${styles.btnAction} ${styles.btnSuccess}`} 
+            <button
+              onClick={fetchWithdrawals}
+              className={`${styles.btnAction} ${styles.btnSuccess}`}
               style={{ padding: '0.65rem 1.5rem', fontWeight: 600 }}
             >
               Buscar
+            </button>
+
+            <button
+              onClick={exportCSV}
+              disabled={withdrawals.length === 0}
+              className={styles.btnAction}
+              style={{ padding: '0.65rem 1.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: withdrawals.length === 0 ? 0.5 : 1 }}
+              title={`Exportar todos os saques do período${startDate ? ' de ' + startDate : ''}${endDate ? ' até ' + endDate : ''}`}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar CSV
             </button>
           </div>
           
