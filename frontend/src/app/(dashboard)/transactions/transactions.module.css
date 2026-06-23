@@ -162,12 +162,12 @@
 .btnCancelItem:hover { opacity: 1; }
 .btnCloseModal { padding: 0.625rem 1.25rem; border: none; background-color: #94a3b8; color: white; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: background-color 0.2s; }
 .btnCloseModal:hover { background-color: #64748b; }
-.producerBanner { background-color: #2cb5c6; color: white; padding: 1rem; border-radius: var(--radius-md); font-weight: 500; margin: 1rem 0; font-size: 0.95rem; }
+.producerBanner { background-color: var(--secondary-color); color: white; padding: 1rem; border-radius: var(--radius-md); font-weight: 500; margin: 1rem 0; font-size: 0.95rem; }
 .feesTable { width: 100%; border-collapse: collapse; }
 .feesTable th, .feesTable td { padding: 1rem 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
 .feesTable th { text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; }
 .feesTable td:last-child, .feesTable th:last-child { text-align: right; font-weight: 600; }
 .tableHeaderLight { background-color: transparent !important; color: var(--text-muted) !important; text-transform: none !important; font-size: 0.85rem !important; border-bottom: 2px solid var(--border-color) !important; }
-.btnViewSmall { background-color: #2cb5c6; color: white; border: none; padding: 0.35rem 1rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+.btnViewSmall { background-color: var(--secondary-color); color: white; border: none; padding: 0.35rem 1rem; border-radius: var(--radius-md); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
 .btnViewSmall:hover { opacity: 0.9; }
 

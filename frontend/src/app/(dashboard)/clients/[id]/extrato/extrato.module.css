@@ -241,7 +241,7 @@
 
 /* Tabs Content Additions */
 .producerBanner {
-  background-color: #2cb5c6; /* Cyan matching screenshot */
+  background-color: var(--secondary-color); /* Cyan matching screenshot */
   color: white;
   padding: 1rem;
   border-radius: var(--radius-md);
@@ -282,7 +282,7 @@
 }
 
 .btnViewSmall {
-  background-color: #2cb5c6;
+  background-color: var(--secondary-color);
   color: white;
   border: none;
   padding: 0.35rem 1rem;
