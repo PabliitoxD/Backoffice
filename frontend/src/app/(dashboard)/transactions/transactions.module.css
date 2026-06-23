@@ -12,6 +12,60 @@
 .tableCard { background-color: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
 .tableToolbar { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 1rem; }
 .filterSelect { padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--surface); color: var(--text-main); outline: none; }
+
+/* ── Date filter ── */
+.filterGroup {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.filterBtn {
+  padding: 0.375rem 1rem;
+  border-radius: calc(var(--radius-md) - 2px);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.filterBtn:hover { color: var(--text-main); }
+
+.filterBtnActive {
+  background: var(--primary-color);
+  color: #fff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.customDateGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.dateInput {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  outline: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+}
 .tableWrapper { overflow-x: auto; width: 100%; }
 .table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
 .table th, .table td { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; }
