@@ -1,0 +1,90 @@
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  background: var(--card-bg);
+  padding: 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .filterBar {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.btnGroup {
+  display: flex;
+  background: rgba(var(--primary-color-rgb), 0.05);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+  gap: 0.25rem;
+}
+
+.btnGroup button {
+  padding: 0.5rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btnGroup button:hover {
+  color: var(--text-main);
+}
+
+.btnGroup button.active {
+  background: white;
+  color: var(--primary-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.manualInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.dateInput {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  background: var(--bg-main);
+  color: var(--text-main);
+}
+
+.separator {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.btnSearch {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnSearch:hover {
+  filter: brightness(1.1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}

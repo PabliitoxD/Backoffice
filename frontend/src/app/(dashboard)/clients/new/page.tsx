@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './newClient.module.css';
+import { resolveMcc } from '@/lib/cnae-mcc';
 
 // ─── Bank list ────────────────────────────────────────────────────────────────
 
@@ -741,14 +742,9 @@ export default function NewClientPage() {
 
         {/* ── Actions ── */}
         <div className={styles.formActions}>
-          <button type="button" className={styles.btnCancel} onClick={() => router.push('/clients')}>
-            Cancelar
-          </button>
-          <button type="submit" className={styles.btnSubmit}>
-            Salvar e Cadastrar
-          </button>
+          <button type="button" className={styles.btnCancel} onClick={() => router.push('/clients')}>Cancelar</button>
+          <button type="submit" className={styles.btnSubmit}>Salvar e Cadastrar</button>
         </div>
-
       </form>
     </div>
   );

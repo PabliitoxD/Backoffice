@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import styles from '../financial.module.css';
+import styles from './withdrawals.module.css';
 import { API_URL } from '@/lib/api';
 
 const formatCurrency = (value: number) => {
@@ -22,6 +22,7 @@ export default function WithdrawalsPage() {
   const [filterStatus, setFilterStatus] = useState('ALL');
   
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const statusMap: Record<string, string> = {
     'PENDING': 'Pendente',
@@ -30,11 +31,20 @@ export default function WithdrawalsPage() {
     'COMPLETED': 'Processado'
   };
 
+  const getStatusBadgeClass = (status: string) => {
+    switch(status) {
+      case 'PENDING': return styles.badgeWarning;
+      case 'APPROVED': return styles.badgeSecondary;
+      case 'COMPLETED': return styles.badgeCredit;
+      case 'REFUSED': return styles.badgeDebit;
+      default: return styles.badgeInfo;
+    }
+  };
+
   const fetchWithdrawals = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      // Build query params
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
@@ -45,14 +55,8 @@ export default function WithdrawalsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        const data = await res.json();
-        setWithdrawals(data);
-      } else {
-        // Mock se falhar
-        setWithdrawals([
-          { id: 'wt-11', amount: 1500, fee: 5.0, status: 'PENDING', producer: { name: 'Acme Corp' }, createdAt: new Date().toISOString() },
-          { id: 'wt-22', amount: 320, fee: 5.0, status: 'PENDING', producer: { name: 'Tech Solutions' }, createdAt: new Date(Date.now() - 3600000).toISOString() }
-        ]);
+         const data = await res.json();
+         setWithdrawals(data);
       }
     } catch(e) {
       console.error(e);
@@ -79,10 +83,13 @@ export default function WithdrawalsPage() {
     }
   };
 
-  const notifyFinance = async () => {
+  const handleNotifyFinance = () => {
     if (!selectedIds.length) return;
-    if (!confirm(`Confirmar envio de ${selectedIds.length} saque(s) ao financeiro?`)) return;
-    
+    setIsPreviewModalOpen(true);
+  };
+
+  const confirmNotifyFinance = async () => {
+    setIsPreviewModalOpen(false);
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -95,7 +102,7 @@ export default function WithdrawalsPage() {
         body: JSON.stringify({ withdrawalIds: selectedIds })
       });
       if (res.ok) {
-        alert('Notificação enviada com sucesso! Verifique o console do backend.');
+        alert('Notificação enviada com sucesso aos responsáveis!');
         setSelectedIds([]);
         fetchWithdrawals();
       } else {
@@ -135,11 +142,10 @@ export default function WithdrawalsPage() {
       
       if (res.ok) {
         alert("Operação realizada com sucesso!");
-        fetchWithdrawals(); // Recarrega
+        fetchWithdrawals();
         setModalData(null);
       } else {
         alert("Erro ao realizar operação");
-        setWithdrawals(prev => prev.filter(w => w.id !== id)); // Mock behavior
         setModalData(null);
       }
     } catch(e) {
@@ -210,10 +216,10 @@ export default function WithdrawalsPage() {
             <div style={{ padding: '0.75rem 1rem', backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: '#0369a1', fontWeight: 600 }}>{selectedIds.length} saque(s) selecionado(s)</span>
               <button 
-                onClick={notifyFinance}
+                onClick={handleNotifyFinance}
                 style={{ cursor: 'pointer', padding: '0.5rem 1rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600 }}
               >
-                Notificar Financeiro (E-mail)
+                Notificar Financeiro
               </button>
             </div>
           )}
@@ -243,12 +249,12 @@ export default function WithdrawalsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Carregando solicitações...</td></tr>
+                <tr><td colSpan={9} className={styles.emptyState}>Carregando solicitações...</td></tr>
               ) : withdrawals.length === 0 ? (
-                <tr><td colSpan={7} className={styles.emptyState}>Nenhuma solicitação pendente no momento.</td></tr>
+                <tr><td colSpan={9} className={styles.emptyState}>Nenhuma solicitação encontrada.</td></tr>
               ) : (
                 withdrawals.map((item) => {
-                  const fee = item.fee || 5.00; // Mock fee if undefined
+                  const fee = item.fee || 5.00;
                   const payout = item.amount - fee;
                   return (
                     <tr 
@@ -258,8 +264,6 @@ export default function WithdrawalsPage() {
                         backgroundColor: selectedIds.includes(item.id) ? '#f0f9ff' : 'transparent',
                         cursor: 'pointer'
                       }}
-                      onMouseOver={(e) => e.currentTarget.style.backgroundColor = selectedIds.includes(item.id) ? '#e0f2fe' : 'var(--bg-secondary)'}
-                      onMouseOut={(e) => e.currentTarget.style.backgroundColor = selectedIds.includes(item.id) ? '#f0f9ff' : 'transparent'}
                     >
                       <td style={{ textAlign: 'center' }} onClick={(e) => e.stopPropagation()}>
                         <input 
@@ -276,7 +280,7 @@ export default function WithdrawalsPage() {
                       <td className={styles.textMuted}>{formatCurrency(fee)}</td>
                       <td className={styles.fontWeightMedium} style={{ color: '#10b981' }}>{formatCurrency(payout)}</td>
                       <td>
-                        <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                        <span className={`${styles.badge} ${getStatusBadgeClass(item.status)}`}>
                           {statusMap[item.status] || item.status}
                         </span>
                       </td>
@@ -404,7 +408,7 @@ export default function WithdrawalsPage() {
               <div style={{ display: 'flex', gap: '2rem' }}>
                 <div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Status</div>
-                  <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                  <span className={`${styles.badge} ${getStatusBadgeClass(infoModalData.status)}`}>
                     {statusMap[infoModalData.status] || infoModalData.status}
                   </span>
                 </div>
@@ -434,7 +438,7 @@ export default function WithdrawalsPage() {
               <div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.25rem' }}>Motivo / Observação</div>
                 <div style={{ padding: '0.75rem', backgroundColor: 'var(--background)', border: '1px solid var(--border-color)', borderRadius: '6px', minHeight: '60px', color: 'var(--text-main)', fontStyle: infoModalData.observation ? 'normal' : 'italic', fontSize: '0.95rem' }}>
-                  {infoModalData.observation || 'Não há observações operacionais registradas para alterar este status.'}
+                  {infoModalData.observation || 'Não há observações operacionais registradas.'}
                 </div>
               </div>
             </div>
@@ -445,7 +449,78 @@ export default function WithdrawalsPage() {
                 style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', border: '1px solid var(--border-color)' }}
                 onClick={() => setInfoModalData(null)}
               >
-                Fechar Painel
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isPreviewModalOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+          <div style={{ backgroundColor: 'var(--surface)', color: 'var(--text-main)', padding: '2rem', borderRadius: '12px', width: '800px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700 }}>Pré-visualização da Notificação</h3>
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Os dados abaixo serão enviados para tania.souza e pablo.werner</p>
+              </div>
+              <button onClick={() => setIsPreviewModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {withdrawals.filter(w => selectedIds.includes(w.id)).map(w => (
+                <div key={w.id} style={{ padding: '1.5rem', backgroundColor: 'var(--background)', borderRadius: '8px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '1rem', right: '1.5rem', fontWeight: 700, color: '#10b981', fontSize: '1.1rem' }}>
+                    {formatCurrency(w.amount - (w.fee || 5.00))}
+                  </div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)', width: '150px' }}>PRODUTOR:</td>
+                        <td style={{ padding: '4px 0', fontWeight: 600 }}>{w.producer?.name}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>ID:</td>
+                        <td style={{ padding: '4px 0' }}><code>{w.id}</code></td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>CHAVE PIX:</td>
+                        <td style={{ padding: '4px 0', fontWeight: 600, color: 'var(--primary-color)' }}>{w.pixKey || w.producer?.pixKey || 'Não informada'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>STATUS:</td>
+                        <td style={{ padding: '4px 0' }}>{w.status}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>DATA SOLICITAÇÃO:</td>
+                        <td style={{ padding: '4px 0' }}>{new Date(w.createdAt).toLocaleString('pt-BR')}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>DATA APROVAÇÃO:</td>
+                        <td style={{ padding: '4px 0' }}>{w.approvedAt ? new Date(w.approvedAt).toLocaleString('pt-BR') : 'Agora'}</td>
+                      </tr>
+                      <tr>
+                        <td style={{ padding: '4px 0', color: 'var(--text-muted)' }}>PARECER DO RISCO:</td>
+                        <td style={{ padding: '4px 0', fontStyle: 'italic' }}>{w.observation || 'Sem parecer registrado'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
+              <button 
+                onClick={() => setIsPreviewModalOpen(false)}
+                style={{ padding: '0.75rem 1.5rem', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'none', cursor: 'pointer', color: 'var(--text-main)', fontWeight: 600 }}
+              >
+                Voltar e Ajustar
+              </button>
+              <button 
+                onClick={confirmNotifyFinance}
+                style={{ padding: '0.75rem 2rem', borderRadius: '6px', background: 'var(--primary-color)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '1rem' }}
+              >
+                Confirmar e Enviar E-mail
               </button>
             </div>
           </div>

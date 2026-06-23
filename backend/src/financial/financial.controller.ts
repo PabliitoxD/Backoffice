@@ -10,6 +10,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class FinancialController {
   constructor(private readonly financialService: FinancialService) {}
 
+  @Get('dashboard-summary')
+  @ApiOperation({ summary: 'Obtem o resumo estatístico para o dashboard principal' })
+  getDashboardSummary(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string
+  ) {
+    return this.financialService.getDashboardSummary(startDate, endDate);
+  }
+
   @Get('statement')
   @ApiOperation({ summary: 'Obtem o extrato unificado de todas as transações e saques' })
   getGlobalStatement(
@@ -18,5 +27,11 @@ export class FinancialController {
     @Query('search') search?: string
   ) {
     return this.financialService.getGlobalStatement(startDate, endDate, search);
+  }
+
+  @Get('notifications')
+  @ApiOperation({ summary: 'Obtem as notificações de chargebacks e saques pendentes' })
+  getNotifications() {
+    return this.financialService.getNotifications();
   }
 }

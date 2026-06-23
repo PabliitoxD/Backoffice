@@ -54,7 +54,7 @@
 
 .progress-line-fill {
   height: 100%;
-  background-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
   border-radius: 2px;
   transition: width 0.4s ease;
 }
@@ -83,14 +83,14 @@
 }
 
 .progress-step.active .step-circle {
-  border-color: var(--primary-color, #4361ee);
-  color: var(--primary-color, #4361ee);
+  border-color: var(--primary-color, var(--primary-color));
+  color: var(--primary-color, var(--primary-color));
   box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1);
 }
 
 .progress-step.completed .step-circle {
-  background-color: var(--primary-color, #4361ee);
-  border-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
+  border-color: var(--primary-color, var(--primary-color));
   color: white;
 }
 
@@ -156,7 +156,7 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: var(--primary-color, #4361ee);
+  border-color: var(--primary-color, var(--primary-color));
   box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
 }
 
@@ -219,8 +219,8 @@
 }
 
 .checkbox-label input[type="checkbox"]:checked {
-  background-color: var(--primary-color, #4361ee);
-  border-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
+  border-color: var(--primary-color, var(--primary-color));
 }
 
 .checkbox-label input[type="checkbox"]:checked::before {
@@ -269,7 +269,7 @@
 }
 
 input:checked + .slider {
-  background-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
 }
 
 input:checked + .slider:before {
@@ -313,9 +313,9 @@ input:checked + .slider:before {
 }
 
 .plan-card.selected {
-  border-color: var(--primary-color, #4361ee);
+  border-color: var(--primary-color, var(--primary-color));
   background-color: #f0f4ff;
-  box-shadow: 0 0 0 2px var(--primary-color, #4361ee);
+  box-shadow: 0 0 0 2px var(--primary-color, var(--primary-color));
 }
 
 .plan-card h4 {
@@ -359,7 +359,7 @@ input:checked + .slider:before {
 }
 
 .plan-card.featured {
-  border-color: var(--primary-color, #4361ee);
+  border-color: var(--primary-color, var(--primary-color));
 }
 
 .badge {
@@ -367,7 +367,7 @@ input:checked + .slider:before {
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
   color: white;
   font-size: 0.7rem;
   font-weight: bold;
@@ -409,7 +409,7 @@ input:checked + .slider:before {
 
 .highlight-plan {
   font-weight: bold;
-  color: var(--primary-color, #4361ee) !important;
+  color: var(--primary-color, var(--primary-color)) !important;
   font-size: 1.1rem;
 }
 
@@ -433,12 +433,12 @@ input:checked + .slider:before {
 }
 
 .btn-primary {
-  background-color: var(--primary-color, #4361ee);
+  background-color: var(--primary-color, var(--primary-color));
   color: white;
 }
 
 .btn-primary:hover {
-  background-color: #3b52d9;
+  background-color: var(--primary-hover);
 }
 
 .btn-secondary {
