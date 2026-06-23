@@ -33,6 +33,11 @@
   box-shadow: var(--shadow-md);
 }
 
+:global(.dark) .statCard {
+  background: rgba(255, 255, 255, 0.045);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .statTitle {
   font-size: 0.875rem;
   font-weight: 600;
@@ -96,6 +101,11 @@
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
   overflow: hidden; /* ensures border radius applies to children like lists/tables if they stretch */
+}
+
+:global(.dark) .tableCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 .tableToolbar {

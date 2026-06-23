@@ -5,11 +5,13 @@
 .btnBack:hover { background-color: var(--surface); border-color: var(--text-muted); }
 .statsRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
 .statCard { background-color: var(--surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 0.5rem; }
+:global(.dark) .statCard { background: rgba(255, 255, 255, 0.045); border-color: rgba(255, 255, 255, 0.08); }
 .statTitle { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .statValue { font-size: 1.75rem; font-weight: 700; color: var(--text-main); }
 .statPositive { color: #10b981; }
 .statNegative { color: #ef4444; }
 .tableCard { background-color: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); overflow: hidden; }
+:global(.dark) .tableCard { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.08); }
 .tableToolbar { padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); gap: 1rem; flex-wrap: wrap; }
 .filterSelect { padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--surface); color: var(--text-main); outline: none; }
 

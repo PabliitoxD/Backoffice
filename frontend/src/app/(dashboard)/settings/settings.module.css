@@ -64,6 +64,11 @@
   box-shadow: var(--shadow-sm);
 }
 
+:global(.dark) .tableCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .tableToolbar {
   padding: 1.25rem 1.5rem;
   display: flex;
@@ -142,6 +147,11 @@
   padding: 2rem;
   max-width: 600px;
   box-shadow: var(--shadow-sm);
+}
+
+:global(.dark) .profileCard {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Modal Styles */
