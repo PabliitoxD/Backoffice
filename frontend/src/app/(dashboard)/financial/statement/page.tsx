@@ -131,117 +131,29 @@ export default function StatementPage() {
   const totalOut = filteredStatement.filter(s => s.impact < 0).reduce((acc, curr) => acc + Math.abs(curr.impact), 0);
   const filteredBalance = filteredStatement.reduce((acc, curr) => acc + curr.impact, 0);
 
-  const getStatusBadgeConfig = (status: string) => {
-    switch(status) {
-      case 'APPROVED': return { className: modalStyles.statusApproved, label: 'Aprovada' };
-      case 'COMPLETED': return { className: modalStyles.statusCompleted, label: 'Finalizada' };
-      case 'WAITING': return { className: modalStyles.statusWaiting, label: 'Aguardando' };
-      case 'REVERSED': return { className: modalStyles.statusReversed, label: 'Estornada' };
-      case 'REFUNDED': return { className: modalStyles.statusClaimed, label: 'Reembolsada' };
-      case 'CHARGEBACK': return { className: modalStyles.statusChargeback, label: 'Chargeback' };
-      default: return { className: '', label: status };
-    }
-  };
+  const exportCSV = () => {
+    const rows = [
+      ['Data', 'Tipo', 'Descrição', 'Produtor/Ref', 'Status', 'Valor (R$)', 'Taxa (R$)', 'Impacto (R$)'],
+      ...statement.map((item) => [
+        new Date(item.date).toLocaleString('pt-BR'),
+        item.type === 'TRANSACTION' ? 'Venda' : 'Saque',
+        item.description,
+        item.producerName,
+        item.status,
+        item.amount.toFixed(2).replace('.', ','),
+        item.fee.toFixed(2).replace('.', ','),
+        item.impact.toFixed(2).replace('.', ','),
+      ]),
+    ];
 
-  const renderTabContent = () => {
-    if (!selectedTx || selectedTx.type !== 'TRANSACTION') return null;
-    
-    if (activeModalTab === 'geral') {
-      return (
-        <>
-          <div className={modalStyles.detailGrid}>
-            <span className={modalStyles.detailLabel}>Cliente</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.name}</span>
-            <span className={modalStyles.detailLabel}>Gênero</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.gender || '-'}</span>
-            <span className={modalStyles.detailLabel}>Tipo</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.type || '-'}</span>
-            <span className={modalStyles.detailLabel}>CPF/CNPJ</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.document}</span>
-            <span className={modalStyles.detailLabel}>E-mail</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.email}</span>
-            <span className={modalStyles.detailLabel}>Telefone</span>
-            <span className={modalStyles.detailValue}>{selectedTx.customer?.phone || '-'}</span>
-          </div>
-
-          <div className={modalStyles.productSection}>
-            <div className={modalStyles.productInfo}>
-              <div style={{ fontSize: '2rem' }}>📦</div>
-              <div className={modalStyles.productDesc}>
-                <span className={modalStyles.productCode}>Código: {selectedTx.product?.code}</span>
-                <span className={modalStyles.productName}>{selectedTx.product?.name}</span>
-              </div>
-            </div>
-            <div className={modalStyles.productPrice}>{formatCurrency(selectedTx.amount)}</div>
-          </div>
-
-          <div className={modalStyles.detailGrid}>
-            <span className={modalStyles.detailLabel}>Data do pedido</span>
-            <span className={modalStyles.detailValue}>{new Date(selectedTx.date).toLocaleString('pt-BR')}</span>
-            <span className={modalStyles.detailLabel}>Total dos itens (+)</span>
-            <span className={modalStyles.detailValue}>{formatCurrency(selectedTx.amount)}</span>
-            <span className={modalStyles.detailLabel}>Valor da venda (=)</span>
-            <span className={modalStyles.detailValueBold}>{formatCurrency(selectedTx.amount)}</span>
-            <span className={modalStyles.detailLabel}>Meio de pagamento</span>
-            <span className={modalStyles.detailValue}>{selectedTx.method}</span>
-            <span className={modalStyles.detailLabel}>Condição de pagamento</span>
-            <span className={modalStyles.detailValue}>{selectedTx.installments || `À vista`}</span>
-          </div>
-        </>
-      );
-    }
-
-    if (activeModalTab === 'historico') {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ marginBottom: '1rem' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '1rem' }}>
-              Histórico de status da venda
-            </h3>
-            <table className={`${modalStyles.table} ${modalStyles.modalTable}`}>
-              <thead>
-                <tr>
-                  <th className={modalStyles.tableHeaderLight}>Data ↑↓</th>
-                  <th className={modalStyles.tableHeaderLight}>Status</th>
-                  <th className={modalStyles.tableHeaderLight} style={{ width: '100%' }}>Detalhes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedTx.history?.map((h: any) => (
-                  <tr key={h.id} style={{ backgroundColor: 'transparent' }}>
-                    <td className={modalStyles.textMuted}>{new Date(h.createdAt).toLocaleString('pt-BR')}</td>
-                    <td><span className={`${modalStyles.statusBadge} ${getStatusBadgeConfig(h.status).className}`}>{getStatusBadgeConfig(h.status).label}</span></td>
-                    <td className={modalStyles.textMuted}>{h.details || 'Atualização de status'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    if (activeModalTab === 'taxas') {
-      const isPix = selectedTx.method === 'PIX';
-      const processingFee = isPix ? 1.00 : selectedTx.amount * 0.0499; 
-      const fixedFee = isPix ? 0 : 1.00;
-      const totalFees = processingFee + fixedFee;
-      const netValue = selectedTx.amount - totalFees;
-
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <p className={modalStyles.textMuted}>Veja abaixo as taxas e os valores de cada participante da venda:</p>
-          <div className={modalStyles.producerBanner}>Você participou dessa venda como <strong>produtor</strong>.</div>
-          <table className={`${modalStyles.feesTable} ${modalStyles.modalTable}`}>
-            <tbody>
-              <tr><td>Total pago pelo comprador:</td><td className={modalStyles.textMuted}>{formatCurrency(selectedTx.amount)}</td></tr>
-              <tr><td style={{ fontWeight: 600, color: 'var(--text-main)' }}>Valor base:</td><td style={{ fontWeight: 600, color: 'var(--text-main)' }}>{formatCurrency(selectedTx.amount)}</td></tr>
-              <tr><td style={{ fontWeight: 600, color: '#10b981' }}>Sua comissão líquida:</td><td style={{ color: '#10b981', fontWeight: 600, fontSize: '1.1rem' }}>{formatCurrency(netValue)}</td></tr>
-            </tbody>
-          </table>
-        </div>
-      );
-    }
+    const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `extrato_${startDate}_${endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -322,12 +234,27 @@ export default function StatementPage() {
               <option value="CHARGEBACKS">Chargebacks e Estornos (-)</option>
             </select>
 
-            <button 
-              onClick={fetchStatement} 
-              className={`${styles.btnAction} ${styles.btnSuccess}`} 
+            <button
+              onClick={fetchStatement}
+              className={`${styles.btnAction} ${styles.btnSuccess}`}
               style={{ padding: '0.65rem 1.5rem', fontWeight: 600 }}
             >
               Buscar
+            </button>
+
+            <button
+              onClick={exportCSV}
+              disabled={statement.length === 0}
+              className={styles.btnAction}
+              style={{ padding: '0.65rem 1.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem', opacity: statement.length === 0 ? 0.5 : 1 }}
+              title={`Exportar todas as movimentações do período ${startDate} até ${endDate} (sem filtro de tipo)`}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar CSV
             </button>
           </div>
         </div>
